@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 import { useAuth } from '@/context/AuthContext';
 import { Settings, LogOut, LayoutDashboard } from 'lucide-react';
@@ -19,6 +19,34 @@ import {
 export default function LandingPage() {
   const shouldReduceMotion = useReducedMotion();
   const { isAuthenticated, user, isLoading, logout } = useAuth();
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const faqData = [
+    {
+      q: 'How is AgencyFlow different from tools like Asana or HubSpot?',
+      a: "AgencyFlow is purpose-built for agencies — it combines lead management, project execution, and billing in one workspace, instead of stitching together a CRM, a project tool, and an invoicing app that don't talk to each other.",
+    },
+    {
+      q: 'Can I migrate my existing leads and clients?',
+      a: "Yes. You can import leads, clients, and project data via CSV, or our team can help with a guided migration if you're moving from another platform.",
+    },
+    {
+      q: 'Is there a free trial?',
+      a: 'Yes, every plan includes a free trial with full access to core features — no credit card required to get started.',
+    },
+    {
+      q: 'What integrations do you support?',
+      a: 'AgencyFlow connects with the tools agencies already use for email, calendars, payments, and communication. Check our integrations page for the full list.',
+    },
+    {
+      q: 'Is my data secure?',
+      a: 'Yes. We use role-based permissions, encryption at rest and in transit, and multi-tenant security defaults so client data stays isolated and protected.',
+    },
+    {
+      q: 'Can I cancel anytime?',
+      a: 'Yes, there are no long-term contracts. You can upgrade, downgrade, or cancel your plan at any time from your account settings.',
+    },
+  ];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
@@ -1503,6 +1531,170 @@ export default function LandingPage() {
               </motion.div>
             </div>
           </div>
+        </motion.section>
+
+        {/* FAQ Section */}
+        <motion.section
+          id="faq"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+          variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+          style={{
+            scrollMarginTop: '100px',
+            padding: '96px 24px',
+            maxWidth: '1280px',
+            margin: '0 auto',
+            width: '100%',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Header */}
+          <motion.div
+            variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+            style={{ textAlign: 'center', marginBottom: '48px' }}
+          >
+            <motion.span
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                display: 'inline-block',
+                fontSize: '12px',
+                fontFamily: "'Geist', sans-serif",
+                fontWeight: 600,
+                color: '#d0bcff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
+              }}
+            >
+              FAQ
+            </motion.span>
+            <motion.h2
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '40px',
+                fontWeight: 700,
+                color: '#e2e2e8',
+                marginTop: '8px',
+                lineHeight: '1.2',
+              }}
+            >
+              Questions, Answered
+            </motion.h2>
+            <motion.p
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                color: '#cbc3d7',
+                fontSize: '18px',
+                maxWidth: '600px',
+                margin: '16px auto 0 auto',
+                lineHeight: '1.6',
+              }}
+            >
+              Everything you need to know before making the switch.
+            </motion.p>
+          </motion.div>
+
+          {/* Accordion Container */}
+          <motion.div
+            variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+            style={{
+              maxWidth: '740px',
+              margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            {faqData.map((item, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <motion.div
+                  key={idx}
+                  variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+                  style={{
+                    background: '#1a1c20',
+                    border: isOpen ? '1px solid rgba(208, 188, 255, 0.4)' : '1px solid rgba(73, 68, 84, 0.3)',
+                    borderRadius: '12px',
+                    padding: '20px 24px',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease',
+                    boxShadow: isOpen ? '0 8px 24px rgba(0,0,0,0.3)' : 'none',
+                  }}
+                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                >
+                  {/* Question Row */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '16px',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: '#e2e2e8',
+                        fontWeight: 600,
+                        fontSize: '17px',
+                        lineHeight: '1.4',
+                      }}
+                    >
+                      {item.q}
+                    </span>
+                    <motion.div
+                      animate={{ rotate: isOpen ? 45 : 0 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: isOpen ? 'rgba(208, 188, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: isOpen ? '#d0bcff' : '#cbc3d7',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                        add
+                      </span>
+                    </motion.div>
+                  </div>
+
+                  {/* Answer Transition */}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <p
+                          style={{
+                            color: '#cbc3d7',
+                            fontSize: '15px',
+                            lineHeight: '1.6',
+                            marginTop: '14px',
+                            marginBottom: '4px',
+                            borderTop: '1px solid rgba(73, 68, 84, 0.2)',
+                            paddingTop: '14px',
+                          }}
+                        >
+                          {item.a}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         </motion.section>
       </main>
 
