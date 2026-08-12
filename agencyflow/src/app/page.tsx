@@ -2,427 +2,321 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Shield,
-  Zap,
-  TrendingUp,
-  Users,
-  CheckCircle2,
-  ArrowRight,
-  Sparkles,
-  BarChart3,
-  Layers,
-  FileText,
-  DollarSign,
-  Clock,
-  ChevronRight,
-  Menu,
-  X,
-  Star,
-  Lock,
-  Globe,
-  Bot,
-  Activity,
-  Briefcase,
-  Check,
-} from 'lucide-react';
 
 export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hasAuth = document.cookie.includes('agencyflow_auth=true') || localStorage.getItem('agencyflow_user');
+      const hasAuth =
+        document.cookie.includes('agencyflow_auth=true') ||
+        localStorage.getItem('agencyflow_user');
       if (hasAuth) setIsAuthenticated(true);
     }
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0d14', color: 'var(--on-surface)', fontFamily: 'system-ui, -apple-system, sans-serif', overflowX: 'hidden' }}>
-      
-      {/* Background Decorative Glow Orbs */}
-      <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '1200px', height: '600px', background: 'radial-gradient(ellipse at top, rgba(128, 131, 255, 0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none', zIndex: 0 }} />
-
-      {/* Public Header Navigation */}
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          background: 'rgba(10, 13, 20, 0.85)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        }}
-      >
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="bg-surface text-on-surface font-body-md min-h-screen overflow-x-hidden">
+      {/* Header */}
+      <header className="fixed top-0 left-0 w-full z-[100] bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+        <div className="h-20 w-full px-gutter flex items-center justify-between max-w-container-max mx-auto">
           
-          {/* Brand Logo */}
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none', color: 'var(--on-surface)' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '0.65rem', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900, fontSize: '1rem', boxShadow: '0 0 15px rgba(192, 193, 255, 0.4)' }}>
-              AF
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>AgencyFlow</span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 700, letterSpacing: '0.1em' }}>CRM & OPERATIONS</span>
-            </div>
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-stack-sm text-decoration-none">
+            <img
+              alt="AgencyFlow Logo"
+              className="h-8 w-auto object-contain"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh7XRd3K5XvcrASIg5kn-kcInUo56DudWSKrnCgSFed4bkfUQogow883Vh5slNidU82zfTSL_tVdv-U99crl0DA6GnsH_v3R4Qlk-9dkFlp83fDv8YJvm4Di1xPsrREfqOVKB0J94HQmv0bJEc3fZl7K_gmScaAvJewss4pEw1GcfryvFkwXLMMj80DLA5Tb1IfcuuFqjsFSaJIGCNOvWLba5E6Nkk0X1XkesHCn1eMbynqxaqz8-nFg"
+            />
+            <span className="font-headline-md text-headline-md text-on-surface tracking-tight">
+              AgencyFlow
+            </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden-mobile" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <a href="#features" style={{ color: 'var(--on-surface-variant)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600, transition: 'color 0.2s' }}>Features</a>
-            <a href="#how-it-works" style={{ color: 'var(--on-surface-variant)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600, transition: 'color 0.2s' }}>How It Works</a>
-            <a href="#analytics" style={{ color: 'var(--on-surface-variant)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600, transition: 'color 0.2s' }}>Analytics</a>
-            <a href="#pricing" style={{ color: 'var(--on-surface-variant)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600, transition: 'color 0.2s' }}>Pricing</a>
+          {/* Nav */}
+          <nav className="hidden lg:flex items-center gap-stack-lg">
+            <a href="#features" className="text-button font-button text-on-surface-variant hover:text-on-surface transition-colors">
+              Features
+            </a>
+            <a href="#how-it-works" className="text-button font-button text-on-surface-variant hover:text-on-surface transition-colors">
+              How It Works
+            </a>
+            <a href="#pricing" className="text-button font-button text-on-surface-variant hover:text-on-surface transition-colors">
+              Pricing
+            </a>
+            <a href="#about" className="text-button font-button text-on-surface-variant hover:text-on-surface transition-colors">
+              About
+            </a>
           </nav>
 
-          {/* Action CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Actions */}
+          <div className="flex items-center gap-stack-md">
             {isAuthenticated ? (
               <Link
                 href="/dashboard"
-                className="btn btn-primary"
-                style={{ padding: '0.55rem 1.15rem', fontSize: '0.85rem', fontWeight: 800, borderRadius: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                className="inline-flex items-center justify-center px-6 py-2 bg-primary text-on-primary rounded text-button font-button hover:opacity-90 shadow-[0_0_30px_rgba(208,188,255,0.15)] transition-all"
               >
-                Open Dashboard <ArrowRight size={15} />
+                Open Dashboard
               </Link>
             ) : (
               <>
                 <Link
                   href="/login"
-                  style={{
-                    padding: '0.55rem 1rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    color: 'var(--on-surface)',
-                    textDecoration: 'none',
-                    borderRadius: '0.5rem',
-                    background: 'transparent',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
+                  className="hidden sm:inline-flex items-center justify-center px-4 py-2 border border-outline-variant rounded text-button font-button text-on-surface hover:bg-surface-container-high transition-all"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/signup"
-                  className="btn btn-primary"
-                  style={{ padding: '0.55rem 1.15rem', fontSize: '0.85rem', fontWeight: 800, borderRadius: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                  className="inline-flex items-center justify-center px-6 py-2 bg-primary text-on-primary rounded text-button font-button hover:opacity-90 shadow-[0_0_30px_rgba(208,188,255,0.15)] transition-all"
                 >
-                  Start Free Trial <ArrowRight size={15} />
+                  Sign Up Free
                 </Link>
               </>
             )}
-
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="show-mobile-only"
-              style={{ background: 'none', border: 'none', color: 'var(--on-surface)', cursor: 'pointer', padding: '0.4rem' }}
+            <Link
+              href={isAuthenticated ? '/dashboard' : '/login'}
+              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-2"
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+              <span className="material-symbols-outlined text-on-primary text-[18px]">
+                person
+              </span>
+            </Link>
           </div>
         </div>
-
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div style={{ background: '#131620', padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <a href="#features" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--on-surface)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 600 }}>Features</a>
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--on-surface)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 600 }}>How It Works</a>
-            <a href="#analytics" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--on-surface)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 600 }}>Analytics</a>
-            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--on-surface)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 600 }}>Pricing</a>
-          </div>
-        )}
       </header>
 
-      {/* Hero Section */}
-      <section style={{ position: 'relative', padding: '5rem 1.5rem 4rem 1.5rem', maxWidth: '1280px', margin: '0 auto', textAlign: 'center' }}>
-        
-        {/* Subhead Badge */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderRadius: '9999px', background: 'rgba(192, 193, 255, 0.1)', border: '1px solid rgba(192, 193, 255, 0.25)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 800, marginBottom: '1.5rem', letterSpacing: '0.04em' }}>
-          <Sparkles size={14} /> NEXT-GEN AGENCY CRM & OPERATIONS PLATFORM
-        </div>
-
-        {/* Main Headline */}
-        <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4.25rem)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.1, color: '#ffffff', maxWidth: '900px', margin: '0 auto' }}>
-          Scale Your Agency Revenue with Unified Pipeline & Client Intelligence
-        </h1>
-
-        {/* Subtitle */}
-        <p style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: 'var(--on-surface-variant)', maxWidth: '720px', margin: '1.5rem auto 2.5rem auto', lineHeight: 1.6 }}>
-          AgencyFlow combines deal pipeline tracking, client retainer management, deliverable execution, and automated financial forecasting into a single high-performance workspace.
-        </p>
-
-        {/* CTA Button Group */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <Link
-            href="/signup"
-            className="btn btn-primary"
-            style={{ padding: '0.85rem 2rem', fontSize: '1rem', fontWeight: 800, borderRadius: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 6px 20px rgba(128, 131, 255, 0.35)' }}
-          >
-            Start 14-Day Free Trial <ArrowRight size={18} />
-          </Link>
-          <Link
-            href="/login"
-            style={{
-              padding: '0.85rem 1.75rem',
-              fontSize: '1rem',
-              fontWeight: 700,
-              color: 'var(--on-surface)',
-              textDecoration: 'none',
-              borderRadius: '0.6rem',
-              background: 'var(--surface-container-high)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
-          >
-            Explore Demo Workspace
-          </Link>
-        </div>
-
-        {/* Trust Points */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap', marginTop: '2.5rem', fontSize: '0.85rem', color: 'var(--on-surface-variant)' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><CheckCircle2 size={16} color="var(--secondary)" /> No credit card required</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><CheckCircle2 size={16} color="var(--secondary)" /> 2-minute instant onboarding</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><CheckCircle2 size={16} color="var(--secondary)" /> Unlimited team members</span>
-        </div>
-
-        {/* Hero Product Screenshot Card Mockup */}
-        <div
-          className="glass-card"
-          style={{
-            marginTop: '4rem',
-            padding: '1rem',
-            borderRadius: '1.25rem',
-            background: '#141722',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            boxShadow: '0 30px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(128, 131, 255, 0.15)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ background: '#0e111a', borderRadius: '0.85rem', padding: '1.5rem', textAlign: 'left' }}>
-            {/* Top Mock Window Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.85rem' }}>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f56' }} />
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffbd2e' }} />
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#27c93f' }} />
-              </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>agencyflow.io/dashboard</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--secondary)', fontWeight: 700 }}>● Live Workspace</span>
-            </div>
-
-            {/* Dashboard Mock Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ background: 'var(--surface-container-high)', padding: '1rem', borderRadius: '0.65rem', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>MONTHLY RECURRING REVENUE</span>
-                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--secondary)', marginTop: '0.2rem' }}>$148,500.00</div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>↑ +14.2% vs previous month</span>
-              </div>
-
-              <div style={{ background: 'var(--surface-container-high)', padding: '1rem', borderRadius: '0.65rem', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>ACTIVE RETENTION RATE</span>
-                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--primary)', marginTop: '0.2rem' }}>96.8%</div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>Top 5% Agency Benchmark</span>
-              </div>
-
-              <div style={{ background: 'var(--surface-container-high)', padding: '1rem', borderRadius: '0.65rem', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>PIPELINE CONVERSION</span>
-                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--tertiary)', marginTop: '0.2rem' }}>38.4%</div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--tertiary)' }}>14 deals in qualified stage</span>
-              </div>
-            </div>
-
-            {/* Mock Table Row Preview */}
-            <div style={{ background: 'var(--surface-container)', padding: '1rem', borderRadius: '0.65rem', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--on-surface)' }}>ACTIVE CLIENT RETAINERS</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>View All Accounts →</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.8rem' }}>
-                <span style={{ fontWeight: 700 }}>Apex Digital Group</span>
-                <span style={{ color: 'var(--secondary)', fontWeight: 700 }}>$18,000 / mo</span>
-                <span style={{ color: 'var(--secondary)' }}>● Healthy</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontSize: '0.8rem' }}>
-                <span style={{ fontWeight: 700 }}>Vanguard FinTech</span>
-                <span style={{ color: 'var(--secondary)', fontWeight: 700 }}>$24,500 / mo</span>
-                <span style={{ color: 'var(--secondary)' }}>● Healthy</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" style={{ padding: '5rem 1.5rem', maxWidth: '1280px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>BUILT FOR HIGH-GROWTH AGENCIES</span>
-          <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: '#fff', marginTop: '0.5rem', letterSpacing: '-0.02em' }}>
-            Everything You Need to Run & Scale Operations
-          </h2>
-          <p style={{ fontSize: '1rem', color: 'var(--on-surface-variant)', maxWidth: '600px', margin: '0.75rem auto 0 auto' }}>
-            Eliminate fragmented tools. Manage your agency pipeline, clients, projects, deliverables, and invoices from one unified hub.
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+      {/* Main Content */}
+      <main className="w-full pt-20 bg-surface">
+        <div className="flex flex-col w-full font-body-md overflow-x-hidden">
           
-          {/* Feature 1: Deal Pipeline */}
-          <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#141722', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '0.75rem', background: 'rgba(128, 131, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', marginBottom: '1.25rem' }}>
-              <TrendingUp size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>Visual Deal Kanban Pipeline</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-              Track deal velocity across lead qualification, proposal delivery, negotiation, and closed retainers with instant value calculations.
-            </p>
-          </div>
-
-          {/* Feature 2: Client Management */}
-          <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#141722', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '0.75rem', background: 'rgba(78, 222, 163, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)', marginBottom: '1.25rem' }}>
-              <Users size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>Client Accounts & Health Scoring</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-              Maintain complete visibility into retainer health, client profitability, communication history, and active project deliverables.
-            </p>
-          </div>
-
-          {/* Feature 3: Task & Operations */}
-          <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#141722', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '0.75rem', background: 'rgba(255, 185, 95, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tertiary)', marginBottom: '1.25rem' }}>
-              <Layers size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>Tasks & Operations Workspace</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-              Streamline team workload, task deadlines, assignment tracking, and client deliverables with high-density list and kanban views.
-            </p>
-          </div>
-
-          {/* Feature 4: Financial Analytics */}
-          <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#141722', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '0.75rem', background: 'rgba(128, 131, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', marginBottom: '1.25rem' }}>
-              <BarChart3 size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>Revenue & Cashflow Analytics</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-              Accurately forecast monthly recurring revenue, sales cycle length, deal size averages, and client retention trends.
-            </p>
-          </div>
-
-          {/* Feature 5: AI Sales Copilot */}
-          <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#141722', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '0.75rem', background: 'rgba(78, 222, 163, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--secondary)', marginBottom: '1.25rem' }}>
-              <Bot size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>AI Sales & Follow-Up Copilot</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-              Leverage artificial intelligence to score incoming leads, generate personalized proposal follow-ups, and automate outreach.
-            </p>
-          </div>
-
-          {/* Feature 6: Invoicing & Billing */}
-          <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#141722', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '0.75rem', background: 'rgba(255, 185, 95, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tertiary)', marginBottom: '1.25rem' }}>
-              <DollarSign size={24} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem' }}>Invoices & Proposal Contracts</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.6 }}>
-              Generate branded client proposals, manage billing milestones, and track invoice payment statuses without leaving the workspace.
-            </p>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" style={{ padding: '5rem 1.5rem', background: '#0e111a', borderTop: '1px solid rgba(255, 255, 255, 0.06)', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>TRANSPARENT PRICING</span>
-            <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: '#fff', marginTop: '0.5rem', letterSpacing: '-0.02em' }}>
-              Simple, Predictable Plans for Every Agency
-            </h2>
-            <p style={{ fontSize: '1rem', color: 'var(--on-surface-variant)', maxWidth: '540px', margin: '0.75rem auto 0 auto' }}>
-              All plans include full CRM access, unlimited deals, and 14-day free trial.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+          {/* Hero Section */}
+          <section className="relative pt-32 pb-section-gap-mobile lg:pb-section-gap-desktop px-gutter flex flex-col items-center text-center max-w-container-max mx-auto w-full z-10">
             
-            {/* Starter Plan */}
-            <div className="glass-card" style={{ padding: '2.25rem', borderRadius: '1rem', background: '#141722', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--on-surface-variant)' }}>STARTER AGENCY</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff', margin: '0.75rem 0 0.25rem 0' }}>$49 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>/ month</span></div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginBottom: '1.5rem' }}>Ideal for boutique agencies and growing teams up to 5 members.</p>
+            {/* Ambient Background Glow */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen" />
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', fontSize: '0.85rem' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Up to 5 Team Members</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Full Deal & Pipeline Tracking</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Client & Retainer Management</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Standard Task Operations</span>
-              </div>
-
-              <Link
-                href="/signup"
-                className="btn btn-secondary"
-                style={{ marginTop: 'auto', textAlign: 'center', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 800, fontSize: '0.875rem' }}
-              >
-                Start 14-Day Free Trial
-              </Link>
+            {/* Pill Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container border border-outline-variant/30 mb-8 backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-label-caps font-label-caps text-on-surface-variant tracking-wider uppercase">
+                AgencyFlow 2.0 is Here
+              </span>
             </div>
 
-            {/* Pro Plan (Featured) */}
-            <div className="glass-card" style={{ padding: '2.25rem', borderRadius: '1rem', background: '#181b29', border: '2px solid var(--primary)', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 10px 30px rgba(128, 131, 255, 0.2)' }}>
-              <div style={{ position: 'absolute', top: '-14px', right: '20px', background: 'var(--primary)', color: '#000', fontSize: '0.7rem', fontWeight: 900, padding: '0.2rem 0.75rem', borderRadius: '9999px', letterSpacing: '0.05em' }}>
-                MOST POPULAR
-              </div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--primary)' }}>PRO SCALE</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff', margin: '0.75rem 0 0.25rem 0' }}>$99 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>/ month</span></div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginBottom: '1.5rem' }}>Designed for scaling digital agencies and mid-sized teams.</p>
+            {/* Main Headline */}
+            <h1 className="text-display-xl-mobile lg:text-display-xl font-display-xl tracking-tighter text-on-surface max-w-4xl mb-6 leading-tight">
+              Run Your Agency <br className="hidden sm:block" />{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+                Without the Chaos.
+              </span>
+            </h1>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', fontSize: '0.85rem' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Unlimited Team Members</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Advanced Revenue Analytics & MRR</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> AI Lead Scoring & Follow-ups</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Invoicing & Milestone Billing</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Check size={16} color="var(--secondary)" /> Priority 24/7 Support</span>
-              </div>
+            {/* Subtitle */}
+            <p className="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto mb-10">
+              AgencyFlow brings leads, clients, proposals, projects, tasks, invoices, and your team together in one powerful workspace built for modern agencies.
+            </p>
 
+            {/* Button Actions */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center mb-6">
               <Link
                 href="/signup"
-                className="btn btn-primary"
-                style={{ marginTop: 'auto', textAlign: 'center', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 800, fontSize: '0.875rem' }}
+                className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-fixed text-on-primary font-button rounded-lg shadow-[0_0_30px_rgba(208,188,255,0.2)] hover:shadow-[0_0_40px_rgba(208,188,255,0.3)] transition-all duration-300 text-center flex items-center justify-center gap-2"
               >
-                Start Free Trial
+                Start Free <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
               </Link>
+              <a
+                href="#features"
+                className="w-full sm:w-auto px-8 py-4 bg-transparent border border-outline-variant hover:bg-surface-container text-on-surface font-button rounded-lg transition-all duration-300 text-center flex items-center justify-center gap-2"
+              >
+                Explore AgencyFlow
+              </a>
             </div>
 
-          </div>
+            {/* Guarantee Tag */}
+            <div className="flex items-center gap-3 text-label-caps font-label-caps text-on-surface-variant opacity-80 mb-20">
+              <span className="material-symbols-outlined text-[16px] text-primary">verified</span> No credit card required. 14-day free trial.
+            </div>
+
+            {/* 3D Perspective Card Mockup */}
+            <div className="relative w-full max-w-5xl mx-auto perspective-1000 group">
+              <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent z-10 bottom-0 h-32 translate-y-full" />
+              <div className="relative rounded-xl border border-outline-variant/30 bg-surface-container-low shadow-2xl overflow-hidden transform-gpu transition-transform duration-700 hover:rotate-x-2 hover:scale-[1.02]">
+                <div className="h-10 border-b border-outline-variant/30 bg-surface-container flex items-center px-4 gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-error" />
+                    <div className="w-3 h-3 rounded-full bg-tertiary" />
+                    <div className="w-3 h-3 rounded-full bg-secondary" />
+                  </div>
+                  <div className="mx-auto flex-1 flex justify-center">
+                    <div className="px-6 py-1 bg-surface-container-highest rounded-md text-[10px] text-on-surface-variant font-label-caps flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[12px]">lock</span> agencyflow.com/dashboard
+                    </div>
+                  </div>
+                </div>
+                <img
+                  alt="AgencyFlow Dashboard showing Leads Pipeline and Project Status"
+                  className="w-full h-auto object-cover relative z-0"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNWt16MpLwZYPsUD5ny1mP7OuFFGbmtrVnD_jnsovx4KL6SiWFNNJIXgIriWUdkiPvU3dTMfgX-xmP9Mz5Ns_ET6gVMjH662GoosVlGwitPYe10bho7kShzhgHun2TPwKFWlEHydbj8sCdI4eP3HJBICwJRuVI6DSAoP4V6bESI6k4KUGYWOqDI_wZV0m5iJ0taUdURuLmoimfne2YC2tBZF-OnMTkuTndqwCIc8j1A9aZJB3GIR5dEQ"
+                />
+              </div>
+              <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-secondary/20 rounded-full blur-[80px] -z-10" />
+              <div className="absolute -top-10 -right-10 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -z-10" />
+            </div>
+
+          </section>
+
+          {/* Features Marquee Section */}
+          <section id="features" className="border-y border-outline-variant/20 bg-surface-container-low overflow-hidden py-8">
+            <div className="max-w-container-max mx-auto px-gutter mb-6 text-center">
+              <h3 className="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-widest">
+                Everything your agency needs to operate
+              </h3>
+            </div>
+            <div className="relative w-full flex overflow-x-hidden group">
+              <div className="animate-marquee whitespace-nowrap flex gap-12 items-center px-6">
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-primary">filter_alt</span> Leads
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-secondary">groups</span> Clients
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-tertiary">description</span> Proposals
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-primary">work</span> Projects
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-secondary">check_circle</span> Tasks
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-tertiary">analytics</span> Analytics
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-primary">smart_toy</span> AI Assistant
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+              </div>
+
+              <div className="absolute top-0 animate-marquee2 whitespace-nowrap flex gap-12 items-center px-6">
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-primary">filter_alt</span> Leads
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-secondary">groups</span> Clients
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-tertiary">description</span> Proposals
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-primary">work</span> Projects
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-secondary">check_circle</span> Tasks
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-tertiary">analytics</span> Analytics
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+                <div className="flex items-center gap-2 text-headline-md font-headline-md text-on-surface-variant hover:text-on-surface transition-colors cursor-default">
+                  <span className="material-symbols-outlined text-primary">smart_toy</span> AI Assistant
+                </div>
+                <span className="w-2 h-2 rounded-full bg-outline-variant/50" />
+              </div>
+
+              <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-surface-container-low to-transparent z-10 pointer-events-none" />
+              <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-surface-container-low to-transparent z-10 pointer-events-none" />
+            </div>
+          </section>
+
         </div>
-      </section>
+      </main>
 
       {/* Footer */}
-      <footer style={{ padding: '3rem 1.5rem', background: '#0a0d14', borderTop: '1px solid rgba(255, 255, 255, 0.08)', color: 'var(--on-surface-variant)', fontSize: '0.85rem' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '0.4rem', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900, fontSize: '0.75rem' }}>
-              AF
+      <footer className="w-full bg-surface-container-low pt-section-gap-mobile pb-stack-lg lg:pt-section-gap-desktop">
+        <div className="max-w-container-max mx-auto px-gutter">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-stack-lg mb-stack-lg">
+            
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-stack-sm mb-stack-md">
+                <img
+                  alt="AgencyFlow Logo"
+                  className="h-6 w-auto object-contain"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh7XRd3K5XvcrASIg5kn-kcInUo56DudWSKrnCgSFed4bkfUQogow883Vh5slNidU82zfTSL_tVdv-U99crl0DA6GnsH_v3R4Qlk-9dkFlp83fDv8YJvm4Di1xPsrREfqOVKB0J94HQmv0bJEc3fZl7K_gmScaAvJewss4pEw1GcfryvFkwXLMMj80DLA5Tb1IfcuuFqjsFSaJIGCNOvWLba5E6Nkk0X1XkesHCn1eMbynqxaqz8-nFg"
+                />
+                <span className="font-headline-md text-headline-md text-on-surface text-[24px]">
+                  AgencyFlow
+                </span>
+              </div>
+              <p className="text-on-surface-variant text-body-md max-w-xs mb-stack-md">
+                The operating system for modern agencies. Streamline your workflow, manage clients, and scale with confidence.
+              </p>
+              <div className="flex gap-4">
+                <a className="text-on-surface-variant hover:text-primary transition-colors" href="#">
+                  <span className="material-symbols-outlined">public</span>
+                </a>
+                <a className="text-on-surface-variant hover:text-primary transition-colors" href="#">
+                  <span className="material-symbols-outlined">share</span>
+                </a>
+                <a className="text-on-surface-variant hover:text-primary transition-colors" href="#">
+                  <span className="material-symbols-outlined">alternate_email</span>
+                </a>
+              </div>
             </div>
-            <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--on-surface)' }}>AgencyFlow CRM</span>
+
+            <div>
+              <h4 className="font-label-caps text-label-caps text-on-surface mb-stack-md uppercase">
+                Product
+              </h4>
+              <nav className="flex flex-col gap-3">
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#features">Features</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#pricing">Pricing</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Integrations</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Changelog</a>
+              </nav>
+            </div>
+
+            <div>
+              <h4 className="font-label-caps text-label-caps text-on-surface mb-stack-md uppercase">
+                Company
+              </h4>
+              <nav className="flex flex-col gap-3">
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#about">About Us</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Careers</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Contact</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Blog</a>
+              </nav>
+            </div>
+
+            <div>
+              <h4 className="font-label-caps text-label-caps text-on-surface mb-stack-md uppercase">
+                Legal
+              </h4>
+              <nav className="flex flex-col gap-3">
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Privacy</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Terms</a>
+                <a className="text-body-md text-on-surface-variant hover:text-on-surface" href="#">Security</a>
+              </nav>
+            </div>
+
           </div>
 
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
-            <Link href="/login" style={{ color: 'var(--on-surface-variant)', textDecoration: 'none' }}>Log In</Link>
-            <Link href="/signup" style={{ color: 'var(--on-surface-variant)', textDecoration: 'none' }}>Sign Up</Link>
-            <Link href="/dashboard" style={{ color: 'var(--on-surface-variant)', textDecoration: 'none' }}>Dashboard</Link>
-          </div>
-
-          <div>
-            © {new Date().getFullYear()} AgencyFlow Technologies Inc. All rights reserved.
+          <div className="pt-stack-lg border-t border-outline-variant text-center">
+            <p className="text-on-surface-variant text-label-caps">
+              © 2024 AgencyFlow Inc. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

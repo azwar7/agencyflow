@@ -391,3 +391,31 @@ button {
   background: var(--outline);
 }
 
+/* Perspective and Marquee Keyframe Animations */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.rotate-x-2 {
+  transform: rotateX(2deg);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+@keyframes marquee2 {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0%); }
+}
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}
+.animate-marquee2 {
+  animation: marquee2 35s linear infinite;
+}
+.group:hover .animate-marquee,
+.group:hover .animate-marquee2 {
+  animation-play-state: paused;
+}
+
+
