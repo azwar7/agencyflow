@@ -12,6 +12,7 @@ import {
   slideInRight,
   subtleScale,
   footerFade,
+  solutionFade,
   reducedMotionFade,
 } from '@/lib/animations';
 
@@ -949,6 +950,341 @@ export default function LandingPage() {
             <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '128px', background: 'linear-gradient(to left, #1a1c20, transparent)', pointerEvents: 'none', zIndex: 10 }} />
           </div>
         </section>
+
+        {/* Problem/Solution Section — THE AGENCY STRUGGLE */}
+        <motion.section
+          id="struggle"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+          variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+          style={{
+            padding: '96px 24px',
+            maxWidth: '1280px',
+            margin: '0 auto',
+            width: '100%',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+          }}
+        >
+          <motion.div
+            variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+            style={{ textAlign: 'center', marginBottom: '64px' }}
+          >
+            <motion.span
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                display: 'inline-block',
+                fontSize: '12px',
+                fontFamily: "'Geist', sans-serif",
+                fontWeight: 600,
+                color: '#d0bcff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
+              }}
+            >
+              THE AGENCY STRUGGLE
+            </motion.span>
+            <motion.h2
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '40px',
+                fontWeight: 700,
+                color: '#e2e2e8',
+                marginTop: '8px',
+                lineHeight: '1.2',
+              }}
+            >
+              Running an Agency Shouldn&apos;t Feel This Chaotic
+            </motion.h2>
+            <motion.p
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                color: '#cbc3d7',
+                fontSize: '18px',
+                maxWidth: '600px',
+                margin: '16px auto 0 auto',
+                lineHeight: '1.6',
+              }}
+            >
+              You&apos;re juggling five different tools just to keep the lights on — and still losing deals, missing deadlines, and guessing at profitability.
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '24px',
+            }}
+          >
+            {/* Card 1: Purple Accent */}
+            <motion.div
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                background: '#1a1c20',
+                border: '1px solid rgba(73, 68, 84, 0.3)',
+                borderRadius: '16px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              }}
+            >
+              {/* Before */}
+              <div
+                style={{
+                  background: 'rgba(255, 180, 171, 0.05)',
+                  borderLeft: '3px solid #ffb4ab',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ffb4ab', fontSize: '18px' }}>
+                    cancel
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffb4ab', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    BEFORE
+                  </span>
+                </div>
+                <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.5', margin: 0 }}>
+                  Leads slip through spreadsheets and Slack DMs
+                </p>
+              </div>
+
+              {/* Transition Divider */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '20px', opacity: 0.7 }}>
+                  south
+                </span>
+              </div>
+
+              {/* After */}
+              <motion.div
+                variants={shouldReduceMotion ? reducedMotionFade : solutionFade}
+                style={{
+                  background: 'rgba(208, 188, 255, 0.05)',
+                  borderLeft: '3px solid #d0bcff',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '18px' }}>
+                    check_circle
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    AFTER AGENCYFLOW
+                  </span>
+                </div>
+                <p style={{ color: '#ffffff', fontSize: '15px', fontWeight: 600, lineHeight: '1.5', margin: 0 }}>
+                  Centralized pipeline with AI-powered lead scoring
+                </p>
+              </motion.div>
+            </motion.div>
+
+            {/* Card 2: Green Accent */}
+            <motion.div
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                background: '#1a1c20',
+                border: '1px solid rgba(73, 68, 84, 0.3)',
+                borderRadius: '16px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              }}
+            >
+              {/* Before */}
+              <div
+                style={{
+                  background: 'rgba(255, 180, 171, 0.05)',
+                  borderLeft: '3px solid #ffb4ab',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ffb4ab', fontSize: '18px' }}>
+                    cancel
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffb4ab', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    BEFORE
+                  </span>
+                </div>
+                <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.5', margin: 0 }}>
+                  Projects stall because no one knows who owns what
+                </p>
+              </div>
+
+              {/* Transition Divider */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <span className="material-symbols-outlined" style={{ color: '#4edea3', fontSize: '20px', opacity: 0.7 }}>
+                  south
+                </span>
+              </div>
+
+              {/* After */}
+              <motion.div
+                variants={shouldReduceMotion ? reducedMotionFade : solutionFade}
+                style={{
+                  background: 'rgba(78, 222, 163, 0.05)',
+                  borderLeft: '3px solid #4edea3',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#4edea3', fontSize: '18px' }}>
+                    check_circle
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#4edea3', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    AFTER AGENCYFLOW
+                  </span>
+                </div>
+                <p style={{ color: '#ffffff', fontSize: '15px', fontWeight: 600, lineHeight: '1.5', margin: 0 }}>
+                  Clear task ownership with milestone tracking in one workspace
+                </p>
+              </motion.div>
+            </motion.div>
+
+            {/* Card 3: Amber Accent */}
+            <motion.div
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                background: '#1a1c20',
+                border: '1px solid rgba(73, 68, 84, 0.3)',
+                borderRadius: '16px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              }}
+            >
+              {/* Before */}
+              <div
+                style={{
+                  background: 'rgba(255, 180, 171, 0.05)',
+                  borderLeft: '3px solid #ffb4ab',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ffb4ab', fontSize: '18px' }}>
+                    cancel
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffb4ab', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    BEFORE
+                  </span>
+                </div>
+                <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.5', margin: 0 }}>
+                  Invoices go out late, and payment status is a mystery
+                </p>
+              </div>
+
+              {/* Transition Divider */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <span className="material-symbols-outlined" style={{ color: '#ffb95f', fontSize: '20px', opacity: 0.7 }}>
+                  south
+                </span>
+              </div>
+
+              {/* After */}
+              <motion.div
+                variants={shouldReduceMotion ? reducedMotionFade : solutionFade}
+                style={{
+                  background: 'rgba(255, 185, 95, 0.05)',
+                  borderLeft: '3px solid #ffb95f',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ffb95f', fontSize: '18px' }}>
+                    check_circle
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffb95f', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    AFTER AGENCYFLOW
+                  </span>
+                </div>
+                <p style={{ color: '#ffffff', fontSize: '15px', fontWeight: 600, lineHeight: '1.5', margin: 0 }}>
+                  Automated invoicing with real-time payment tracking
+                </p>
+              </motion.div>
+            </motion.div>
+
+            {/* Card 4: Purple Accent */}
+            <motion.div
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{
+                background: '#1a1c20',
+                border: '1px solid rgba(73, 68, 84, 0.3)',
+                borderRadius: '16px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              }}
+            >
+              {/* Before */}
+              <div
+                style={{
+                  background: 'rgba(255, 180, 171, 0.05)',
+                  borderLeft: '3px solid #ffb4ab',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ffb4ab', fontSize: '18px' }}>
+                    cancel
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffb4ab', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    BEFORE
+                  </span>
+                </div>
+                <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.5', margin: 0 }}>
+                  No idea which clients are actually profitable
+                </p>
+              </div>
+
+              {/* Transition Divider */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '20px', opacity: 0.7 }}>
+                  south
+                </span>
+              </div>
+
+              {/* After */}
+              <motion.div
+                variants={shouldReduceMotion ? reducedMotionFade : solutionFade}
+                style={{
+                  background: 'rgba(208, 188, 255, 0.05)',
+                  borderLeft: '3px solid #d0bcff',
+                  borderRadius: '8px',
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '18px' }}>
+                    check_circle
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    AFTER AGENCYFLOW
+                  </span>
+                </div>
+                <p style={{ color: '#ffffff', fontSize: '15px', fontWeight: 600, lineHeight: '1.5', margin: 0 }}>
+                  Live dashboards showing revenue and client health at a glance
+                </p>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </motion.section>
 
         {/* 4. How It Works Section */}
         <motion.section

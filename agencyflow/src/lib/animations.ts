@@ -77,6 +77,23 @@ export const footerFade: Variants = {
   },
 };
 
+// Solution fade variant (for card solution reveal with 150ms delay)
+export const solutionFade: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 12,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      delay: 0.15,
+      ease: customEase,
+    },
+  },
+};
+
 // Reduced motion fallback variant
 export const reducedMotionFade: Variants = {
   hidden: { opacity: 0 },
