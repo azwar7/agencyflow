@@ -43,8 +43,7 @@
   --radius-full: 9999px;
 }
 
-html,
-body {
+html {
   scroll-behavior: smooth;
   overflow-x: hidden;
   max-width: 100%;
