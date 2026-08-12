@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
+import { useAuth } from '@/context/AuthContext';
+import { Settings, LogOut, LayoutDashboard } from 'lucide-react';
 import {
   staggerContainer,
   fadeUp,
@@ -15,17 +17,14 @@ import {
 
 export default function LandingPage() {
   const shouldReduceMotion = useReducedMotion();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, user, isLoading, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const hasAuth =
-        document.cookie.includes('agencyflow_auth=true') ||
-        localStorage.getItem('agencyflow_user');
-      if (hasAuth) setIsAuthenticated(true);
-    }
-  }, []);
+  const handleLogout = () => {
+    setIsAccountMenuOpen(false);
+    logout();
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#111318', color: '#e2e2e8', fontFamily: "'Inter', sans-serif", overflowX: 'hidden' }}>
@@ -77,28 +76,154 @@ export default function LandingPage() {
           </div>
 
           {/* 3. RIGHT SECTION (Absolute Right Anchor) */}
-          <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {isAuthenticated ? (
-              <Link
-                href="/dashboard"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '8px 18px',
-                  background: '#d0bcff',
-                  color: '#23005c',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  fontFamily: "'Geist', sans-serif",
-                  textDecoration: 'none',
-                  boxShadow: '0 0 25px rgba(208,188,255,0.25)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Open Dashboard
-              </Link>
+          <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+            {isLoading ? (
+              <div style={{ width: '120px', height: '36px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)' }} />
+            ) : isAuthenticated ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '8px 18px',
+                    background: '#d0bcff',
+                    color: '#23005c',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    fontFamily: "'Geist', sans-serif",
+                    textDecoration: 'none',
+                    boxShadow: '0 0 25px rgba(208,188,255,0.25)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Open Dashboard
+                </Link>
+
+                {/* Account Profile Avatar Trigger */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+                    title="Account Menu"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      background: '#d0bcff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#23005c',
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: '0 0 16px rgba(208,188,255,0.3)',
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                      person
+                    </span>
+                  </button>
+
+                  {/* Authenticated Account Menu Dropdown */}
+                  {isAccountMenuOpen && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '125%',
+                        right: 0,
+                        width: '240px',
+                        background: '#1a1c20',
+                        borderRadius: '0.85rem',
+                        padding: '0.85rem',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+                        zIndex: 150,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <div style={{ paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                        <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#e2e2e8', margin: 0 }}>{user?.name || 'Alex Sterling'}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#cbc3d7', margin: 0 }}>{user?.email || 'alex@agencyflow.io'}</p>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            marginTop: '0.3rem',
+                            padding: '0.1rem 0.5rem',
+                            borderRadius: '9999px',
+                            background: 'rgba(208, 188, 255, 0.15)',
+                            color: '#d0bcff',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                          }}
+                        >
+                          WORKSPACE {user?.role || 'OWNER'}
+                        </span>
+                      </div>
+
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsAccountMenuOpen(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.5rem 0.6rem',
+                          borderRadius: '0.4rem',
+                          color: '#e2e2e8',
+                          fontSize: '0.85rem',
+                          textDecoration: 'none',
+                          transition: 'background 0.2s',
+                        }}
+                      >
+                        <LayoutDashboard size={16} color="#d0bcff" /> Dashboard
+                      </Link>
+
+                      <Link
+                        href="/settings"
+                        onClick={() => setIsAccountMenuOpen(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.5rem 0.6rem',
+                          borderRadius: '0.4rem',
+                          color: '#e2e2e8',
+                          fontSize: '0.85rem',
+                          textDecoration: 'none',
+                          transition: 'background 0.2s',
+                        }}
+                      >
+                        <Settings size={16} color="#d0bcff" /> Account Settings
+                      </Link>
+
+                      <button
+                        onClick={handleLogout}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.5rem 0.6rem',
+                          borderRadius: '0.4rem',
+                          color: '#ffb4ab',
+                          fontSize: '0.85rem',
+                          background: 'rgba(255, 180, 171, 0.08)',
+                          border: '1px solid rgba(255, 180, 171, 0.2)',
+                          width: '100%',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          marginTop: '0.2rem',
+                        }}
+                      >
+                        <LogOut size={16} /> Log Out Session
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <>
                 <Link
@@ -144,26 +269,6 @@ export default function LandingPage() {
                 </Link>
               </>
             )}
-            <Link
-              href={isAuthenticated ? '/dashboard' : '/login'}
-              title="Account / Profile"
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                background: '#d0bcff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#23005c',
-                textDecoration: 'none',
-                flexShrink: 0,
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                person
-              </span>
-            </Link>
 
             {/* Mobile Menu Toggle Button */}
             <button
@@ -208,6 +313,41 @@ export default function LandingPage() {
             <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
               About
             </a>
+
+            {isAuthenticated ? (
+              <div style={{ paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} style={{ color: '#d0bcff', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
+                  Open Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#ffb4ab',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                    padding: 0,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Log Out Session
+                </button>
+              </div>
+            ) : (
+              <div style={{ paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '12px' }}>
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px' }}>
+                  Log In
+                </Link>
+                <Link href="/signup" onClick={() => setMobileMenuOpen(false)} style={{ color: '#d0bcff', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
+                  Sign Up Free
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </header>

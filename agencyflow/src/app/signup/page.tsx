@@ -2,13 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Mail, Lock, User, Briefcase, ArrowRight, CheckCircle2, Shield } from 'lucide-react';
-
+import { Mail, Lock, User, Briefcase, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 
 export default function SignupPage() {
-  const router = useRouter();
+  const { login } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [agencyName, setAgencyName] = useState('');
@@ -20,15 +19,13 @@ export default function SignupPage() {
     setLoading(true);
 
     setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(
-          'agencyflow_user',
-          JSON.stringify({ email, name: fullName, agency: agencyName, role: 'OWNER' })
-        );
-        document.cookie = 'agencyflow_auth=true; path=/; max-age=86400';
-      }
-      router.push('/dashboard');
-    }, 600);
+      login({
+        email,
+        name: fullName || 'Alex Sterling',
+        agency: agencyName || 'Sterling Digital Agency',
+        role: 'OWNER',
+      });
+    }, 400);
   };
 
   return (

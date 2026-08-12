@@ -2,13 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Shield, Mail, Lock, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
-
+import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,12 +19,13 @@ export default function LoginPage() {
     setError('');
 
     setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('agencyflow_user', JSON.stringify({ email, name: 'Alex Sterling', role: 'OWNER' }));
-        document.cookie = 'agencyflow_auth=true; path=/; max-age=86400';
-      }
-      router.push('/dashboard');
-    }, 600);
+      login({
+        email: email || 'alex@agencyflow.io',
+        name: 'Alex Sterling',
+        role: 'OWNER',
+        agency: 'Sterling Digital Agency',
+      });
+    }, 400);
   };
 
   return (
