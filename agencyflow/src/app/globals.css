@@ -43,8 +43,11 @@
   --radius-full: 9999px;
 }
 
-html {
+html,
+body {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 * {
@@ -60,7 +63,6 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 a {
@@ -376,23 +378,23 @@ button {
   }
 }
 
-/* Global Dark Custom Scrollbars */
+/* Global Dark Custom Scrollbars (Slim 5px) */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-background);
+  background: #0f131d;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-container-highest);
+  background: rgba(208, 188, 255, 0.25);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--outline);
+  background: rgba(208, 188, 255, 0.5);
 }
 
 /* Perspective and Marquee Keyframe Animations */

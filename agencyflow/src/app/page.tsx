@@ -232,7 +232,7 @@ export default function LandingPage() {
       </header>
 
       {/* 2. Hero Section (Noticeably Reduced Top Gap) */}
-      <main style={{ paddingTop: '80px', width: '100%', background: '#111318' }}>
+      <main style={{ paddingTop: '80px', width: '100%', background: '#111318', overflowX: 'hidden' }}>
         <section
           style={{
             position: 'relative',
@@ -249,6 +249,7 @@ export default function LandingPage() {
             width: '100%',
             boxSizing: 'border-box',
             zIndex: 10,
+            overflow: 'hidden',
           }}
         >
           {/* Ambient Glowing Radial Halo */}
