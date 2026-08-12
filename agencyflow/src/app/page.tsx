@@ -423,61 +423,73 @@ export default function LandingPage() {
             No credit card required. 14-day free trial.
           </div>
 
-          {/* 3D Perspective Card Mockup Container */}
+          {/* macOS-Style Single Browser Frame around Real Dashboard Screenshot */}
           <div
-            className="perspective-1000"
             style={{
               position: 'relative',
               width: '100%',
-              maxWidth: '1024px',
+              maxWidth: '1100px',
               margin: '0 auto',
             }}
           >
             <div
-              className="rotate-x-2"
               style={{
                 position: 'relative',
                 borderRadius: '12px',
-                border: '1px solid rgba(73, 68, 84, 0.3)',
-                background: '#1a1c20',
-                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6), 0 0 50px rgba(208, 188, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                background: '#13151b',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.7), 0 0 60px rgba(208, 188, 255, 0.15)',
                 overflow: 'hidden',
+                transform: 'none',
               }}
             >
-              {/* Mock Window Titlebar */}
+              {/* Single macOS Window Titlebar */}
               <div
                 style={{
-                  height: '40px',
-                  borderBottom: '1px solid rgba(73, 68, 84, 0.3)',
-                  background: '#1e2024',
+                  height: '42px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: '#1a1c22',
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0 16px',
-                  gap: '8px',
+                  position: 'relative',
                 }}
               >
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffb4ab' }} />
-                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffb95f' }} />
-                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#4edea3' }} />
+                {/* macOS Traffic Light Buttons */}
+                <div style={{ display: 'flex', gap: '8px', zIndex: 2 }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56', border: '1px solid rgba(0,0,0,0.2)' }} />
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e', border: '1px solid rgba(0,0,0,0.2)' }} />
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f', border: '1px solid rgba(0,0,0,0.2)' }} />
                 </div>
-                <div style={{ margin: '0 auto', display: 'flex', justifyContent: 'center' }}>
+
+                {/* Centered URL Address Bar */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <div
                     style={{
-                      padding: '4px 24px',
-                      background: '#333539',
+                      padding: '4px 20px',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
                       borderRadius: '6px',
-                      fontSize: '10px',
+                      fontSize: '12px',
                       color: '#cbc3d7',
                       fontFamily: "'Geist', sans-serif",
-                      fontWeight: 600,
+                      fontWeight: 500,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      letterSpacing: '0.05em',
+                      letterSpacing: '0.02em',
                     }}
                   >
-                    <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#4edea3' }}>
                       lock
                     </span>{' '}
                     agencyflow.com/dashboard
@@ -485,45 +497,45 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Dashboard Product Image */}
+              {/* Real Dashboard Screenshot (Crisp, High Quality) */}
               <img
-                alt="AgencyFlow Dashboard showing Leads Pipeline and Project Status"
+                src="/dashboard-preview.png"
+                alt="AgencyFlow Real Dashboard showing Pipeline Value, Active Projects, and Active Kanban Pipeline"
                 style={{
                   width: '100%',
                   height: 'auto',
                   display: 'block',
-                  objectFit: 'cover',
-                  position: 'relative',
-                  zIndex: 0,
+                  borderRadius: '0 0 12px 12px',
                 }}
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNWt16MpLwZYPsUD5ny1mP7OuFFGbmtrVnD_jnsovx4KL6SiWFNNJIXgIriWUdkiPvU3dTMfgX-xmP9Mz5Ns_ET6gVMjH662GoosVlGwitPYe10bho7kShzhgHun2TPwKFWlEHydbj8sCdI4eP3HJBICwJRuVI6DSAoP4V6bESI6k4KUGYWOqDI_wZV0m5iJ0taUdURuLmoimfne2YC2tBZF-OnMTkuTndqwCIc8j1A9aZJB3GIR5dEQ"
               />
             </div>
 
-            {/* Glowing Accent Orbs behind Mockup */}
+            {/* Glowing Ambient Purple & Green Accent Spotlight behind Frame */}
             <div
               style={{
                 position: 'absolute',
-                bottom: '-40px',
-                left: '-40px',
-                width: '192px',
-                height: '192px',
+                top: '-30px',
+                right: '10%',
+                width: '320px',
+                height: '320px',
                 borderRadius: '50%',
-                background: 'rgba(78, 222, 163, 0.2)',
-                filter: 'blur(80px)',
+                background: 'rgba(208, 188, 255, 0.18)',
+                filter: 'blur(90px)',
+                pointerEvents: 'none',
                 zIndex: -1,
               }}
             />
             <div
               style={{
                 position: 'absolute',
-                top: '-40px',
-                right: '-40px',
-                width: '256px',
-                height: '256px',
+                bottom: '-30px',
+                left: '10%',
+                width: '320px',
+                height: '320px',
                 borderRadius: '50%',
-                background: 'rgba(208, 188, 255, 0.2)',
-                filter: 'blur(80px)',
+                background: 'rgba(78, 222, 163, 0.12)',
+                filter: 'blur(90px)',
+                pointerEvents: 'none',
                 zIndex: -1,
               }}
             />
