@@ -11,7 +11,7 @@ interface AgencyFlowLogoProps {
 export default function AgencyFlowLogo({ height = 36, href = '/', className = '', style }: AgencyFlowLogoProps) {
   const logoImage = (
     <img
-      src="/agencyflow-logo-transparent.png"
+      src="/agencyflow-logo-transparent.png?v=3"
       alt="AgencyFlow"
       className={className}
       style={{
