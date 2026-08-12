@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/context/AuthContext';
+import { NavigationProgress } from '@/components/NavigationProgress';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -27,7 +28,10 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-on-background">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <NavigationProgress />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
