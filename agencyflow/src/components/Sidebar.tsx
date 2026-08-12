@@ -1,0 +1,169 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+export function Sidebar() {
+  const pathname = usePathname();
+
+  const navItems = [
+    { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
+    { label: 'Leads', path: '/leads', icon: 'filter_list' },
+    { label: 'Clients', path: '/clients', icon: 'group' },
+    { label: 'Proposals', path: '/proposals', icon: 'description' },
+    { label: 'Projects', path: '/projects', icon: 'account_tree' },
+    { label: 'Tasks', path: '/tasks', icon: 'assignment_turned_in' },
+    { label: 'Deliverables', path: '/deliverables', icon: 'inventory_2' },
+    { label: 'Invoices', path: '/invoices', icon: 'receipt_long' },
+    { label: 'Analytics', path: '/analytics', icon: 'leaderboard' },
+    { label: 'AI Assistant', path: '/ai-copilot', icon: 'smart_toy' },
+  ];
+
+  const managementItems = [
+    { label: 'Team', path: '/team', icon: 'groups_3' },
+    { label: 'Files', path: '/files', icon: 'folder_open' },
+    { label: 'Settings', path: '/settings', icon: 'settings' },
+  ];
+
+  return (
+    <aside className="app-sidebar">
+      {/* Brand Header */}
+      <Link
+        href="/dashboard"
+        style={{
+          height: '64px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0 1.25rem',
+          flexShrink: 0,
+          textDecoration: 'none',
+          cursor: 'pointer',
+          borderBottom: '1px solid rgba(70, 69, 84, 0.15)',
+        }}
+      >
+        <img
+          src="/logo.png"
+          alt="AgencyFlow Logo"
+          style={{
+            height: '28px',
+            width: 'auto',
+            maxHeight: '100%',
+            objectFit: 'contain',
+          }}
+        />
+        <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)' }}>
+          AgencyFlow
+        </span>
+      </Link>
+
+      {/* Main Navigation Container */}
+      <nav className="sidebar-nav">
+        {navItems.map((item) => {
+          const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/');
+          return (
+            <Link
+              key={item.path}
+              href={item.path}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.5rem 0.85rem',
+                borderRadius: 'var(--radius-DEFAULT)',
+                fontSize: '0.85rem',
+                fontWeight: isActive ? 600 : 400,
+                color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
+                background: isActive ? 'rgba(192, 193, 255, 0.1)' : 'transparent',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                {item.icon}
+              </span>
+              <span className="sidebar-label">{item.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Management Section Header */}
+        <div style={{ padding: '0.75rem 0.85rem 0.25rem 0.85rem' }}>
+          <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--outline)', fontWeight: 700 }}>
+            Management
+          </span>
+        </div>
+
+        {managementItems.map((item) => {
+          const isActive = pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              href={item.path}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.5rem 0.85rem',
+                borderRadius: 'var(--radius-DEFAULT)',
+                fontSize: '0.85rem',
+                fontWeight: isActive ? 600 : 400,
+                color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
+                background: isActive ? 'rgba(192, 193, 255, 0.1)' : 'transparent',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                {item.icon}
+              </span>
+              <span className="sidebar-label">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* User Profile Footer */}
+      <div style={{ padding: '0.85rem 1rem', borderTop: '1px solid rgba(70, 69, 84, 0.2)', flexShrink: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.35rem',
+            borderRadius: 'var(--radius-md)',
+            cursor: 'pointer',
+          }}
+        >
+          <div
+            style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '50%',
+              background: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--on-primary)',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              flexShrink: 0,
+            }}
+          >
+            AS
+          </div>
+          <div className="sidebar-label" style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Alex Sterling
+            </p>
+            <p style={{ fontSize: '11px', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Agency Owner
+            </p>
+          </div>
+          <span className="material-symbols-outlined sidebar-label" style={{ color: 'var(--outline)', fontSize: '18px' }}>
+            unfold_more
+          </span>
+        </div>
+      </div>
+    </aside>
+  );
+}

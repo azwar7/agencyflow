@@ -1,0 +1,148 @@
+// Prisma Schema for AgencyFlow CRM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  leads      Lead[]
+  companies  Company[]
+  contacts   Contact[]
+  deals      Deal[]
+  activities Activity[]
+  tasks      Task[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  workspaceId  String
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         String    @default("SALES_REP") // OWNER, MANAGER, SALES_REP
+  avatarUrl    String?
+  createdAt    DateTime  @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leads      Lead[]     @relation("AssignedLeads")
+  deals      Deal[]     @relation("AssignedDeals")
+  activities Activity[]
+  tasks      Task[]     @relation("AssignedTasks")
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  domain      String?
+  industry    String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contacts  Contact[]
+  deals     Deal[]
+}
+
+model Contact {
+  id          String   @id @default(uuid())
+  workspaceId String
+  companyId   String?
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  title       String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  deals     Deal[]
+}
+
+model Lead {
+  id           String   @id @default(uuid())
+  workspaceId  String
+  assignedToId String?
+  firstName    String
+  lastName     String
+  email        String
+  phone        String?
+  companyName  String?
+  status       String   @default("NEW") // NEW, CONTACTED, QUALIFIED, UNQUALIFIED, CONVERTED
+  leadScore    Int      @default(0)
+  aiSummary    String?
+  source       String   @default("Website Inbound")
+  createdAt    DateTime @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedTo User?      @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities Activity[]
+  tasks      Task[]
+}
+
+model Deal {
+  id                String    @id @default(uuid())
+  workspaceId       String
+  contactId         String?
+  companyId         String?
+  assignedToId      String?
+  title             String
+  value             Float     @default(0.0)
+  stage             String    @default("DISCOVERY") // DISCOVERY, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST
+  lossReason        String?
+  expectedCloseDate DateTime?
+  createdAt         DateTime  @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact    Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  company    Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  assignedTo User?      @relation("AssignedDeals", fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities Activity[]
+  tasks      Task[]
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  workspaceId String
+  userId      String
+  leadId      String?
+  dealId      String?
+  type        String   // NOTE, CALL, EMAIL, MEETING, STAGE_CHANGE
+  content     String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead      Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  deal      Deal?     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id           String   @id @default(uuid())
+  workspaceId  String
+  assignedToId String
+  leadId       String?
+  dealId       String?
+  title        String
+  dueDate      DateTime
+  priority     String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  status       String   @default("PENDING") // PENDING, COMPLETED
+  createdAt    DateTime @default(now())
+
+  workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedTo User      @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: Cascade)
+  lead       Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  deal       Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+}

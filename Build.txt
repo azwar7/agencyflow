@@ -1,0 +1,3420 @@
+# LeadFlow CRM — Portfolio Project Blueprint
+
+### Phased Prompt Set for an Upwork-Ready SaaS CRM
+
+## How to Use This
+
+Run each phase in its own turn or fresh chat.
+
+Each phase depends on the previous phase. Paste the previous phase's output where indicated.
+
+**Project:** LeadFlow CRM
+
+**Product Type:** Multi-user SaaS CRM / Lead Management Platform
+
+**Primary Goal:** Build a production-quality portfolio project that looks and behaves like a real custom CRM application delivered to a paying Upwork client.
+
+**Important:** Do not rush into coding. Validate the business, requirements, architecture, UX, and technical decisions before implementation.
+
+### Phases
+
+`0 Research → 1A PRD → 1B UX Blueprint → 1C Technical Foundation → 1.5 System Design → 2A Backend → 2B Frontend + Stitch → 2C Stitch Translation → 3 Design/SEO/Security → 3.5 Testing/Deployment → 4 AI/Portfolio Packaging → 5 GitHub Issues`
+
+---
+
+# PHASE 0 — AgencyFlow Product Discovery, Market Research & Opportunity Validation
+
+You are a Senior Product Manager, SaaS Consultant, Agency Operations Specialist, and Freelance Marketplace Researcher with 15+ years of experience designing business management platforms.
+
+We are considering building **AgencyFlow**, a production-quality SaaS platform for freelancers, small digital agencies, and growing agencies.
+
+The platform should help users manage the complete business lifecycle:
+
+```text
+Prospect
+   ↓
+Lead
+   ↓
+Discovery
+   ↓
+Proposal
+   ↓
+Won
+   ↓
+Client Onboarding
+   ↓
+Project
+   ↓
+Tasks / Deliverables
+   ↓
+Client Review
+   ↓
+Approval
+   ↓
+Invoice / Payment
+   ↓
+Project Completion
+   ↓
+Retention / Repeat Business
+```
+
+## CRITICAL OBJECTIVE
+
+Do NOT assume that AgencyFlow should simply be another CRM.
+
+There are already many mature CRM and agency-management products.
+
+The purpose of this research is to determine:
+
+1. What freelancers and agencies actually struggle with.
+2. Which existing products already solve those problems.
+3. Which workflows remain fragmented.
+4. Whether freelancers and small agencies are a strong target market.
+5. Whether AgencyFlow should focus on a particular segment.
+6. What features would provide genuine value.
+7. What would make the project impressive as an Upwork portfolio piece.
+8. What functionality I could personally use to manage my own freelance business.
+9. What should NOT be built.
+
+Do not force a product direction if the research shows that another positioning is better.
+
+---
+
+# 1. Market Definition
+
+Research the current market for:
+
+* Agency management software
+* Agency CRM
+* Client management platforms
+* Freelancer CRM
+* Client portals
+* Project management for agencies
+* Agency operations software
+* Freelance business management software
+* Client onboarding software
+* Proposal management
+* Retainer management
+* Agency profitability software
+
+Explain:
+
+* What these products do
+* Who uses them
+* Why businesses buy them
+* What workflows they combine
+* What problems they solve
+* What problems they leave fragmented
+
+---
+
+# 2. Target Customer Research
+
+Investigate at least these customer segments:
+
+### Segment A — Solo Freelancer
+
+Examples:
+
+* Web developer
+* Software developer
+* Designer
+* Marketing freelancer
+* Copywriter
+* Video editor
+* AI freelancer
+
+Analyze:
+
+* How they find clients
+* How they track prospects
+* How they send proposals
+* How they onboard clients
+* How they manage projects
+* How they communicate
+* How they track payments
+* How they handle repeat business
+
+### Segment B — Small Agency
+
+Approximately 2–10 people.
+
+Analyze:
+
+* Team management
+* Client ownership
+* Project assignment
+* Proposal management
+* Client communication
+* Deliverables
+* Approvals
+* Invoicing
+* Team workload
+* Profitability
+
+### Segment C — Growing Agency
+
+Approximately 10–50 people.
+
+Analyze:
+
+* Departments
+* Roles
+* Permissions
+* Multiple projects
+* Resource planning
+* Client accounts
+* Retainers
+* Reporting
+* Profitability
+* Automation
+
+Determine which segment should be the **primary target for the MVP**.
+
+---
+
+# 3. Personal-Use Scenario
+
+The platform must be potentially useful for a freelancer running their own business.
+
+Research the workflow of an independent developer who is:
+
+* Finding Upwork clients
+* Finding Fiverr clients
+* Receiving LinkedIn leads
+* Receiving website inquiries
+* Sending proposals
+* Conducting discovery calls
+* Negotiating scope
+* Winning projects
+* Managing client communication
+* Delivering software projects
+* Tracking milestones
+* Requesting approvals
+* Sending invoices
+* Following up
+* Seeking repeat business
+
+Determine which of these workflows should be supported directly.
+
+Do not assume that direct Upwork/Fiverr integrations are appropriate.
+
+Research legitimate integration possibilities separately and identify what should initially be handled manually.
+
+---
+
+# 4. Upwork Opportunity Research
+
+Research current Upwork demand for projects involving:
+
+* CRM development
+* Agency management systems
+* Client portals
+* Project management platforms
+* Client management dashboards
+* SaaS applications
+* Business management software
+* Internal agency tools
+* Proposal systems
+* Invoicing systems
+* AI-powered business applications
+* Custom workflow software
+
+Identify:
+
+* Common client requirements
+* Common pain points
+* Requested features
+* Technology requirements
+* Typical project scope
+* Small projects
+* Medium projects
+* Large projects
+* Features that increase project value
+* Features that clients repeatedly request
+* Industries requesting these systems
+
+Do not invent exact market statistics.
+
+Clearly distinguish:
+
+* Verified research
+* Reasonable inference
+* Your recommendation
+
+---
+
+# 5. Existing Product Landscape
+
+Research at least 12 relevant products.
+
+Include categories such as:
+
+### General CRM
+
+* HubSpot
+* Salesforce
+* Zoho
+* Pipedrive
+
+### Agency Management
+
+* Productive
+* Scoro
+* Accelo
+* Workamajig
+* Function Point
+
+### Freelancer / Agency-focused
+
+Find additional relevant products specifically serving freelancers and small agencies.
+
+### Project Management
+
+Include relevant products such as:
+
+* ClickUp
+* Asana
+* Monday
+* Notion
+
+### Client Portal / Collaboration
+
+Identify relevant products.
+
+For each product analyze:
+
+* Target customer
+* Pricing model
+* CRM functionality
+* Project management
+* Client portal
+* Proposals
+* Invoicing
+* Retainers
+* Time tracking
+* Team management
+* Client communication
+* Reporting
+* AI
+* Integrations
+* Strengths
+* Weaknesses
+* Complexity
+* UX observations
+
+Do not merely list features.
+
+Determine what each product is best at.
+
+---
+
+# 6. "Why Not Just Use Existing Software?" Analysis
+
+This section is mandatory.
+
+Answer:
+
+> Why would a freelancer or small agency build/use AgencyFlow instead of simply using HubSpot + ClickUp + Stripe + Notion + email?
+
+Identify workflow fragmentation.
+
+For example:
+
+```text
+CRM
++
+Project Management
++
+Client Portal
++
+Proposal Tool
++
+Invoicing
++
+Email
++
+Documents
++
+Communication
+```
+
+Determine whether these tools create:
+
+* Duplicate data
+* Context switching
+* Repeated data entry
+* Lost client information
+* Poor visibility
+* Workflow gaps
+* Excessive complexity
+* Subscription costs
+
+Only include problems supported by research or clearly label them as hypotheses.
+
+---
+
+# 7. Opportunity Gap Analysis
+
+Find underserved opportunities.
+
+Investigate possibilities such as:
+
+### Freelancer-first workflow
+
+```text
+Lead → Proposal → Client → Project → Payment → Repeat Client
+```
+
+### Agency-first workflow
+
+```text
+Lead → Proposal → Client → Team → Project → Delivery → Profitability
+```
+
+### Client-first workflow
+
+```text
+Onboarding → Communication → Deliverables → Review → Approval → Payment
+```
+
+### Retainer workflow
+
+```text
+Client
+ ↓
+Retainer
+ ↓
+Allocated Hours / Services
+ ↓
+Work Delivered
+ ↓
+Usage
+ ↓
+Billing
+ ↓
+Renewal
+```
+
+Determine which workflow offers the strongest opportunity.
+
+---
+
+# 8. Product Differentiation
+
+Generate 5–10 possible positioning strategies.
+
+Examples:
+
+* Freelancer business OS
+* Small agency operating system
+* Client relationship + project delivery platform
+* Client portal-first platform
+* Proposal-to-delivery platform
+* AI-powered agency operations platform
+* Retainer management platform
+
+For each evaluate:
+
+| Positioning | Market Need | Competition | Build Complexity | Upwork Value | Personal Use | Recommendation |
+| ----------- | ----------- | ----------- | ---------------- | ------------ | ------------ | -------------- |
+
+Select the strongest positioning based on evidence.
+
+---
+
+# 9. Feature Discovery
+
+Create a comprehensive feature inventory.
+
+Potential features:
+
+## Lead & Sales
+
+* Leads
+* Lead sources
+* Lead scoring
+* Pipeline
+* Discovery calls
+* Proposals
+* Proposal templates
+* Follow-ups
+* Deal tracking
+
+## Client Management
+
+* Client profiles
+* Companies
+* Contacts
+* Notes
+* Files
+* Communication history
+* Client timeline
+
+## Onboarding
+
+* Onboarding checklist
+* Forms
+* Required documents
+* Welcome workflow
+* Client information collection
+
+## Project Management
+
+* Projects
+* Milestones
+* Tasks
+* Assignments
+* Deadlines
+* Deliverables
+* Project status
+
+## Client Portal
+
+* Project progress
+* Files
+* Deliverables
+* Comments
+* Approvals
+* Messages
+* Invoices
+
+## Finance
+
+* Invoices
+* Payments
+* Expenses
+* Retainers
+* Revenue
+* Profitability
+
+## Team
+
+* Members
+* Roles
+* Permissions
+* Workload
+* Assignments
+
+## Reporting
+
+* Revenue
+* Pipeline
+* Project performance
+* Client performance
+* Team performance
+* Profitability
+
+## Automation
+
+* Reminders
+* Follow-up automation
+* Notifications
+* Status-based actions
+
+## AI
+
+Potential features:
+
+* Proposal generation
+* Proposal improvement
+* Client communication drafting
+* Lead prioritization
+* Follow-up suggestions
+* Project risk detection
+* Client summary
+* Meeting summary
+* Business insights
+
+Do not assume all features belong in the MVP.
+
+---
+
+# 10. Feature Prioritization
+
+Categorize features into:
+
+### Must Have
+
+Required for a compelling MVP.
+
+### Should Have
+
+Important but not required for the first version.
+
+### Premium
+
+Features that significantly increase commercial value.
+
+### Future
+
+Features that should be postponed.
+
+### AI
+
+AI features that provide measurable value.
+
+For every feature provide:
+
+* User problem
+* Business value
+* User value
+* Complexity
+* Dependencies
+* Competitive differentiation
+* MVP recommendation
+
+---
+
+# 11. Core Workflow Design
+
+Based on research, design the complete recommended workflow.
+
+At minimum investigate:
+
+## Lead-to-Client
+
+```text
+Lead
+ ↓
+Qualification
+ ↓
+Discovery
+ ↓
+Proposal
+ ↓
+Negotiation
+ ↓
+Won/Lost
+```
+
+## Client Onboarding
+
+```text
+Won
+ ↓
+Contract
+ ↓
+Client Information
+ ↓
+Documents
+ ↓
+Project Setup
+ ↓
+Onboarding Complete
+```
+
+## Project Delivery
+
+```text
+Project
+ ↓
+Milestones
+ ↓
+Tasks
+ ↓
+Deliverables
+ ↓
+Client Review
+ ↓
+Revision
+ ↓
+Approval
+ ↓
+Completion
+```
+
+## Payment
+
+```text
+Proposal
+ ↓
+Invoice
+ ↓
+Payment
+ ↓
+Receipt
+```
+
+## Retention
+
+```text
+Project Complete
+ ↓
+Client Follow-up
+ ↓
+Maintenance / Retainer
+ ↓
+Repeat Project
+```
+
+Adapt these workflows based on research.
+
+---
+
+# 12. Client Portal Opportunity
+
+Research client portals specifically.
+
+Determine what clients actually need to access.
+
+Evaluate:
+
+* Project progress
+* Deliverables
+* Files
+* Approvals
+* Messages
+* Tasks
+* Invoices
+* Payments
+* Contracts
+* Forms
+* Feedback
+
+Determine which features are essential versus unnecessary.
+
+---
+
+# 13. Agency Operations
+
+Research the operational problems of small agencies.
+
+Investigate:
+
+* Team workload
+* Project capacity
+* Deadlines
+* Client profitability
+* Scope creep
+* Unpaid invoices
+* Client approvals
+* Retainers
+* Revisions
+* Internal communication
+* Project risk
+
+Identify which operational features would provide the highest value.
+
+---
+
+# 14. AI Opportunity Analysis
+
+Do not add AI simply because it is popular.
+
+For each potential AI feature determine:
+
+* Problem
+* Input data
+* Output
+* Business value
+* Accuracy requirements
+* Risk
+* Implementation complexity
+* Whether AI is actually better than normal automation
+
+Prioritize AI features that save meaningful time.
+
+Potential high-value areas:
+
+* Proposal assistance
+* Client communication
+* Lead prioritization
+* Project risk detection
+* Client/project summaries
+* Follow-up recommendations
+* Business insights
+
+Define fallback behavior when AI cannot confidently answer.
+
+---
+
+# 15. Product Scope
+
+Based on all research, define:
+
+### MVP
+
+The smallest version that is genuinely useful to a freelancer or small agency.
+
+### Version 1.5
+
+Important improvements after MVP.
+
+### Version 2
+
+Advanced agency functionality.
+
+### Future
+
+Features that should not be considered yet.
+
+Explicitly list features we should **NOT BUILD**.
+
+This is important to prevent scope creep.
+
+---
+
+# 16. Recommended Product Architecture Direction
+
+Determine whether the product should be:
+
+* Freelancer application
+* Small-agency SaaS
+* Multi-tenant SaaS
+* Agency operating system
+* Client portal platform
+* Hybrid CRM + project management system
+
+Recommend the best architecture direction based on research.
+
+Do not write implementation code.
+
+---
+
+# 17. Portfolio Value
+
+Evaluate the project specifically as an Upwork portfolio piece.
+
+Determine what it demonstrates:
+
+* Full-stack development
+* SaaS architecture
+* Authentication
+* RBAC
+* Multi-tenancy
+* Database design
+* API development
+* Project management
+* Client portals
+* Payments
+* File management
+* AI integration
+* Responsive design
+* Security
+* Testing
+* Deployment
+
+Identify which features will have the strongest visual impact in portfolio screenshots.
+
+---
+
+# 18. Personal Business Value
+
+Evaluate how I could personally use AgencyFlow.
+
+Create a realistic workflow for:
+
+```text
+Finding an Upwork opportunity
+↓
+Adding the lead
+↓
+Tracking the proposal
+↓
+Following up
+↓
+Winning the project
+↓
+Onboarding the client
+↓
+Managing development
+↓
+Delivering milestones
+↓
+Getting approval
+↓
+Getting paid
+↓
+Following up for repeat business
+```
+
+Identify the minimum features I need to actually use it for my own freelance business.
+
+---
+
+# 19. Product Naming & Positioning
+
+Recommend:
+
+* Final product name
+* Tagline
+* One-sentence description
+* Target customer
+* Core value proposition
+* Differentiator
+
+Do not use "CRM" as the primary positioning unless research proves it is the strongest positioning.
+
+Prefer a positioning such as:
+
+**Agency CRM & Client Operations Platform**
+
+or
+
+**Freelancer & Agency Business Operating System**
+
+only if supported by the research.
+
+---
+
+# 20. Upwork Portfolio Positioning
+
+Create:
+
+### Portfolio Title
+
+A professional title that communicates business value.
+
+### Portfolio Description
+
+Under 600 characters.
+
+### Skills Demonstrated
+
+List the technical and business skills shown.
+
+### Screenshots
+
+Recommend the 6–8 most impressive screens.
+
+### Demo Flow
+
+Design a 2–3 minute demonstration showing the complete business lifecycle.
+
+### Client Pitch
+
+Explain what an Upwork client should understand about my ability after seeing this project.
+
+---
+
+# 21. Final Recommendation
+
+End with a decisive recommendation.
+
+Answer:
+
+1. Should we build AgencyFlow?
+2. Who should the MVP target?
+3. What exact problem should it solve?
+4. What should differentiate it?
+5. What should the MVP contain?
+6. What should we deliberately exclude?
+7. How useful would it be for my own freelance business?
+8. How valuable would it be as an Upwork portfolio project?
+9. What existing products are the biggest competitors?
+10. What is the strongest positioning?
+
+Give a confidence score from 1–10.
+
+If the research suggests that AgencyFlow is not the strongest idea, say so and recommend a better direction.
+
+---
+
+# FINAL RULES
+
+1. Do not assume AgencyFlow should be a generic CRM.
+2. Do not copy existing CRM feature lists.
+3. Do not build features simply because competitors have them.
+4. Prioritize real business workflows.
+5. Prioritize freelancers and small agencies unless research supports a different target.
+6. Make the product useful enough that I can use it for my own freelance business.
+7. Do not assume direct Upwork/Fiverr integrations are allowed or technically available.
+8. Research integration possibilities before recommending them.
+9. Do not invent market statistics.
+10. Clearly distinguish facts, research findings, assumptions, and recommendations.
+11. Identify competitive gaps.
+12. Identify unnecessary features.
+13. Control MVP scope.
+14. Design complete workflows rather than isolated CRUD modules.
+15. Consider client-side and agency-side experiences.
+16. Treat the client portal as a first-class product experience if research supports it.
+17. Treat security and multi-tenancy as architectural requirements, not later additions.
+18. Identify loading, empty, error, permission, offline, and success states conceptually where relevant.
+19. Apply the AtlasBuild lessons during discovery so missing workflows are identified before implementation.
+20. The final product must be useful as both:
+
+    * A real freelance/agency management tool
+    * A convincing Upwork portfolio project
+
+Do not write code.
+
+Do not begin Phase 1A.
+
+First produce the complete **AgencyFlow Product Discovery, Market Research & Opportunity Validation Report**.
+
+
+# PHASE 1A — Product Requirements Document
+
+You are a Senior Product Manager specializing in SaaS and CRM systems.
+
+## Project
+
+**LeadFlow CRM**
+
+## Context
+
+Below is the complete Phase 0 research:
+
+[PASTE PHASE 0 HERE]
+
+Convert the research into a professional Product Requirements Document.
+
+### Rules
+
+* Base decisions on Phase 0.
+* Do not randomly introduce features.
+* Do not redesign the product.
+* Every feature must have a business justification.
+* Avoid generic SaaS filler.
+* Think like a Product Manager working with Engineering and Design teams.
+* Use tables where appropriate.
+
+## 1. Executive Summary
+
+Include:
+
+* Product Vision
+* Mission
+* Business Objectives
+* Success Metrics
+* Target Audience
+* Value Proposition
+* Product Positioning
+
+## 2. Product Overview
+
+Define:
+
+* Product name
+* Tagline
+* Product description
+* Target market
+* Problems solved
+* Key differentiators
+
+## 3. Business Requirements
+
+Document:
+
+* Business goals
+* Stakeholders
+* Constraints
+* Assumptions
+* KPIs
+* Risks
+
+## 4. User Personas
+
+Create detailed requirements for:
+
+* Owner
+* Sales Manager
+* Sales Representative
+* Marketing User
+* Contact
+* Admin
+
+## 5. Functional Requirements
+
+Group requirements by module.
+
+Potential modules include:
+
+* Authentication
+* Dashboard
+* Leads
+* Contacts
+* Companies
+* Deals
+* Sales Pipeline
+* Tasks
+* Activities
+* Notes
+* Notifications
+* Reports
+* Analytics
+* Team Management
+* Settings
+* AI Assistant
+
+For every requirement provide:
+
+| ID | Requirement | Priority | User Role | Acceptance Criteria |
+| -- | ----------- | -------- | --------- | ------------------- |
+
+## 6. Non-Functional Requirements
+
+Define:
+
+* Performance
+* Security
+* Accessibility
+* Scalability
+* Reliability
+* SEO
+* Mobile responsiveness
+* Browser support
+* Data privacy
+
+## 7. User Stories
+
+Create user stories for every major persona.
+
+Format:
+
+```text
+As a [role],
+I want to [action],
+so that [benefit].
+```
+
+Include acceptance criteria.
+
+## 8. CRM Business Rules
+
+Define rules for:
+
+* Lead statuses
+* Deal stages
+* Status transitions
+* Duplicate contacts
+* Required fields
+* Ownership
+* Permissions
+* Activity tracking
+* Task completion
+* Deal closing
+* Lost deals
+* Follow-up dates
+
+## 9. Scope
+
+Separate:
+
+* MVP
+* Version 1.5
+* Version 2
+* Future
+
+## 10. Deliverables
+
+Summarize everything that will actually be built.
+
+Output a professional PRD.
+
+---
+
+# PHASE 1B — Product Structure & UX Blueprint
+
+You are a Senior Product Manager and Senior UX Designer specializing in SaaS applications.
+
+## Context
+
+Project:
+
+**LeadFlow CRM**
+
+Paste:
+
+* Phase 0
+* Phase 1A
+
+[PASTE CONTEXT HERE]
+
+Transform the requirements into the complete product structure before visual design begins.
+
+## Rules
+
+* Stay consistent with approved requirements.
+* Every page must support a business goal.
+* Prioritize usability.
+* Design for real sales workflows.
+* Do not add unnecessary screens.
+
+## 1. Feature Prioritization
+
+Separate:
+
+* MVP
+* Nice To Have
+* Premium
+* AI Roadmap
+
+For every feature include:
+
+* Purpose
+* Business Value
+* User Value
+* Complexity
+* Dependencies
+
+## 2. Information Architecture
+
+Create the complete sitemap.
+
+Include:
+
+### Public
+
+* Landing Page
+* Pricing
+* Login
+* Signup
+* Documentation/Help if required
+
+### Application
+
+* Dashboard
+* Leads
+* Contacts
+* Companies
+* Deals
+* Pipeline
+* Tasks
+* Activities
+* Reports
+* Notifications
+* AI Assistant
+* Settings
+
+### Admin
+
+* Users
+* Roles
+* Permissions
+* System Settings
+* Audit Logs
+
+Adapt the final sitemap to Phase 1A.
+
+## 3. Navigation Strategy
+
+Design:
+
+* Public navigation
+* Dashboard sidebar
+* Secondary navigation
+* Mobile navigation
+* User/account navigation
+
+## 4. User Journeys
+
+Create at least five CRM journeys.
+
+Examples:
+
+### Lead Management
+
+```text
+Lead Created
+↓
+Lead Viewed
+↓
+Lead Contacted
+↓
+Lead Qualified
+↓
+Converted
+```
+
+### Deal Management
+
+```text
+Opportunity
+↓
+Qualification
+↓
+Proposal
+↓
+Negotiation
+↓
+Won/Lost
+```
+
+### Follow-up
+
+```text
+Lead
+↓
+Task Created
+↓
+Reminder
+↓
+Contact
+↓
+Activity Logged
+```
+
+### Team Workflow
+
+```text
+Manager
+↓
+Assign Lead
+↓
+Sales Representative
+↓
+Update Lead
+↓
+Manager Reviews
+```
+
+### AI Workflow
+
+```text
+User Question
+↓
+CRM Data Retrieval
+↓
+AI Analysis
+↓
+Recommendation
+↓
+User Action
+```
+
+For each journey provide:
+
+* Happy Path
+* Alternate Path
+* Failure Path
+
+Use Mermaid diagrams.
+
+## 5. Content Strategy
+
+For every major page define:
+
+* Purpose
+* Primary CTA
+* Secondary CTA
+* Required sections
+* Important information
+* SEO intent where relevant
+
+## 6. UI State Inventory
+
+For every major screen define:
+
+* Loading
+* Skeleton
+* Empty
+* Error
+* Success
+* Permission Denied
+* Offline
+* Search No Results
+
+Make each state specific to the page.
+
+## 7. UX Recommendations
+
+Focus on:
+
+* Sales efficiency
+* Quick actions
+* Lead visibility
+* Pipeline clarity
+* Information hierarchy
+* Search
+* Filtering
+* Bulk actions
+* Keyboard accessibility
+* Mobile usability
+* Trust and data clarity
+
+Output a complete UX Blueprint.
+
+---
+
+# PHASE 1C — Technical Foundation
+
+You are a Senior Solution Architect specializing in SaaS applications.
+
+## Context
+
+Project:
+
+**LeadFlow CRM**
+
+Paste:
+
+* Phase 0
+* Phase 1A
+* Phase 1B
+
+[PASTE CONTEXT HERE]
+
+Prepare the technical foundation.
+
+Do not write code.
+
+Do not generate APIs yet.
+
+## 1. Domain Model
+
+Identify:
+
+* Users
+* Organizations
+* Roles
+* Permissions
+* Leads
+* Contacts
+* Companies
+* Deals
+* Pipelines
+* Pipeline Stages
+* Tasks
+* Activities
+* Notes
+* Notifications
+* AI interactions
+* Audit logs
+* Other required entities
+
+Explain relationships and business rules.
+
+## 2. Multi-Tenant Architecture
+
+Determine whether LeadFlow should support organizations/workspaces.
+
+If yes, define:
+
+* Organization
+* Members
+* Ownership
+* Tenant isolation
+* Data access rules
+
+## 3. Database Design
+
+For every table provide:
+
+* Table name
+* Fields
+* Types
+* Primary keys
+* Foreign keys
+* Indexes
+* Relationships
+* Constraints
+
+Explain why each table exists.
+
+## 4. Authentication & Authorization
+
+Define:
+
+* Authentication strategy
+* Session strategy
+* Roles
+* Permissions
+* Organization-level access
+
+Create a permission matrix:
+
+| Role | View | Create | Edit | Delete | Assign | Export | Manage Users |
+| ---- | ---- | ------ | ---- | ------ | ------ | ------ | ------------ |
+
+## 5. Data Lifecycle
+
+Document flows such as:
+
+### Lead Creation
+
+```text
+User
+↓
+Frontend
+↓
+Validation
+↓
+API
+↓
+Database
+↓
+Activity Log
+↓
+Dashboard
+```
+
+### Lead Conversion
+
+```text
+Lead
+↓
+Qualification
+↓
+Contact / Company
+↓
+Deal
+↓
+Activity History
+```
+
+### Deal Closure
+
+```text
+Deal
+↓
+Won/Lost
+↓
+Pipeline Update
+↓
+Analytics
+↓
+Notification
+```
+
+## 6. Business Rules
+
+Document:
+
+* Validation
+* Status transitions
+* Ownership
+* Duplicate handling
+* Permissions
+* Assignment rules
+* Deletion rules
+* Audit logging
+
+## 7. Technical Risks
+
+Identify:
+
+* Database risks
+* Security risks
+* Multi-tenancy risks
+* Performance risks
+* Scalability risks
+* AI risks
+
+Provide mitigation strategies.
+
+## 8. Implementation Readiness
+
+Verify:
+
+* Every feature has supporting entities
+* Every workflow is supported
+* Every role has permissions
+* Database schema supports MVP
+* Multi-tenant isolation is clear
+* No critical dependencies are missing
+
+Give a readiness score out of 10.
+
+---
+# PHASE 1D — Product Completeness, Risk & Quality Gate
+
+You are a Senior Product Manager, QA Architect, UX Engineer, and Solution Architect reviewing the LeadFlow CRM specification before implementation begins.
+
+## Context
+
+The following documents have already been approved:
+
+* Phase 0 — Product Discovery
+* Phase 1A — PRD
+* Phase 1B — UX Blueprint
+* Phase 1C — Technical Foundation
+
+[PASTE ALL THREE DOCUMENTS HERE]
+
+Your job is to find missing requirements, incomplete workflows, contradictions, navigation problems, authentication problems, UI-state gaps, deployment gaps, and technical risks **before development begins**.
+
+Do not redesign the product unnecessarily.
+
+Your goal is to identify anything that could cause the same type of problems that commonly appear when building a production application without sufficient upfront validation.
+
+---
+
+# 1. Feature Completeness Audit
+
+Create a table containing every MVP feature.
+
+| Feature | Business Requirement | User Role | Workflow Defined | DB Support | API Needed | UI Defined | Permissions Defined | Error States | Testing Defined | Complete? |
+| ------- | -------------------- | --------- | ---------------- | ---------- | ---------- | ---------- | ------------------- | ------------ | --------------- | --------- |
+
+Mark every missing dependency.
+
+A feature is NOT considered complete unless all required layers are defined.
+
+---
+
+# 2. End-to-End Workflow Audit
+
+For every major business workflow, verify the complete lifecycle.
+
+For LeadFlow, audit workflows such as:
+
+* User registration
+* Login
+* Organization creation
+* Team invitation
+* Lead creation
+* Lead assignment
+* Lead qualification
+* Lead conversion
+* Contact creation
+* Company creation
+* Deal creation
+* Deal stage movement
+* Deal won
+* Deal lost
+* Task creation
+* Task completion
+* Activity logging
+* Notification
+* AI request
+* Data export
+* User removal
+* Resource deletion
+
+For every workflow document:
+
+```text
+Trigger
+↓
+Frontend
+↓
+Validation
+↓
+Authentication
+↓
+Authorization
+↓
+API
+↓
+Business Logic
+↓
+Database
+↓
+Side Effects
+↓
+Notification
+↓
+Frontend Update
+```
+
+Identify every missing step.
+
+---
+
+# 3. State Coverage Audit
+
+Every major screen must have explicitly defined states.
+
+Create a matrix:
+
+| Screen | Loading | Skeleton | Empty | Error | Success | Unauthorized | Forbidden | Offline | No Search Results |
+| ------ | ------- | -------- | ----- | ----- | ------- | ------------ | --------- | ------- | ----------------- |
+
+Do not accept generic statements such as "show a spinner."
+
+Each state must explain:
+
+* What the user sees
+* What action they can take
+* Whether retry is available
+* Whether data is preserved
+* Whether navigation remains available
+
+---
+
+# 4. Authentication & Session Audit
+
+Verify:
+
+* Login
+* Logout
+* Signup
+* Session persistence
+* Session expiration
+* Refresh behavior
+* Protected routes
+* Public routes
+* Unauthorized behavior
+* Forbidden behavior
+* Account menu behavior
+* Logo/home navigation while authenticated
+* Direct URL access
+* Browser refresh while authenticated
+* Multiple tabs
+* Expired sessions
+
+Explicitly define what happens when an authenticated user:
+
+* Clicks the logo
+* Clicks their account
+* Refreshes the page
+* Opens a protected URL directly
+* Returns to the application after session expiry
+* Attempts to access another organization's data
+
+No authentication behavior may be left implicit.
+
+---
+
+# 5. Route & Navigation Audit
+
+Create a complete route inventory.
+
+| Route | Page | Public/Protected | Required Role | Entry Points | Exit Points | API Dependencies | Tested |
+| ----- | ---- | ---------------- | ------------- | ------------ | ----------- | ---------------- | ------ |
+
+Verify that:
+
+* Every navigation item has a valid destination.
+* Every destination exists.
+* No navigation item points to a nonexistent route.
+* Protected pages cannot be accessed without authentication.
+* Unauthorized users receive the correct response.
+* Logo navigation is defined.
+* Account navigation is defined.
+* Mobile navigation contains the same essential destinations.
+* Footer/legal links work.
+* No visible button or link is a dead end.
+
+Include a specific audit for:
+
+* Header
+* Sidebar
+* Mobile menu
+* Footer
+* Account menu
+* Breadcrumbs
+* Buttons that navigate
+* Cards that navigate
+
+---
+
+# 6. Responsive Design Audit
+
+For every major screen verify:
+
+### Desktop
+
+* Navigation
+* Content width
+* Tables
+* Forms
+* Modals
+* Charts
+
+### Tablet
+
+* Navigation behavior
+* Sidebar behavior
+* Tables
+* Forms
+* Cards
+
+### Mobile
+
+* Header
+* Navigation menu
+* Tables
+* Pipeline
+* Forms
+* Modals
+* Charts
+* Buttons
+* Filters
+* Search
+* Touch targets
+
+Do not assume that a desktop layout automatically becomes mobile-friendly.
+
+Define explicit mobile behavior.
+
+---
+
+# 7. Database ↔ API ↔ UI Consistency Audit
+
+For every important entity verify:
+
+```text
+Requirement
+↓
+Database Entity
+↓
+API
+↓
+Service Logic
+↓
+Frontend
+↓
+UI
+↓
+Testing
+```
+
+Check for:
+
+* Missing tables
+* Missing fields
+* Missing API endpoints
+* Missing frontend consumers
+* Fields displayed in UI but not supported by backend
+* Backend fields with no UI use
+* Inconsistent naming
+* Incorrect relationships
+* Missing indexes
+* Missing validation
+
+---
+
+# 8. Permissions Audit
+
+Create a complete permission matrix for every role and every sensitive action.
+
+Include:
+
+* View
+* Create
+* Edit
+* Delete
+* Assign
+* Export
+* Manage users
+* Manage organization
+* Access analytics
+* Access AI
+* Access audit logs
+
+Verify permissions at:
+
+1. Frontend
+2. API
+3. Service/business logic
+4. Database/query layer where necessary
+
+Never rely on frontend hiding alone for security.
+
+---
+
+# 9. Error Handling Audit
+
+For every important operation define:
+
+* Validation failure
+* Authentication failure
+* Authorization failure
+* Resource not found
+* Duplicate resource
+* Network failure
+* Database failure
+* Third-party API failure
+* Timeout
+* Rate limit
+* Unexpected server error
+
+Every error must have:
+
+* User-facing message
+* Recovery action
+* Logging requirement
+* Appropriate HTTP status where applicable
+
+---
+
+# 10. Loading & Initialization Audit
+
+Identify every operation that can take noticeable time.
+
+Examples:
+
+* Authentication initialization
+* Dashboard loading
+* Lead list loading
+* Pipeline loading
+* Analytics
+* AI responses
+* File uploads
+* Search
+* Filters
+* Data mutations
+
+For each define:
+
+* Loading indicator
+* Skeleton where appropriate
+* Timeout behavior
+* Retry behavior
+* Error behavior
+
+Prevent the application from appearing broken while data is initializing.
+
+---
+
+# 11. Third-Party Integration Audit
+
+For every external service document:
+
+| Service | Purpose | Environment Variables | Failure Behavior | Local Development | Production |
+| ------- | ------- | --------------------- | ---------------- | ----------------- | ---------- |
+
+Include:
+
+* Database
+* Storage
+* Email
+* AI provider
+* Analytics
+* Authentication provider if external
+* Payments if applicable
+
+Define what happens if each service becomes unavailable.
+
+---
+
+# 12. Environment & Deployment Audit
+
+Create a complete environment variable inventory.
+
+| Variable | Purpose | Local | Staging | Production | Secret? |
+| -------- | ------- | ----- | ------- | ---------- | ------- |
+
+Verify:
+
+* No secrets are committed
+* `.env.example` exists
+* Required variables are documented
+* Missing variables fail clearly
+* Development and production configurations are separated
+* Database migrations are defined
+* Storage configuration is defined
+* Deployment dependencies are documented
+
+---
+
+# 13. Security Audit
+
+Review:
+
+* Authentication
+* Authorization
+* Multi-tenancy
+* Session security
+* Cookies
+* CSRF
+* XSS
+* SQL injection
+* Input validation
+* File uploads
+* Rate limiting
+* API abuse
+* Secrets
+* Security headers
+* CSP
+* Logging
+* Audit trails
+
+Identify potential conflicts between security controls and legitimate third-party integrations before implementation.
+
+---
+
+# 14. AI Safety Audit
+
+For every AI feature verify:
+
+* Required data
+* Retrieval/data source
+* Input validation
+* Prompt structure
+* Output schema
+* Confidence handling
+* Hallucination prevention
+* Fallback behavior
+* Timeout behavior
+* Provider failure
+* Rate limiting
+* Sensitive data handling
+* Logging
+
+The AI must never be allowed to silently invent CRM information.
+
+If required data cannot be retrieved or confidence is insufficient, define a graceful fallback.
+
+---
+
+# 15. Testing Coverage Matrix
+
+Create:
+
+| Feature | Unit | Integration | API | E2E | Responsive | Security | Edge Cases |
+| ------- | ---- | ----------- | --- | --- | ---------- | -------- | ---------- |
+
+Every critical workflow must have at least one end-to-end test.
+
+Minimum E2E coverage should include:
+
+* Signup/login
+* Protected route access
+* Lead creation
+* Lead assignment
+* Lead conversion
+* Deal creation
+* Deal stage movement
+* Deal completion
+* Logout/session expiry
+* Mobile navigation
+* AI feature if implemented
+
+---
+
+# 16. Dead-End Audit
+
+Search the entire product specification for anything that could become a dead end.
+
+Examples:
+
+* Button with no action
+* Link with no route
+* Form with no submission behavior
+* Modal with no completion behavior
+* Empty state with no next action
+* Error state with no recovery
+* Account menu with undefined behavior
+* Notification with no destination
+* Search result with no detail page
+* Table row with no defined action
+
+Everything visible to the user must have defined behavior.
+
+---
+
+# 17. Requirements Contradiction Audit
+
+Compare Phase 0, Phase 1A, Phase 1B and Phase 1C.
+
+Identify:
+
+* Contradictory requirements
+* Duplicate features
+* Missing features
+* Conflicting roles
+* Conflicting terminology
+* Database inconsistencies
+* Workflow inconsistencies
+* Scope creep
+
+Do not silently resolve contradictions.
+
+List them and recommend the correct decision.
+
+---
+
+# 18. AtlasBuild Lessons Applied
+
+Explicitly verify that LeadFlow avoids these previously encountered classes of problems:
+
+1. Authentication/session inconsistencies
+2. Broken mobile navigation
+3. Broken routes
+4. Non-functional footer/legal links
+5. Incomplete business workflows
+6. Missing admin actions
+7. Missing loading states
+8. CSP/security configuration conflicts
+9. Environment-variable confusion
+10. Database/storage architecture gaps
+11. File-upload lifecycle gaps
+12. AI integration configuration problems
+13. Internal development labels appearing in the user-facing UI
+14. Missing AI fallback/validation
+15. Incomplete navigation testing
+16. Missing UI states
+17. Features discovered only after implementation
+
+Do not simply list these issues.
+
+For each, identify the corresponding LeadFlow requirement or test that prevents it.
+
+---
+
+# 19. Release Readiness Gate
+
+Give the project a score out of 100.
+
+Score:
+
+* Product completeness — 15
+* Workflow completeness — 15
+* UX completeness — 10
+* Route/navigation completeness — 10
+* Authentication/security — 15
+* Database/API consistency — 10
+* Responsive readiness — 10
+* Testing readiness — 10
+* Deployment readiness — 5
+
+The project must score at least **90/100** before implementation begins.
+
+If it scores below 90:
+
+1. Identify the blocking issues.
+2. Explain why each matters.
+3. Recommend the smallest change required.
+4. Do not move to implementation until critical issues are resolved.
+
+## Final Output
+
+Produce:
+
+1. Completeness Audit
+2. Missing Requirements
+3. Contradictions
+4. Workflow Gaps
+5. Navigation/Route Gaps
+6. Authentication Gaps
+7. Responsive Gaps
+8. Database/API/UI Gaps
+9. Security Gaps
+10. AI Safety Gaps
+11. Testing Gaps
+12. Deployment Gaps
+13. Required Fixes
+14. Final Readiness Score
+
+This phase is a **mandatory gate**, not optional documentation.
+---
+
+# PHASE 1.5 — System Design
+
+Continuing LeadFlow CRM.
+
+Paste Phase 1 context:
+
+[PASTE PHASE 1A + 1B + 1C HERE]
+
+Act as a Senior Solution Architect preparing documentation for an architecture review.
+
+## High-Level Architecture
+
+Create a diagram showing:
+
+```text
+Browser
+↓
+CDN / Hosting
+↓
+Frontend
+↓
+API
+↓
+Authentication
+↓
+Business Services
+↓
+PostgreSQL
+↓
+Storage / Email / External APIs
+```
+
+Adapt the architecture to the actual technology choices.
+
+Explain every layer.
+
+## Key Flow Diagrams
+
+Create diagrams for:
+
+* Request flow
+* Authentication
+* Lead creation
+* Lead conversion
+* Deal update
+* File upload if required
+* AI assistant request
+* Deployment
+
+## Sequence Diagrams
+
+Create detailed sequences for:
+
+* Login
+* Create Lead
+* Convert Lead
+* Create Deal
+* Move Deal Stage
+* Create Task
+* AI Assistant Query
+* Delete a core resource
+
+## Architectural Risks
+
+Analyze:
+
+* Performance
+* Security
+* Multi-tenancy
+* Database bottlenecks
+* API bottlenecks
+* AI latency
+* Scalability
+* Accessibility
+* SEO
+* 10x scaling strategy
+
+Provide 3–5 future architectural improvements.
+
+Be concrete about the technologies selected for LeadFlow.
+
+---
+
+# PHASE 2A — Backend Build
+
+Continuing LeadFlow CRM.
+
+Paste:
+
+* Phase 1A
+* Phase 1B
+* Phase 1C
+* Phase 1.5
+
+[PASTE CONTEXT HERE]
+
+Backend only.
+
+Do not design frontend.
+
+## Backend APIs
+
+Create an API contract for every resource.
+
+Format:
+
+| Method | Route | Description | Auth | Validation | Request | Response |
+| ------ | ----- | ----------- | ---- | ---------- | ------- | -------- |
+
+Cover:
+
+* Authentication
+* Users
+* Organizations
+* Leads
+* Contacts
+* Companies
+* Deals
+* Pipelines
+* Activities
+* Tasks
+* Notes
+* Notifications
+* Reports
+* AI Assistant
+* Admin
+* Settings
+
+Include business-specific actions such as:
+
+* Assign Lead
+* Convert Lead
+* Move Deal Stage
+* Mark Deal Won
+* Mark Deal Lost
+* Create Follow-up
+* Bulk Update Leads
+* Export Data
+
+## Backend Stack
+
+Recommend:
+
+* Framework
+* Database
+* ORM
+* Authentication
+* Authorization
+* Storage
+* Email
+* Background jobs
+* AI provider
+* Deployment
+* Monitoring
+
+Give a one-line justification for each.
+
+## Backend Folder Structure
+
+Create a production-grade structure:
+
+```text
+backend/
+├── routes/
+├── controllers/
+├── services/
+├── models/
+├── schemas/
+├── middleware/
+├── auth/
+├── database/
+├── utils/
+├── tests/
+└── config/
+```
+
+Adapt it to the chosen stack.
+
+## Error Handling
+
+Define:
+
+* Standard response format
+* Error response format
+* HTTP status codes
+* Validation errors
+* Authentication errors
+* Authorization errors
+* Not found errors
+* Rate-limit errors
+* Internal errors
+
+The API contract must be usable by a frontend developer without seeing backend code.
+
+---
+
+# PHASE 2B — Frontend Build + Stitch AI Design
+
+Continuing LeadFlow CRM.
+
+Paste:
+
+* Phase 1A
+* Phase 1B
+* Phase 1.5
+* Phase 2A
+
+[PASTE CONTEXT HERE]
+
+Frontend only.
+
+Treat the Phase 2A API contract as fixed.
+
+## 1. Frontend Pages
+
+For every page provide:
+
+* Purpose
+* Sections
+* Components
+* API endpoints
+* User interactions
+* Responsive behavior
+* Animations
+* SEO
+* Loading state
+* Skeleton state
+* Empty state
+* Error state
+* Offline state
+* Permission state
+* Success state
+
+Prioritize complex screens such as:
+
+* Dashboard
+* Leads
+* Lead Detail
+* Sales Pipeline
+* Deal Detail
+* Contacts
+* Reports
+* AI Assistant
+* Settings
+
+## 2. UI Components
+
+Identify reusable components:
+
+* Navbar
+* Sidebar
+* Buttons
+* Forms
+* Tables
+* Data cards
+* KPI cards
+* Charts
+* Pipeline columns
+* Deal cards
+* Lead cards
+* Filters
+* Search
+* Modals
+* Drawers
+* Dropdowns
+* Toasts
+* Notifications
+* Pagination
+* Empty states
+* Confirmation dialogs
+
+## 3. CRM Dashboard
+
+Design:
+
+* Sidebar
+* KPI cards
+* Revenue
+* Leads
+* Conversion rate
+* Open deals
+* Pipeline value
+* Recent activity
+* Tasks
+* Follow-ups
+* Charts
+* Notifications
+* Quick actions
+
+## 4. Frontend Stack
+
+Recommend:
+
+* Framework
+* State management
+* Styling
+* Form validation
+* Data fetching
+* Charts
+* Testing
+
+## 5. Frontend Folder Structure
+
+Create a production-grade structure.
+
+## 6. Design Tokens
+
+Define:
+
+* Primary color
+* Secondary color
+* Accent
+* Background
+* Surface
+* Text
+* Typography
+* Spacing
+* Radius
+* Shadows
+* Icon style
+
+The design should feel like a modern professional B2B SaaS product.
+
+## 7. Stitch Prompts
+
+Create:
+
+### DESIGN.md
+
+A concise design system that can be pasted into Google Stitch as a hard visual constraint.
+
+### Key Screen Prompts
+
+Create ready-to-paste Stitch prompts for 6–8 important screens:
+
+1. Dashboard
+2. Leads
+3. Lead Detail
+4. Sales Pipeline
+5. Deal Detail
+6. Contacts
+7. Analytics
+8. AI Assistant
+
+Each prompt must specify:
+
+* Platform
+* Layout
+* Purpose
+* Sections
+* Components
+* Data
+* Interactions
+* Responsive behavior
+* UI states
+
+## 8. Stitch Prompt Order
+
+Specify which screen should be generated first and how later screens should reference the visual anchor.
+
+---
+
+# PHASE 2C — Translate Stitch Output Into Build Specification
+
+Run this separately for every Stitch screen.
+
+## Context
+
+Screen:
+
+[SCREEN NAME]
+
+Stitch output:
+
+[PASTE SCREENSHOT / DESCRIPTION / CODE HERE]
+
+Compare the actual Stitch output with the previous specification.
+
+Perform:
+
+### 1. Component Reconciliation
+
+Identify:
+
+* New components
+* Removed components
+* Changed components
+
+### 2. Page Specification Update
+
+Update:
+
+* Layout
+* Sections
+* Components
+* Spacing
+* States
+* Responsive behavior
+
+### 3. Implementation Specification
+
+Provide implementation-ready component specifications matching the actual Stitch design.
+
+Wire components to the correct Phase 2A API endpoints.
+
+### 4. Design Drift
+
+Compare against DESIGN.md.
+
+Identify:
+
+* Color drift
+* Typography drift
+* Spacing drift
+* Component drift
+
+Do not redesign the entire product.
+
+Only update this screen.
+
+---
+
+# PHASE 3 — Design, SEO & Security
+
+Continuing AgencyFlow CRM.
+
+Paste accumulated context:
+
+[PASTE RELEVANT PHASES HERE]
+
+## 14. Design System
+
+Expand the existing tokens.
+
+Explain:
+
+* Typography
+* Color system
+* Spacing
+* Radius
+* Shadows
+* Icons
+* Illustration style
+* Animation style
+* Design principles
+
+## 15. Responsive Design
+
+Describe Desktop / Tablet / Mobile behavior for the five most important screens.
+
+Pay special attention to:
+
+* CRM tables
+* Pipeline
+* Filters
+* Sidebars
+* Charts
+* Forms
+
+## 16. SEO
+
+For public pages define:
+
+* Metadata
+* Open Graph
+* JSON-LD
+* Sitemap
+* Robots
+* Canonicals
+* Performance
+* Accessibility
+
+Do not apply unnecessary SEO strategies to authenticated CRM screens.
+
+## 17. Security
+
+Cover:
+
+* Authentication
+* Authorization
+* Tenant isolation
+* Rate limiting
+* Input validation
+* XSS
+* CSRF
+* SQL injection
+* Secure cookies
+* File security
+* API security
+* Audit logging
+* Secret management
+
+## 18. Performance
+
+Cover:
+
+* Database indexes
+* Query optimization
+* Pagination
+* Caching
+* Lazy loading
+* Code splitting
+* API optimization
+* Image optimization
+* Chart optimization
+* Background jobs
+
+## 19. Integrations
+
+Recommend only integrations that provide real value.
+
+Potential integrations:
+
+* Email
+* Calendar
+* Notifications
+* Analytics
+* AI
+* File storage
+* Payment system if SaaS billing is implemented
+
+---
+
+# PHASE 3.5 — Testing & Deployment
+
+## 20. Testing Strategy
+
+Define:
+
+### Unit Tests
+
+Critical business logic.
+
+### Integration Tests
+
+* API + database
+* Authentication
+* Authorization
+* Tenant isolation
+
+### API Tests
+
+Test highest-risk endpoints.
+
+### E2E Tests
+
+At minimum:
+
+```text
+Signup
+↓
+Create Lead
+↓
+Qualify Lead
+↓
+Create Deal
+↓
+Move Deal
+↓
+Mark Won
+```
+
+Also test:
+
+* Login
+* Lead assignment
+* Search
+* Filters
+* AI assistant
+
+### Lighthouse
+
+Set realistic targets for:
+
+* Performance
+* Accessibility
+* Best Practices
+* SEO
+
+### Edge Cases
+
+Identify 8–10 CRM-specific edge cases.
+
+Examples:
+
+* Duplicate lead
+* Deleted assigned user
+* Deal moved backward
+* Unauthorized organization access
+* Expired session
+* Concurrent deal updates
+* Deleted company with active contacts
+* Failed AI request
+* Large lead dataset
+
+## 21. Deployment
+
+Create a production deployment architecture.
+
+Cover:
+
+* Local
+* Development
+* Staging
+* Production
+* Environment variables
+* Secrets
+* CI/CD
+* Testing before deployment
+* Database migrations
+* Rollbacks
+* Monitoring
+* Logging
+
+Use concrete technologies.
+
+---
+
+# PHASE 4 — AI Features, Roadmap & Portfolio Packaging
+
+Continuing LeadFlow CRM.
+
+## 22. AI Features
+
+Identify 3–5 realistic AI features.
+
+Prioritize features such as:
+
+### AI Lead Assistant
+
+Answer questions about CRM data.
+
+Example:
+
+> "Which leads need follow-up today?"
+
+### Lead Scoring
+
+Predict lead priority based on available CRM data.
+
+### Follow-up Generator
+
+Generate personalized follow-up messages.
+
+### Deal Risk Detection
+
+Identify deals that appear likely to stall.
+
+### CRM Insights
+
+Summarize sales performance and identify trends.
+
+For every AI feature explain:
+
+* What it does
+* Business value
+* User value
+* Data required
+* Implementation approach
+* Risks
+* Whether it belongs in MVP
+
+Do not add AI just for marketing purposes.
+
+## 23. Development Milestones
+
+Create professional GitHub-ready milestones.
+
+Example:
+
+### Milestone 1 — Project Initialization
+
+### Milestone 2 — Authentication & Organizations
+
+### Milestone 3 — CRM Data Model
+
+### Milestone 4 — Leads & Contacts
+
+### Milestone 5 — Sales Pipeline
+
+### Milestone 6 — Tasks & Activities
+
+### Milestone 7 — Dashboard & Analytics
+
+### Milestone 8 — AI Assistant
+
+### Milestone 9 — Security & Testing
+
+### Milestone 10 — Deployment
+
+For each:
+
+* Commits
+* Deliverables
+* Difficulty
+* Rough time estimate
+
+## 24. Stretch Features
+
+Suggest 3–5 features that make LeadFlow feel like a real commercial product.
+
+## 25. Realistic Demo Content
+
+Create:
+
+* Company name
+* Fictional employees
+* Sample leads
+* Sample companies
+* Sample contacts
+* Sample deals
+* Pipeline stages
+* Activities
+* Tasks
+* Notifications
+* Testimonials if needed
+* FAQs
+* Demo metrics
+
+All content must be fictional.
+
+## 26. Learning Outcomes
+
+Explain what the project demonstrates across:
+
+* Frontend
+* Backend
+* Database
+* Authentication
+* SaaS architecture
+* Multi-tenancy
+* API design
+* AI
+* Security
+* Testing
+* Deployment
+* System design
+* UX
+
+## 27. Resume Description
+
+Create 2–3 strong resume bullets.
+
+Quantify only things that can realistically be supported by the implementation.
+
+## 28. GitHub README
+
+Create a complete README containing:
+
+* Overview
+* Problem
+* Solution
+* Features
+* Architecture
+* Tech stack
+* Screenshots
+* Installation
+* Environment variables
+* Development
+* Testing
+* Deployment
+* Folder structure
+* Future improvements
+* License
+
+## 29. Upwork Positioning
+
+Explain:
+
+* What types of clients this attracts
+* What Upwork jobs it demonstrates capability for
+* What screenshots should be shown
+* What functionality should be demonstrated in the live demo
+* How to describe the project in proposals
+* What project complexity this demonstrates
+* What similar client projects may reasonably be priced at
+
+Provide a concise portfolio description.
+
+Focus on making the project sellable.
+
+---
+
+# PHASE 5 — GitHub Issues Backlog
+
+Continuing LeadFlow CRM.
+
+Paste the full project context:
+
+[PASTE ACCUMULATED CONTEXT HERE]
+
+Break the entire project into GitHub Issues organized under the Phase 4 milestones.
+
+Every issue must include:
+
+* Title
+* Description
+* Acceptance Criteria
+* Dependencies
+* Estimated Hours
+* Difficulty 1–5
+* Files likely affected
+* Conventional Commit
+* Branch Name
+* Pull Request Title
+* Testing Checklist
+
+Cover:
+
+* Project setup
+* Database
+* Authentication
+* Organizations
+* Roles
+* Permissions
+* Leads
+* Contacts
+* Companies
+* Deals
+* Pipeline
+* Tasks
+* Activities
+* Notifications
+* Analytics
+* AI
+* Frontend pages
+* Components
+* Stitch integration
+* Responsive design
+* SEO
+* Security
+* Testing
+* Deployment
+
+Group everything under the milestones from Phase 4.
+
+The final result should be directly usable as a GitHub Project backlog.
+
+---
+
+# FINAL DEVELOPMENT RULES
+
+Throughout the entire AgencyFlow project:
+
+1. Do not skip phases.
+2. Do not contradict decisions made in earlier phases without explicitly identifying the change.
+3. Do not add features merely because they are common in SaaS applications.
+4. Prioritize business value.
+5. Keep the MVP realistic for a solo developer.
+6. Treat the project as if a real client commissioned it.
+7. Avoid tutorial-level CRUD implementation.
+8. Use production-quality architecture.
+9. Include loading, empty, error, permission, offline, and success states.
+10. Prioritize responsive design.
+11. Treat security as part of development, not an afterthought.
+12. Do not use AI features merely for demonstration.
+13. Every AI feature must solve a specific business problem.
+14. Keep the architecture scalable without overengineering the MVP.
+15. Maintain consistency between requirements, database, APIs, frontend, and UI.
+16. Before implementing a feature, verify that its requirements and dependencies are defined.
+17. Use realistic fictional demo data.
+18. Optimize the final project for both technical quality and Upwork portfolio value.
+
+The objective is not simply to build a CRM.
+
+The objective is to create a **convincing, production-quality SaaS portfolio project that demonstrates that I can build custom business applications for real Upwork clients.**
+
+
+# MANDATORY IMPLEMENTATION QUALITY GATE
+
+Before considering this phase complete, perform a self-audit against the approved requirements.
+
+Verify:
+
+* Every requested feature is implemented/specifically defined.
+* Every business workflow has a complete start-to-finish path.
+* Every route exists and has a defined purpose.
+* Every navigation item has a working destination or action.
+* Authentication and protected-route behavior are defined.
+* Authorization is enforced at the backend.
+* Mobile behavior is explicitly handled.
+* Loading states are implemented.
+* Skeleton states are implemented where appropriate.
+* Empty states are implemented.
+* Error states are implemented.
+* Permission-denied states are implemented.
+* Offline/network failure behavior is handled.
+* Every form has validation and submission behavior.
+* Every mutation has success and failure behavior.
+* Every external integration has a failure strategy.
+* Database, API, and frontend specifications remain consistent.
+* No placeholder functionality is presented as complete.
+* No dead buttons or dead links remain.
+* No development terminology accidentally appears in the production UI.
+* Security requirements remain intact.
+
+Then produce:
+
+## Implementation Verification Table
+
+| Requirement | Implemented | Tested | Missing | Action |
+| ----------- | ----------- | ------ | ------- | ------ |
+
+Do not claim a feature is complete simply because the UI exists.
+
+A feature is complete only when its:
+
+**Requirement → Workflow → Database → API → Business Logic → UI → States → Permissions → Responsive Behavior → Testing**
+
+are all addressed.
+
+
+
+AGENCYFLOW — DESIGN REFERENCE & IMPLEMENTATION PROMPT
+
+I am building AgencyFlow, a professional Agency CRM & Client Operations Platform.
+
+I am providing you with a reference design consisting of:
+
+1. A reference screenshot/image
+2. The corresponding Stitch-generated design code
+
+Treat both as the PRIMARY VISUAL SOURCE OF TRUTH for the AgencyFlow interface.
+
+Your task is to build the new screen I specify while maintaining the SAME visual design language as the provided reference.
+
+==================================================
+1. DESIGN REFERENCE
+==================================================
+
+Study the provided reference image and code carefully before making any changes.
+
+Extract and preserve the following characteristics:
+
+- Overall visual style
+- Color palette
+- Typography
+- Font hierarchy
+- Spacing system
+- Grid structure
+- Border radius
+- Borders
+- Shadows
+- Card styling
+- Button styling
+- Input styling
+- Badge styling
+- Icon style
+- Navigation style
+- Sidebar design
+- Header design
+- Table styling
+- Status indicators
+- Charts and data visualization style
+- Hover states
+- Active states
+- Selected states
+- Disabled states
+- Loading patterns
+- Empty states
+- Error states
+- Overall information density
+- Visual hierarchy
+
+The reference is the DESIGN SYSTEM, not a screen that should be copied blindly.
+
+==================================================
+2. DESIGN CONSISTENCY RULE
+==================================================
+
+The new screen must look like it belongs to the SAME PRODUCT as the reference.
+
+A user should be able to move between the reference screen and the new screen and immediately recognize that they are part of AgencyFlow.
+
+DO NOT:
+
+- Introduce a new visual style
+- Change the color palette unnecessarily
+- Introduce unrelated components
+- Use a different typography system
+- Use different card styles
+- Use different button styles
+- Use random spacing
+- Use inconsistent border radii
+- Use different navigation patterns
+- Redesign existing global components
+
+Reuse the established visual language wherever possible.
+
+==================================================
+3. DESKTOP-FIRST REQUIREMENT
+==================================================
+
+AgencyFlow is a desktop-first SaaS application.
+
+Design the primary interface for:
+
+1440 × 900 desktop viewport.
+
+The layout should make proper use of the available horizontal space.
+
+Use:
+
+- Persistent desktop sidebar
+- Desktop top navigation/header
+- Multi-column layouts where appropriate
+- Wide content areas
+- Horizontal data presentation
+- Professional dashboard density
+
+DO NOT design the primary interface as a mobile application.
+
+DO NOT use bottom navigation on desktop.
+
+DO NOT unnecessarily stack everything vertically.
+
+==================================================
+4. RESPONSIVE BEHAVIOR
+==================================================
+
+After establishing the desktop design, ensure the screen can adapt to:
+
+- Desktop
+- Tablet
+- Mobile
+
+Desktop is the primary design reference.
+
+For mobile:
+
+- Sidebar may collapse
+- Navigation may become a mobile menu
+- Multi-column layouts may stack
+- Tables may become horizontally scrollable or transform appropriately
+- Complex controls may reorganize
+
+Do not sacrifice the desktop layout merely to make mobile easier.
+
+==================================================
+5. EXISTING COMPONENTS
+==================================================
+
+Before creating a new component, determine whether an equivalent component already exists in the reference code/design.
+
+Prefer reuse.
+
+Examples:
+
+- Sidebar
+- Header
+- Button
+- Card
+- Modal
+- Input
+- Select
+- Badge
+- Avatar
+- Table
+- Tabs
+- Dropdown
+- Toast
+- Progress indicator
+- Status indicator
+- Pagination
+- Search
+- Filter controls
+
+If an existing component can be reused, do not create a visually different replacement.
+
+==================================================
+6. NEW SCREEN REQUIREMENTS
+==================================================
+
+The screen I want you to build is:
+
+[DESCRIBE THE NEW SCREEN HERE]
+
+Its primary purpose is:
+
+[DESCRIBE THE PURPOSE HERE]
+
+Primary users:
+
+[DESCRIBE USER ROLE HERE]
+
+Important information that must be displayed:
+
+[LIST DATA / CONTENT HERE]
+
+Required actions:
+
+[LIST ACTIONS HERE]
+
+==================================================
+7. INFORMATION ARCHITECTURE
+==================================================
+
+Before implementing the UI, determine the most appropriate hierarchy for the information.
+
+Prioritize:
+
+1. Primary user objective
+2. Most important information
+3. Primary actions
+4. Secondary information
+5. Supporting actions
+
+Do not blindly reproduce the structure of the reference screen.
+
+Use the reference's DESIGN LANGUAGE while creating the appropriate information architecture for this new screen.
+
+==================================================
+8. REALISTIC DATA
+==================================================
+
+Use realistic fictional AgencyFlow data.
+
+DO NOT use:
+
+- Lorem ipsum
+- Generic placeholder text
+- Random meaningless numbers
+- "John Doe" everywhere
+- Empty cards unless an empty state is intentional
+
+Use realistic:
+
+- Client names
+- Agency names
+- Project names
+- Proposal values
+- Dates
+- Statuses
+- Team members
+- Task names
+- Invoice values
+
+The interface should look like a real production application.
+
+==================================================
+9. UI STATES
+==================================================
+
+Consider all appropriate states for the screen.
+
+At minimum evaluate:
+
+- Normal state
+- Loading state
+- Empty state
+- Error state
+- Success state
+- No search results
+- Permission denied state where applicable
+
+Do not implement only the ideal successful state.
+
+==================================================
+10. INTERACTION DESIGN
+==================================================
+
+Every interactive element must have a clear purpose.
+
+Define behavior for:
+
+- Buttons
+- Links
+- Dropdowns
+- Tabs
+- Search
+- Filters
+- Sorting
+- Forms
+- Modals
+- Tables
+- Cards
+- Navigation
+
+Do not create decorative controls that do nothing.
+
+Do not leave dead buttons or dead links.
+
+==================================================
+11. ACCESSIBILITY
+==================================================
+
+Maintain production-quality accessibility:
+
+- Keyboard navigation
+- Visible focus states
+- Proper labels
+- Appropriate semantic HTML
+- Accessible interactive elements
+- Sufficient contrast
+- Appropriate ARIA attributes where required
+
+==================================================
+12. TECHNICAL IMPLEMENTATION
+==================================================
+
+Use the existing AgencyFlow technology stack and architecture.
+
+Do not introduce a new framework or library unless absolutely necessary.
+
+Follow:
+
+- Existing project structure
+- Existing components
+- Existing design tokens
+- Existing API patterns
+- Existing authentication
+- Existing state management
+- Existing routing
+- Existing naming conventions
+
+Do not duplicate existing functionality.
+
+==================================================
+13. API / DATA INTEGRATION
+==================================================
+
+If the screen requires dynamic data:
+
+First identify which existing API/endpoints/services should provide it.
+
+Do not invent API endpoints if an existing endpoint already supports the required data.
+
+If an endpoint genuinely does not exist:
+
+Clearly identify the missing API requirement before implementing a fake solution.
+
+Do not hardcode production data into the UI.
+
+==================================================
+14. CODE QUALITY
+==================================================
+
+Write production-quality code.
+
+Requirements:
+
+- Reusable components
+- Clean component hierarchy
+- Maintainable structure
+- Strong typing where applicable
+- No unnecessary duplication
+- No hardcoded secrets
+- No temporary hacks
+- No unused code
+- No console errors
+- No broken links
+- No placeholder functionality presented as complete
+
+==================================================
+15. VISUAL MATCHING PRIORITY
+==================================================
+
+When making design decisions, prioritize:
+
+1. Existing AgencyFlow design system
+2. Reference screenshot
+3. Reference Stitch code
+4. Existing AgencyFlow component library
+5. UX requirements for the new screen
+6. General UI conventions
+
+Do not allow generic AI-generated design preferences to override the established AgencyFlow visual language.
+
+==================================================
+16. FINAL VISUAL QA
+==================================================
+
+Before considering the screen complete, compare it against the reference design.
+
+Verify:
+
+- Colors
+- Typography
+- Spacing
+- Alignment
+- Component dimensions
+- Border radius
+- Borders
+- Shadows
+- Icons
+- Navigation
+- Information density
+- Visual hierarchy
+- Desktop layout
+- Responsive behavior
+
+The new screen should feel like it was designed by the SAME DESIGNER who created the reference.
+
+==================================================
+17. IMPORTANT
+==================================================
+
+The reference image and Stitch code establish the visual identity of AgencyFlow.
+
+DO NOT simply copy the reference screen.
+
+Instead:
+
+EXTRACT THE DESIGN SYSTEM
+        ↓
+UNDERSTAND THE VISUAL LANGUAGE
+        ↓
+REUSE EXISTING COMPONENTS
+        ↓
+ADAPT THE SYSTEM TO THE NEW SCREEN
+        ↓
+IMPLEMENT THE NEW SCREEN
+        ↓
+PERFORM VISUAL QA
+
+The goal is:
+
+"SAME PRODUCT, SAME DESIGN SYSTEM, DIFFERENT SCREEN."
+
+Not:
+
+"NEW SCREEN WITH A SIMILAR COLOR."
+
+==================================================
+NOW BUILD
+==================================================
+
+Build the following AgencyFlow screen:
+
+CODE:
+
+
+SCREENSHOT ATTTACHED
+
+Use the attached reference image and Stitch code as the visual source of truth.
