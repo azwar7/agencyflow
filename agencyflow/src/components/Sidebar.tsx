@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -29,34 +30,18 @@ export function Sidebar() {
   return (
     <aside className="app-sidebar">
       {/* Brand Header */}
-      <Link
-        href="/dashboard"
+      <div
         style={{
           height: '64px',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.75rem',
           padding: '0 1.25rem',
           flexShrink: 0,
-          textDecoration: 'none',
-          cursor: 'pointer',
           borderBottom: '1px solid rgba(70, 69, 84, 0.15)',
         }}
       >
-        <img
-          src="/logo.png"
-          alt="AgencyFlow Logo"
-          style={{
-            height: '28px',
-            width: 'auto',
-            maxHeight: '100%',
-            objectFit: 'contain',
-          }}
-        />
-        <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)' }}>
-          AgencyFlow
-        </span>
-      </Link>
+        <AgencyFlowLogo height={28} href="/dashboard" />
+      </div>
 
       {/* Main Navigation Container */}
       <nav className="sidebar-nav">
