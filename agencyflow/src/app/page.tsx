@@ -19,7 +19,7 @@ export default function LandingPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#111318', color: '#e2e2e8', fontFamily: "'Inter', sans-serif", overflowX: 'hidden' }}>
       
-      {/* 1. Header Navigation */}
+      {/* 1. Header Navigation — TRUE 3-COLUMN LAYOUT */}
       <header
         style={{
           position: 'fixed',
@@ -38,66 +38,68 @@ export default function LandingPage() {
           style={{
             height: '80px',
             width: '100%',
-            maxWidth: '1280px',
-            margin: '0 auto',
-            padding: '0 24px',
+            padding: '0 40px',
             display: 'grid',
-            gridTemplateColumns: 'auto 1fr auto',
+            gridTemplateColumns: '1fr auto 1fr',
             alignItems: 'center',
             boxSizing: 'border-box',
           }}
         >
-          {/* LEFT: Brand Logo & Name (Anchored Left) */}
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #d0bcff 0%, #a078ff 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#23005c',
-                fontWeight: 900,
-                fontSize: '1.1rem',
-                boxShadow: '0 0 20px rgba(208, 188, 255, 0.3)',
-              }}
-            >
-              AF
-            </div>
-            <span
-              style={{
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#e2e2e8',
-                letterSpacing: '-0.02em',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              AgencyFlow
-            </span>
-          </Link>
+          {/* 1. LEFT SECTION (Absolute Left Anchor) */}
+          <div style={{ justifySelf: 'start' }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #d0bcff 0%, #a078ff 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#23005c',
+                  fontWeight: 900,
+                  fontSize: '1.1rem',
+                  boxShadow: '0 0 20px rgba(208, 188, 255, 0.3)',
+                }}
+              >
+                AF
+              </div>
+              <span
+                style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  color: '#e2e2e8',
+                  letterSpacing: '-0.02em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                AgencyFlow
+              </span>
+            </Link>
+          </div>
 
-          {/* CENTER: Navigation Links (Strictly Centered) */}
-          <nav className="hidden lg:flex" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px' }}>
-            <a href="#features" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
-              Features
-            </a>
-            <a href="#how-it-works" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
-              How It Works
-            </a>
-            <a href="#pricing" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
-              Pricing
-            </a>
-            <a href="#about" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
-              About
-            </a>
-          </nav>
+          {/* 2. CENTER SECTION (True Viewport Centered) */}
+          <div style={{ justifySelf: 'center' }}>
+            <nav className="hidden lg:flex" style={{ display: 'flex', alignItems: 'center', gap: '36px' }}>
+              <a href="#features" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
+                Features
+              </a>
+              <a href="#how-it-works" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
+                How It Works
+              </a>
+              <a href="#pricing" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
+                Pricing
+              </a>
+              <a href="#about" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
+                About
+              </a>
+            </nav>
+          </div>
 
-          {/* RIGHT: Actions & Account Controls (Anchored Right) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'flex-end' }}>
+          {/* 3. RIGHT SECTION (Absolute Right Anchor) */}
+          <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '12px' }}>
             {isAuthenticated ? (
               <Link
                 href="/dashboard"
