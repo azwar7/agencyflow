@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function LandingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [logoLoaded, setLogoLoaded] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -41,13 +41,13 @@ export default function LandingPage() {
             maxWidth: '1280px',
             margin: '0 auto',
             padding: '0 24px',
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr auto',
             alignItems: 'center',
-            justifyContent: 'space-between',
             boxSizing: 'border-box',
           }}
         >
-          {/* Brand Logo */}
+          {/* LEFT: Brand Logo & Name (Anchored Left) */}
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div
               style={{
@@ -73,14 +73,15 @@ export default function LandingPage() {
                 fontWeight: 700,
                 color: '#e2e2e8',
                 letterSpacing: '-0.02em',
+                whiteSpace: 'nowrap',
               }}
             >
               AgencyFlow
             </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          {/* CENTER: Navigation Links (Strictly Centered) */}
+          <nav className="hidden lg:flex" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px' }}>
             <a href="#features" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
               Features
             </a>
@@ -95,8 +96,8 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* RIGHT: Actions & Account Controls (Anchored Right) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'flex-end' }}>
             {isAuthenticated ? (
               <Link
                 href="/dashboard"
@@ -104,7 +105,7 @@ export default function LandingPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '10px 20px',
+                  padding: '8px 18px',
                   background: '#d0bcff',
                   color: '#23005c',
                   borderRadius: '6px',
@@ -112,7 +113,8 @@ export default function LandingPage() {
                   fontWeight: 600,
                   fontFamily: "'Geist', sans-serif",
                   textDecoration: 'none',
-                  boxShadow: '0 0 30px rgba(208,188,255,0.25)',
+                  boxShadow: '0 0 25px rgba(208,188,255,0.25)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Open Dashboard
@@ -134,6 +136,7 @@ export default function LandingPage() {
                     color: '#e2e2e8',
                     textDecoration: 'none',
                     transition: 'all 0.2s',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   Log In
@@ -144,7 +147,7 @@ export default function LandingPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '8px 24px',
+                    padding: '8px 20px',
                     background: '#d0bcff',
                     color: '#23005c',
                     borderRadius: '4px',
@@ -152,8 +155,9 @@ export default function LandingPage() {
                     fontWeight: 600,
                     fontFamily: "'Geist', sans-serif",
                     textDecoration: 'none',
-                    boxShadow: '0 0 30px rgba(208,188,255,0.2)',
+                    boxShadow: '0 0 25px rgba(208,188,255,0.2)',
                     transition: 'all 0.2s',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   Sign Up Free
@@ -162,34 +166,82 @@ export default function LandingPage() {
             )}
             <Link
               href={isAuthenticated ? '/dashboard' : '/login'}
+              title="Account / Profile"
               style={{
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '50%',
                 background: '#d0bcff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginLeft: '8px',
                 color: '#23005c',
                 textDecoration: 'none',
+                flexShrink: 0,
               }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
                 person
               </span>
             </Link>
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#e2e2e8',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                marginLeft: '4px',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>
+                {mobileMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Navigation */}
+        {mobileMenuOpen && (
+          <div
+            style={{
+              background: '#1a1c20',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '16px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
+              Features
+            </a>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
+              How It Works
+            </a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
+              Pricing
+            </a>
+            <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
+              About
+            </a>
+          </div>
+        )}
       </header>
 
-      {/* 2. Hero Section */}
+      {/* 2. Hero Section (Noticeably Reduced Top Gap) */}
       <main style={{ paddingTop: '80px', width: '100%', background: '#111318' }}>
         <section
           style={{
             position: 'relative',
-            paddingTop: '120px',
-            paddingBottom: '160px',
+            paddingTop: '40px',
+            paddingBottom: '120px',
             paddingLeft: '24px',
             paddingRight: '24px',
             display: 'flex',
