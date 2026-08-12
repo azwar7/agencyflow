@@ -89,9 +89,6 @@ export default function LandingPage() {
               <a href="#how-it-works" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
                 How It Works
               </a>
-              <a href="#pricing" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
-                Pricing
-              </a>
               <a href="#about" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '14px', fontWeight: 500, fontFamily: "'Geist', sans-serif", transition: 'color 0.2s' }}>
                 About
               </a>
@@ -226,9 +223,6 @@ export default function LandingPage() {
             </a>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
               How It Works
-            </a>
-            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
-              Pricing
             </a>
             <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e2e8', textDecoration: 'none', fontSize: '15px', fontWeight: 500 }}>
               About
@@ -536,10 +530,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 3. Marquee Ticker Section */}
+        {/* 3. Features Section */}
         <section
           id="features"
           style={{
+            scrollMarginTop: '100px',
             borderTop: '1px solid rgba(73, 68, 84, 0.2)',
             borderBottom: '1px solid rgba(73, 68, 84, 0.2)',
             background: '#1a1c20',
@@ -642,6 +637,158 @@ export default function LandingPage() {
             <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '128px', background: 'linear-gradient(to left, #1a1c20, transparent)', pointerEvents: 'none', zIndex: 10 }} />
           </div>
         </section>
+
+        {/* 4. How It Works Section */}
+        <section
+          id="how-it-works"
+          style={{
+            scrollMarginTop: '100px',
+            padding: '96px 24px',
+            maxWidth: '1280px',
+            margin: '0 auto',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+            <span style={{ fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#4edea3', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+              SIMPLE 3-STEP WORKFLOW
+            </span>
+            <h2 style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '40px', fontWeight: 700, color: '#e2e2e8', marginTop: '8px' }}>
+              How AgencyFlow Transforms Your Agency
+            </h2>
+            <p style={{ color: '#cbc3d7', fontSize: '18px', maxWidth: '600px', margin: '16px auto 0 auto' }}>
+              Replace fragmented tools with an end-to-end operational engine built specifically for digital service providers.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+            {/* Step 1 */}
+            <div
+              style={{
+                background: '#1a1c20',
+                border: '1px solid rgba(73, 68, 84, 0.3)',
+                borderRadius: '12px',
+                padding: '32px',
+                position: 'relative',
+              }}
+            >
+              <div style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#d0bcff', opacity: 0.4, marginBottom: '16px' }}>
+                01
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#e2e2e8', marginBottom: '12px' }}>
+                Capture & Score Leads
+              </h3>
+              <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.6' }}>
+                Organize inbound inquiries, track deal values across custom Kanban stages, and let AI score lead quality in real time.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div
+              style={{
+                background: '#1a1c20',
+                border: '1px solid rgba(73, 68, 84, 0.3)',
+                borderRadius: '12px',
+                padding: '32px',
+                position: 'relative',
+              }}
+            >
+              <div style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#4edea3', opacity: 0.4, marginBottom: '16px' }}>
+                02
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#e2e2e8', marginBottom: '12px' }}>
+                Execute & Deliver Projects
+              </h3>
+              <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.6' }}>
+                Assign team members, set task priorities, track milestone deadlines, and collaborate smoothly inside client workspaces.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div
+              style={{
+                background: '#1a1c20',
+                border: '1px solid rgba(73, 68, 84, 0.3)',
+                borderRadius: '12px',
+                padding: '32px',
+                position: 'relative',
+              }}
+            >
+              <div style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#ffb95f', opacity: 0.4, marginBottom: '16px' }}>
+                03
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#e2e2e8', marginBottom: '12px' }}>
+                Invoice & Scale Revenue
+              </h3>
+              <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.6' }}>
+                Generate proposals, send automated invoices, track client health metrics, and gain complete visibility into agency profitability.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 5. About Section */}
+        <section
+          id="about"
+          style={{
+            scrollMarginTop: '100px',
+            borderTop: '1px solid rgba(73, 68, 84, 0.2)',
+            background: '#17191e',
+            padding: '96px 24px',
+          }}
+        >
+          <div style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '48px', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                  OUR MISSION
+                </span>
+                <h2 style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '38px', fontWeight: 700, color: '#e2e2e8', marginTop: '8px', lineHeight: '1.2' }}>
+                  Built by Agency Founders for High-Performance Teams
+                </h2>
+                <p style={{ color: '#cbc3d7', fontSize: '16px', lineHeight: '1.7', marginTop: '20px' }}>
+                  AgencyFlow was created to solve a fundamental problem: modern agencies waste countless hours switching between disconnected tools for lead management, team tasking, client portals, and revenue reporting.
+                </p>
+                <p style={{ color: '#cbc3d7', fontSize: '16px', lineHeight: '1.7', marginTop: '16px' }}>
+                  We built a single unified platform that combines high-touch sales pipelines with operational rigor, helping agency leaders focus on growth and client satisfaction.
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gap: '16px' }}>
+                <div style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(208, 188, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d0bcff', flexShrink: 0 }}>
+                    <span className="material-symbols-outlined">hub</span>
+                  </div>
+                  <div>
+                    <h4 style={{ color: '#e2e2e8', fontSize: '16px', fontWeight: 600 }}>Unified Workspace</h4>
+                    <p style={{ color: '#cbc3d7', fontSize: '14px', marginTop: '4px', lineHeight: '1.5' }}>Leads, clients, projects, tasks, and billing integrated under one roof.</p>
+                  </div>
+                </div>
+
+                <div style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(78, 222, 163, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4edea3', flexShrink: 0 }}>
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                  </div>
+                  <div>
+                    <h4 style={{ color: '#e2e2e8', fontSize: '16px', fontWeight: 600 }}>AI Sales Copilot</h4>
+                    <p style={{ color: '#cbc3d7', fontSize: '14px', marginTop: '4px', lineHeight: '1.5' }}>Automated deal scoring, follow-up generation, and intelligent lead insights.</p>
+                  </div>
+                </div>
+
+                <div style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(255, 185, 95, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffb95f', flexShrink: 0 }}>
+                    <span className="material-symbols-outlined">security</span>
+                  </div>
+                  <div>
+                    <h4 style={{ color: '#e2e2e8', fontSize: '16px', fontWeight: 600 }}>Enterprise Security</h4>
+                    <p style={{ color: '#cbc3d7', fontSize: '14px', marginTop: '4px', lineHeight: '1.5' }}>Role-based permissions, data encryption, and multi-tenant security defaults.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* 4. Footer */}
@@ -693,9 +840,8 @@ export default function LandingPage() {
               </h4>
               <nav style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <a href="#features" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '16px' }}>Features</a>
-                <a href="#pricing" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '16px' }}>Pricing</a>
-                <a href="#" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '16px' }}>Integrations</a>
-                <a href="#" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '16px' }}>Changelog</a>
+                <a href="#how-it-works" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '16px' }}>How It Works</a>
+                <a href="#about" style={{ color: '#cbc3d7', textDecoration: 'none', fontSize: '16px' }}>About</a>
               </nav>
             </div>
 
