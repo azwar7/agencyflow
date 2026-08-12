@@ -553,9 +553,9 @@ export default function LandingPage() {
               />
             </div>
 
-            {/* FLOATING UI WIDGET FRAGMENTS (Layered Z-Depth & Spatial Dimensionality) */}
+            {/* FLOATING UI WIDGET FRAGMENTS (Crisp HTML/CSS DOM Elements) */}
 
-            {/* Floating Card A: Top-Right Foreground (Z +60px, Crisp) */}
+            {/* Floating Card A: Top-Right Foreground (Deal Closed) */}
             <div
               className="animate-float-a hidden lg:flex"
               style={{
@@ -563,74 +563,73 @@ export default function LandingPage() {
                 top: '-20px',
                 right: '-15px',
                 transformStyle: 'preserve-3d',
-                transform: 'translateZ(60px) rotate(2deg)',
-                background: 'rgba(26, 28, 34, 0.88)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(208, 188, 255, 0.4)',
+                transform: 'rotate(2deg)',
+                background: '#181a20',
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale',
+                border: '1px solid rgba(208, 188, 255, 0.45)',
                 borderRadius: '12px',
                 padding: '14px 18px',
-                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7), 0 0 30px rgba(208, 188, 255, 0.25)',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.75), 0 0 30px rgba(208, 188, 255, 0.25)',
                 zIndex: 4,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                maxWidth: '280px',
+                maxWidth: '290px',
               }}
             >
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(78, 222, 163, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4edea3', flexShrink: 0 }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(78, 222, 163, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4edea3', flexShrink: 0 }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>task_alt</span>
               </div>
               <div>
                 <div style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#4edea3', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Deal Closed 🎉
+                  DEAL CLOSED 🎉
                 </div>
-                <div style={{ fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, color: '#e2e2e8', marginTop: '2px' }}>
+                <div style={{ fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, color: '#ffffff', marginTop: '2px' }}>
                   TechFlow Inc — $45,000
                 </div>
-                <div style={{ fontSize: '11px', color: '#cbc3d7', opacity: 0.8 }}>
+                <div style={{ fontSize: '11px', color: '#cbc3d7', opacity: 0.9 }}>
                   Enterprise Portal Contract
                 </div>
               </div>
             </div>
 
-            {/* Floating Card B: Top-Left Background (Z -40px, Depth-of-Field Blur) */}
+            {/* Floating Card B: Top-Left Crisp Pipeline Value Card */}
             <div
               className="animate-float-b hidden lg:flex"
               style={{
                 position: 'absolute',
-                top: '30px',
-                left: '-30px',
+                top: '25px',
+                left: '-35px',
                 transformStyle: 'preserve-3d',
-                transform: 'translateZ(-40px) rotate(-3deg)',
-                filter: 'blur(0.8px)',
-                background: 'rgba(23, 25, 30, 0.85)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid rgba(78, 222, 163, 0.3)',
+                transform: 'rotate(-2deg)',
+                background: '#181a20',
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale',
+                border: '1px solid rgba(208, 188, 255, 0.45)',
                 borderRadius: '12px',
                 padding: '14px 18px',
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6)',
-                zIndex: 1,
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.75), 0 0 25px rgba(208, 188, 255, 0.2)',
+                zIndex: 3,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '14px',
               }}
             >
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(208, 188, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d0bcff' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: 'rgba(208, 188, 255, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d0bcff', flexShrink: 0 }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>trending_up</span>
               </div>
               <div>
-                <div style={{ fontSize: '10px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#cbc3d7', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <div style={{ fontSize: '10px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   PIPELINE VALUE
                 </div>
-                <div style={{ fontSize: '18px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#e2e2e8', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  $173,500 <span style={{ fontSize: '11px', color: '#4edea3', background: 'rgba(78, 222, 163, 0.15)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>▲ 12.4%</span>
+                <div style={{ fontSize: '19px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                  $173,500 <span style={{ fontSize: '11px', color: '#4edea3', background: 'rgba(78, 222, 163, 0.2)', border: '1px solid rgba(78, 222, 163, 0.4)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>▲ 12.4%</span>
                 </div>
               </div>
             </div>
 
-            {/* Floating Card C: Bottom-Left Foreground (Z +45px, Crisp) */}
+            {/* Floating Card C: Bottom-Left Foreground (Crisp Urgent Task) */}
             <div
               className="animate-float-c hidden lg:flex"
               style={{
@@ -638,36 +637,36 @@ export default function LandingPage() {
                 bottom: '40px',
                 left: '-25px',
                 transformStyle: 'preserve-3d',
-                transform: 'translateZ(45px) rotate(-2deg)',
-                background: 'rgba(26, 28, 34, 0.9)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 185, 95, 0.4)',
+                transform: 'rotate(-2deg)',
+                background: '#181a20',
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale',
+                border: '1px solid rgba(255, 185, 95, 0.45)',
                 borderRadius: '12px',
                 padding: '14px 18px',
-                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 185, 95, 0.15)',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.75), 0 0 25px rgba(255, 185, 95, 0.15)',
                 zIndex: 4,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
-                minWidth: '240px',
+                minWidth: '245px',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffb95f', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>local_fire_department</span> URGENT TASK
                 </span>
-                <span style={{ fontSize: '10px', color: '#cbc3d7', opacity: 0.7 }}>Due Today</span>
+                <span style={{ fontSize: '10px', color: '#cbc3d7', fontWeight: 600 }}>Due Today</span>
               </div>
-              <div style={{ fontSize: '13px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#e2e2e8' }}>
+              <div style={{ fontSize: '13px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#ffffff' }}>
                 Send SOW Proposal to Michael
               </div>
-              <div style={{ width: '100%', height: '4px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: '4px', background: 'rgba(255, 255, 255, 0.12)', borderRadius: '2px', overflow: 'hidden' }}>
                 <div style={{ width: '85%', height: '100%', background: 'linear-gradient(90deg, #ffb95f, #4edea3)', borderRadius: '2px' }} />
               </div>
             </div>
 
-            {/* Floating Card D: Bottom-Right Midground (Z +25px) */}
+            {/* Floating Card D: Bottom-Right Crisp Active Team Badge */}
             <div
               className="animate-float-d hidden lg:flex"
               style={{
@@ -675,14 +674,14 @@ export default function LandingPage() {
                 bottom: '25px',
                 right: '-20px',
                 transformStyle: 'preserve-3d',
-                transform: 'translateZ(25px) rotate(3deg)',
-                background: 'rgba(26, 28, 34, 0.88)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(208, 188, 255, 0.35)',
+                transform: 'rotate(2deg)',
+                background: '#181a20',
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale',
+                border: '1px solid rgba(208, 188, 255, 0.4)',
                 borderRadius: '12px',
                 padding: '14px 18px',
-                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7)',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.75)',
                 zIndex: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -695,10 +694,10 @@ export default function LandingPage() {
                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ffb95f', color: '#442b00', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1a1c20', marginLeft: '-8px' }}>MC</div>
               </div>
               <div>
-                <div style={{ fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#e2e2e8' }}>
+                <div style={{ fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffffff' }}>
                   Active Team (4/4)
                 </div>
-                <div style={{ fontSize: '11px', color: '#4edea3', fontFamily: "'Geist', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '11px', color: '#4edea3', fontFamily: "'Geist', sans-serif", fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4edea3', display: 'inline-block' }} /> 98% Health Score
                 </div>
               </div>
