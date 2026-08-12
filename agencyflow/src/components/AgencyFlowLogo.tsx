@@ -8,7 +8,7 @@ interface AgencyFlowLogoProps {
   style?: React.CSSProperties;
 }
 
-export default function AgencyFlowLogo({ height = 32, href = '/', className = '', style }: AgencyFlowLogoProps) {
+export default function AgencyFlowLogo({ height = 36, href = '/', className = '', style }: AgencyFlowLogoProps) {
   const logoImage = (
     <img
       src="/agencyflow-logo-transparent.png"
@@ -23,7 +23,8 @@ export default function AgencyFlowLogo({ height = 32, href = '/', className = ''
         border: 'none',
         outline: 'none',
         boxShadow: 'none',
-        filter: 'drop-shadow(0 2px 8px rgba(99, 68, 245, 0.15))',
+        margin: 0,
+        padding: 0,
         ...style,
       }}
     />
