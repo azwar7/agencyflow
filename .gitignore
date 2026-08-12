@@ -1,3 +1,7 @@
+# Exclude Build.txt and docs folder
+Build.txt
+docs/
+
 # Dependencies
 node_modules/
 **/node_modules/
