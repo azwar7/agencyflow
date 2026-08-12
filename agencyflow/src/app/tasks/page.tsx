@@ -443,15 +443,58 @@ export default function TasksPage() {
     <AppShell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
         
-        {/* 1. Header Section */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        {/* 1. Header Section with Inline Summary Stat Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--on-surface)', letterSpacing: '-0.02em', margin: 0 }}>
               TASKS
             </h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem', margin: '0.2rem 0 0.5rem 0' }}>
               Manage your agency workload, deadlines, and assignments.
             </p>
+
+            {/* Inline Stat Bar (Unboxed, horizontal, separated by dot dividers) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--on-surface-variant)', paddingTop: '0.25rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <CheckSquare size={14} color="var(--primary)" />
+                <strong style={{ color: 'var(--on-surface)', fontWeight: 800 }}>{totalCount}</strong> Total Tasks
+                <span style={{ fontSize: '0.725rem', color: 'var(--on-surface-variant)', opacity: 0.7 }}>({pendingCount} pending)</span>
+              </div>
+
+              <span style={{ color: 'rgba(255, 255, 255, 0.2)', fontSize: '0.75rem' }}>•</span>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Clock size={14} color={dueTodayCount > 0 ? '#ffb95f' : 'var(--on-surface-variant)'} />
+                <strong style={{ color: dueTodayCount > 0 ? '#ffb95f' : 'var(--on-surface-variant)', fontWeight: 800 }}>{dueTodayCount}</strong> Due Today
+              </div>
+
+              <span style={{ color: 'rgba(255, 255, 255, 0.2)', fontSize: '0.75rem' }}>•</span>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                {overdueCount > 0 && (
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff8c82', boxShadow: '0 0 8px #ff8c82', display: 'inline-block' }} />
+                )}
+                <AlertTriangle size={14} color={overdueCount > 0 ? '#ff8c82' : 'var(--on-surface-variant)'} />
+                <strong style={{ color: overdueCount > 0 ? '#ff8c82' : 'var(--on-surface-variant)', fontWeight: 800 }}>{overdueCount}</strong> Overdue
+              </div>
+
+              <span style={{ color: 'rgba(255, 255, 255, 0.2)', fontSize: '0.75rem' }}>•</span>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                {highPriorityCount > 0 && (
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffb95f', boxShadow: '0 0 8px #ffb95f', display: 'inline-block' }} />
+                )}
+                <span style={{ fontSize: '0.85rem' }}>🔥</span>
+                <strong style={{ color: highPriorityCount > 0 ? '#ffb95f' : 'var(--on-surface-variant)', fontWeight: 800 }}>{highPriorityCount}</strong> High Priority
+              </div>
+
+              <span style={{ color: 'rgba(255, 255, 255, 0.2)', fontSize: '0.75rem' }}>•</span>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <CheckCircle2 size={14} color="var(--secondary)" />
+                <strong style={{ color: 'var(--secondary)', fontWeight: 800 }}>{completedCount}</strong> Completed
+              </div>
+            </div>
           </div>
 
           <button
@@ -464,55 +507,6 @@ export default function TasksPage() {
           >
             <Plus size={18} /> New Task
           </button>
-        </div>
-
-        {/* 2. Compact 5-Card KPI Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem' }}>
-          
-          {/* Card 1: Total Tasks */}
-          <div className="glass-card" style={{ padding: '0.85rem 1rem', borderRadius: '0.65rem', background: 'var(--surface-container-low)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>TOTAL TASKS</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--on-surface)' }}>{totalCount}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>{pendingCount} pending</span>
-            </div>
-          </div>
-
-          {/* Card 2: Due Today */}
-          <div className="glass-card" style={{ padding: '0.85rem 1rem', borderRadius: '0.65rem', background: 'var(--surface-container-low)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DUE TODAY</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--tertiary)' }}>{dueTodayCount}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--tertiary)', fontWeight: 600 }}>Action required</span>
-            </div>
-          </div>
-
-          {/* Card 3: Overdue */}
-          <div className="glass-card" style={{ padding: '0.85rem 1rem', borderRadius: '0.65rem', background: 'var(--surface-container-low)', border: overdueCount > 0 ? '1px solid rgba(255,180,171,0.25)' : undefined, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>OVERDUE</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--error)' }}>{overdueCount}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--error)', fontWeight: 600 }}>Urgent focus</span>
-            </div>
-          </div>
-
-          {/* Card 4: High Priority */}
-          <div className="glass-card" style={{ padding: '0.85rem 1rem', borderRadius: '0.65rem', background: 'var(--surface-container-low)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>HIGH PRIORITY</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>{highPriorityCount}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>Critical focus</span>
-            </div>
-          </div>
-
-          {/* Card 5: Completed */}
-          <div className="glass-card" style={{ padding: '0.85rem 1rem', borderRadius: '0.65rem', background: 'var(--surface-container-low)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>COMPLETED</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--secondary)' }}>{completedCount}</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--secondary)', fontWeight: 600 }}>Resolved</span>
-            </div>
-          </div>
         </div>
 
         {/* 3. Task Control Toolbar */}
