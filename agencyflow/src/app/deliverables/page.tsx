@@ -393,130 +393,185 @@ export default function DeliverablesPage() {
   return (
     <AppShell>
       <div className="page-content">
-        {/* Header Title Section */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            marginBottom: '1rem',
-          }}
-        >
-          <div>
-            <p
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--primary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                fontWeight: 700,
-                marginBottom: '0.2rem',
-              }}
-            >
-              WORKFLOW / CLIENT TOUCHPOINTS
-            </p>
-            <h1 style={{ fontSize: '1.85rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)' }}>
-              Deliverables & Approvals
-            </h1>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setUploadModalOpen(true)}
-              className="btn btn-primary"
-              style={{
-                padding: '0.55rem 1.15rem',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 4px 14px rgba(192, 193, 255, 0.2)',
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                upload_file
-              </span>
-              Upload Deliverable
-            </button>
-          </div>
-        </div>
-
-        {/* Toolbar: Search, Sort, View Toggle */}
+        {/* Header Title & Main CTA Bar */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.85rem',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
             marginBottom: '0.75rem',
+          }}
+        >
+          <div>
+            <p
+              style={{
+                fontSize: '0.7rem',
+                color: 'var(--primary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.18em',
+                fontWeight: 700,
+                marginBottom: '0.1rem',
+              }}
+            >
+              WORKFLOW / CLIENT TOUCHPOINTS
+            </p>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)', lineHeight: 1.15 }}>
+              Deliverables & Approvals
+            </h1>
+          </div>
+
+          <button
+            onClick={() => setUploadModalOpen(true)}
+            className="btn btn-primary"
+            style={{
+              padding: '0.45rem 1rem',
+              fontSize: '0.825rem',
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              boxShadow: '0 4px 12px rgba(192, 193, 255, 0.18)',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>
+              upload_file
+            </span>
+            Upload Deliverable
+          </button>
+        </div>
+
+        {/* Unified Control Row: Filter Tabs (Left) + Search & Tools (Right) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            marginBottom: '0.65rem',
             flexWrap: 'wrap',
           }}
         >
-          {/* Search Input with Keyboard Shortcut Hint & Focus Glow */}
-          <div style={{ position: 'relative', flex: 1, minWidth: '280px', maxWidth: '440px' }}>
-            <span
-              className="material-symbols-outlined"
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--on-surface-variant)',
-                fontSize: '18px',
-                pointerEvents: 'none',
-              }}
-            >
-              search
-            </span>
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search by file or project name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'rgba(23, 27, 38, 0.8)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(192, 193, 255, 0.2)',
-                borderRadius: 'var(--radius-DEFAULT)',
-                padding: '0.55rem 4rem 0.55rem 2.3rem',
-                fontSize: '0.85rem',
-                color: 'var(--on-surface)',
-                outline: 'none',
-                transition: 'all 0.2s ease',
-              }}
-              onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-              onBlur={(e) => (e.target.style.borderColor = 'rgba(192, 193, 255, 0.2)')}
-            />
-            <kbd
-              style={{
-                position: 'absolute',
-                right: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '4px',
-                padding: '0.15rem 0.4rem',
-                fontSize: '10px',
-                fontWeight: 600,
-                color: 'var(--on-surface-variant)',
-                fontFamily: 'monospace',
-                pointerEvents: 'none',
-              }}
-            >
-              ⌘K
-            </kbd>
+          {/* Left: Filter Pills Tabs */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '0.4rem',
+              overflowX: 'auto',
+              whiteSpace: 'nowrap',
+              alignItems: 'center',
+            }}
+          >
+            {[
+              { id: 'all', label: 'All Deliverables', count: counts.all },
+              { id: 'pending', label: 'Pending Review', count: counts.pending },
+              { id: 'approved', label: 'Approved', count: counts.approved },
+              { id: 'revisions', label: 'Revisions Requested', count: counts.revisions },
+            ].map((tab) => {
+              const isActive = filter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setFilter(tab.id as any)}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: isActive ? 'rgba(192, 193, 255, 0.18)' : 'rgba(23, 27, 38, 0.5)',
+                    color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
+                    border: isActive ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: isActive ? '0 0 10px rgba(192, 193, 255, 0.15)' : 'none',
+                  }}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      padding: '0.05rem 0.35rem',
+                      borderRadius: '9999px',
+                      background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.1)',
+                      color: isActive ? 'var(--on-primary)' : 'var(--on-surface-variant)',
+                    }}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Right Toolbar Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Right: Search, Sort, View Mode Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {/* Search Input (Compact 220px) */}
+            <div style={{ position: 'relative', width: '220px' }}>
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--on-surface-variant)',
+                  fontSize: '16px',
+                  pointerEvents: 'none',
+                }}
+              >
+                search
+              </span>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(23, 27, 38, 0.8)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(192, 193, 255, 0.2)',
+                  borderRadius: 'var(--radius-DEFAULT)',
+                  padding: '0.4rem 3.2rem 0.4rem 2.1rem',
+                  fontSize: '0.8rem',
+                  color: 'var(--on-surface)',
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+                onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
+                onBlur={(e) => (e.target.style.borderColor = 'rgba(192, 193, 255, 0.2)')}
+              />
+              <kbd
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '3px',
+                  padding: '0.1rem 0.35rem',
+                  fontSize: '9px',
+                  fontWeight: 600,
+                  color: 'var(--on-surface-variant)',
+                  fontFamily: 'monospace',
+                  pointerEvents: 'none',
+                }}
+              >
+                ⌘K
+              </kbd>
+            </div>
+
             {/* Sort Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', position: 'relative' }}>
-              <ArrowUpDown size={15} style={{ color: 'var(--on-surface-variant)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <ArrowUpDown size={14} style={{ color: 'var(--on-surface-variant)' }} />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
@@ -525,17 +580,17 @@ export default function DeliverablesPage() {
                   background: 'rgba(23, 27, 38, 0.8)',
                   border: '1px solid rgba(255, 255, 255, 0.12)',
                   borderRadius: 'var(--radius-DEFAULT)',
-                  padding: '0.55rem 0.85rem',
-                  fontSize: '0.85rem',
+                  padding: '0.4rem 0.65rem',
+                  fontSize: '0.8rem',
                   color: 'var(--on-surface)',
                   outline: 'none',
                   cursor: 'pointer',
                 }}
               >
-                <option value="newest">Sort by: Newest</option>
-                <option value="oldest">Sort by: Oldest</option>
-                <option value="client">Sort by: Project</option>
-                <option value="status">Sort by: Status</option>
+                <option value="newest">Sort: Newest</option>
+                <option value="oldest">Sort: Oldest</option>
+                <option value="client">Sort: Project</option>
+                <option value="status">Sort: Status</option>
               </select>
             </div>
 
@@ -546,7 +601,7 @@ export default function DeliverablesPage() {
                 background: 'rgba(23, 27, 38, 0.8)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: 'var(--radius-DEFAULT)',
-                padding: '3px',
+                padding: '2px',
                 gap: '2px',
               }}
             >
@@ -555,7 +610,7 @@ export default function DeliverablesPage() {
                 title="List View"
                 aria-label="List View"
                 style={{
-                  padding: '0.35rem 0.55rem',
+                  padding: '0.3rem 0.5rem',
                   borderRadius: '4px',
                   background: viewMode === 'list' ? 'rgba(192, 193, 255, 0.2)' : 'transparent',
                   color: viewMode === 'list' ? 'var(--primary)' : 'var(--on-surface-variant)',
@@ -565,14 +620,14 @@ export default function DeliverablesPage() {
                   alignItems: 'center',
                 }}
               >
-                <ListIcon size={16} />
+                <ListIcon size={14} />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
                 title="Grid View"
                 aria-label="Grid View"
                 style={{
-                  padding: '0.35rem 0.55rem',
+                  padding: '0.3rem 0.5rem',
                   borderRadius: '4px',
                   background: viewMode === 'grid' ? 'rgba(192, 193, 255, 0.2)' : 'transparent',
                   color: viewMode === 'grid' ? 'var(--primary)' : 'var(--on-surface-variant)',
@@ -582,105 +637,47 @@ export default function DeliverablesPage() {
                   alignItems: 'center',
                 }}
               >
-                <LayoutGrid size={16} />
+                <LayoutGrid size={14} />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Filter Pills Tabs (Tight spacing to Toolbar) */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.5rem',
-            marginBottom: '0.85rem',
-            overflowX: 'auto',
-            paddingBottom: '0.4rem',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {[
-            { id: 'all', label: 'All Deliverables', count: counts.all },
-            { id: 'pending', label: 'Pending Review', count: counts.pending },
-            { id: 'approved', label: 'Approved', count: counts.approved },
-            { id: 'revisions', label: 'Revisions Requested', count: counts.revisions },
-          ].map((tab) => {
-            const isActive = filter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setFilter(tab.id as any)}
-                style={{
-                  padding: '0.45rem 1rem',
-                  borderRadius: '9999px',
-                  fontSize: '0.825rem',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  background: isActive ? 'rgba(192, 193, 255, 0.18)' : 'rgba(23, 27, 38, 0.5)',
-                  color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
-                  border: isActive ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.08)',
-                  boxShadow: isActive ? '0 0 12px rgba(192, 193, 255, 0.2)' : 'none',
-                }}
-              >
-                <span>{tab.label}</span>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    padding: '0.1rem 0.4rem',
-                    borderRadius: '9999px',
-                    background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.1)',
-                    color: isActive ? 'var(--on-primary)' : 'var(--on-surface-variant)',
-                  }}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Compact Summary / Stats Bar (Fills empty space productively) */}
+        {/* Thin Sleek Summary Stats Bar */}
         <div
           style={{
             background: 'rgba(23, 27, 38, 0.6)',
             backdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '0.75rem',
-            padding: '0.55rem 1rem',
-            marginBottom: '1.15rem',
+            borderRadius: '0.6rem',
+            padding: '0.35rem 0.85rem',
+            marginBottom: '0.85rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '0.75rem',
-            fontSize: '0.8rem',
+            gap: '0.5rem',
+            fontSize: '0.775rem',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
-            <Clock size={14} style={{ color: '#4edea3' }} />
-            <span>Avg. Approval Time:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
+            <Clock size={13} style={{ color: '#4edea3' }} />
+            <span>Avg. Approval:</span>
             <strong style={{ color: 'var(--on-surface)' }}>1.2 days</strong>
           </div>
 
-          <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.1)' }} />
+          <div style={{ width: '1px', height: '12px', background: 'rgba(255, 255, 255, 0.1)' }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#ffb95f' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#ffb95f' }}>
               schedule
             </span>
             <span>Awaiting Review:</span>
             <span
               style={{
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: 700,
-                padding: '0.05rem 0.4rem',
+                padding: '0.05rem 0.35rem',
                 borderRadius: '9999px',
                 background: 'rgba(255, 185, 95, 0.15)',
                 color: '#ffb95f',
@@ -691,18 +688,18 @@ export default function DeliverablesPage() {
             </span>
           </div>
 
-          <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.1)' }} />
+          <div style={{ width: '1px', height: '12px', background: 'rgba(255, 255, 255, 0.1)' }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#ffb4ab' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#ffb4ab' }}>
               error_outline
             </span>
             <span>Overdue SLA:</span>
             <span
               style={{
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: 700,
-                padding: '0.05rem 0.4rem',
+                padding: '0.05rem 0.35rem',
                 borderRadius: '9999px',
                 background: 'rgba(255, 180, 171, 0.15)',
                 color: '#ffb4ab',
@@ -713,10 +710,10 @@ export default function DeliverablesPage() {
             </span>
           </div>
 
-          <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.1)' }} />
+          <div style={{ width: '1px', height: '12px', background: 'rgba(255, 255, 255, 0.1)' }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
-            <Calendar size={14} style={{ color: 'var(--primary)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
+            <Calendar size={13} style={{ color: 'var(--primary)' }} />
             <span>Next Milestone:</span>
             <strong style={{ color: 'var(--on-surface)' }}>Aug 15 (TechFlow v2.4)</strong>
           </div>
