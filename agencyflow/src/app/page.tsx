@@ -27,7 +27,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#111318', color: '#e2e2e8', fontFamily: "'Inter', sans-serif", overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#111318', color: '#e2e2e8', fontFamily: "'Inter', sans-serif" }}>
       
       {/* 1. Header Navigation — TRUE 3-COLUMN LAYOUT */}
       <header
@@ -353,7 +353,7 @@ export default function LandingPage() {
       </header>
 
       {/* 2. Hero Section (Noticeably Reduced Top Gap) */}
-      <main style={{ paddingTop: '80px', width: '100%', background: '#111318', overflowX: 'hidden' }}>
+      <main style={{ paddingTop: '80px', width: '100%', background: '#111318' }}>
         <section
           style={{
             position: 'relative',
@@ -964,6 +964,7 @@ export default function LandingPage() {
             margin: '0 auto',
             width: '100%',
             boxSizing: 'border-box',
+            overflow: 'hidden',
           }}
         >
           <motion.div
@@ -1083,6 +1084,7 @@ export default function LandingPage() {
             borderTop: '1px solid rgba(73, 68, 84, 0.2)',
             background: '#17191e',
             padding: '96px 24px',
+            overflow: 'hidden',
           }}
         >
           <div style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
@@ -1174,7 +1176,7 @@ export default function LandingPage() {
         whileInView="visible"
         viewport={{ once: true, amount: 0.15 }}
         variants={shouldReduceMotion ? reducedMotionFade : footerFade}
-        style={{ width: '100%', background: '#1a1c20', paddingTop: '80px', paddingBottom: '32px' }}
+        style={{ width: '100%', background: '#1a1c20', paddingTop: '80px', paddingBottom: '32px', overflow: 'hidden' }}
       >
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', marginBottom: '32px' }}>
