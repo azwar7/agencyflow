@@ -11,7 +11,7 @@ interface AgencyFlowLogoProps {
 export default function AgencyFlowLogo({ height = 36, href = '/', className = '', style }: AgencyFlowLogoProps) {
   const logoImage = (
     <img
-      src="/official-agencyflow-logo.png?v=4"
+      src="/official-agencyflow-logo.jpg?v=5"
       alt="AgencyFlow"
       className={className}
       style={{
@@ -19,13 +19,12 @@ export default function AgencyFlowLogo({ height = 36, href = '/', className = ''
         width: 'auto',
         objectFit: 'contain',
         display: 'block',
-        background: 'transparent',
         border: 'none',
         outline: 'none',
         boxShadow: 'none',
-        filter: 'none',
         margin: 0,
         padding: 0,
+        borderRadius: '4px',
         ...style,
       }}
     />
@@ -33,7 +32,7 @@ export default function AgencyFlowLogo({ height = 36, href = '/', className = ''
 
   if (href) {
     return (
-      <Link href={href} style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', background: 'transparent' }}>
+      <Link href={href} style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
         {logoImage}
       </Link>
     );
