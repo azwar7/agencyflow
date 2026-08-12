@@ -2,9 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
+import {
+  staggerContainer,
+  fadeUp,
+  slideInRight,
+  subtleScale,
+  footerFade,
+  reducedMotionFade,
+} from '@/lib/animations';
 
 export default function LandingPage() {
+  const shouldReduceMotion = useReducedMotion();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -801,8 +811,12 @@ export default function LandingPage() {
         </section>
 
         {/* 4. How It Works Section */}
-        <section
+        <motion.section
           id="how-it-works"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
           style={{
             scrollMarginTop: '100px',
             padding: '96px 24px',
@@ -812,21 +826,37 @@ export default function LandingPage() {
             boxSizing: 'border-box',
           }}
         >
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <span style={{ fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#4edea3', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+          <motion.div
+            variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+            style={{ textAlign: 'center', marginBottom: '64px' }}
+          >
+            <motion.span
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{ display: 'inline-block', fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#4edea3', textTransform: 'uppercase', letterSpacing: '0.15em' }}
+            >
               SIMPLE 3-STEP WORKFLOW
-            </span>
-            <h2 style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '40px', fontWeight: 700, color: '#e2e2e8', marginTop: '8px' }}>
+            </motion.span>
+            <motion.h2
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '40px', fontWeight: 700, color: '#e2e2e8', marginTop: '8px' }}
+            >
               How AgencyFlow Transforms Your Agency
-            </h2>
-            <p style={{ color: '#cbc3d7', fontSize: '18px', maxWidth: '600px', margin: '16px auto 0 auto' }}>
+            </motion.h2>
+            <motion.p
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+              style={{ color: '#cbc3d7', fontSize: '18px', maxWidth: '600px', margin: '16px auto 0 auto' }}
+            >
               Replace fragmented tools with an end-to-end operational engine built specifically for digital service providers.
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
+          <motion.div
+            variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}
+          >
             {/* Step 1 */}
-            <div
+            <motion.div
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
               style={{
                 background: '#1a1c20',
                 border: '1px solid rgba(73, 68, 84, 0.3)',
@@ -835,19 +865,23 @@ export default function LandingPage() {
                 position: 'relative',
               }}
             >
-              <div style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#d0bcff', opacity: 0.4, marginBottom: '16px' }}>
+              <motion.div
+                variants={shouldReduceMotion ? reducedMotionFade : subtleScale}
+                style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#d0bcff', opacity: 0.4, marginBottom: '16px' }}
+              >
                 01
-              </div>
+              </motion.div>
               <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#e2e2e8', marginBottom: '12px' }}>
                 Capture & Score Leads
               </h3>
               <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.6' }}>
                 Organize inbound inquiries, track deal values across custom Kanban stages, and let AI score lead quality in real time.
               </p>
-            </div>
+            </motion.div>
 
             {/* Step 2 */}
-            <div
+            <motion.div
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
               style={{
                 background: '#1a1c20',
                 border: '1px solid rgba(73, 68, 84, 0.3)',
@@ -856,19 +890,23 @@ export default function LandingPage() {
                 position: 'relative',
               }}
             >
-              <div style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#4edea3', opacity: 0.4, marginBottom: '16px' }}>
+              <motion.div
+                variants={shouldReduceMotion ? reducedMotionFade : subtleScale}
+                style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#4edea3', opacity: 0.4, marginBottom: '16px' }}
+              >
                 02
-              </div>
+              </motion.div>
               <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#e2e2e8', marginBottom: '12px' }}>
                 Execute & Deliver Projects
               </h3>
               <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.6' }}>
                 Assign team members, set task priorities, track milestone deadlines, and collaborate smoothly inside client workspaces.
               </p>
-            </div>
+            </motion.div>
 
             {/* Step 3 */}
-            <div
+            <motion.div
+              variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
               style={{
                 background: '#1a1c20',
                 border: '1px solid rgba(73, 68, 84, 0.3)',
@@ -877,22 +915,29 @@ export default function LandingPage() {
                 position: 'relative',
               }}
             >
-              <div style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#ffb95f', opacity: 0.4, marginBottom: '16px' }}>
+              <motion.div
+                variants={shouldReduceMotion ? reducedMotionFade : subtleScale}
+                style={{ fontSize: '48px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#ffb95f', opacity: 0.4, marginBottom: '16px' }}
+              >
                 03
-              </div>
+              </motion.div>
               <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#e2e2e8', marginBottom: '12px' }}>
                 Invoice & Scale Revenue
               </h3>
               <p style={{ color: '#cbc3d7', fontSize: '15px', lineHeight: '1.6' }}>
                 Generate proposals, send automated invoices, track client health metrics, and gain complete visibility into agency profitability.
               </p>
-            </div>
-          </div>
-        </section>
+            </motion.div>
+          </motion.div>
+        </motion.section>
 
         {/* 5. About Section */}
-        <section
+        <motion.section
           id="about"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}
           style={{
             scrollMarginTop: '100px',
             borderTop: '1px solid rgba(73, 68, 84, 0.2)',
@@ -902,59 +947,95 @@ export default function LandingPage() {
         >
           <div style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '48px', alignItems: 'center' }}>
-              <div>
-                <span style={{ fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+              <motion.div variants={shouldReduceMotion ? reducedMotionFade : staggerContainer}>
+                <motion.span
+                  variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+                  style={{ display: 'inline-block', fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.15em' }}
+                >
                   OUR MISSION
-                </span>
-                <h2 style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '38px', fontWeight: 700, color: '#e2e2e8', marginTop: '8px', lineHeight: '1.2' }}>
+                </motion.span>
+                <motion.h2
+                  variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+                  style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '38px', fontWeight: 700, color: '#e2e2e8', marginTop: '8px', lineHeight: '1.2' }}
+                >
                   Built by Agency Founders for High-Performance Teams
-                </h2>
-                <p style={{ color: '#cbc3d7', fontSize: '16px', lineHeight: '1.7', marginTop: '20px' }}>
+                </motion.h2>
+                <motion.p
+                  variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+                  style={{ color: '#cbc3d7', fontSize: '16px', lineHeight: '1.7', marginTop: '20px' }}
+                >
                   AgencyFlow was created to solve a fundamental problem: modern agencies waste countless hours switching between disconnected tools for lead management, team tasking, client portals, and revenue reporting.
-                </p>
-                <p style={{ color: '#cbc3d7', fontSize: '16px', lineHeight: '1.7', marginTop: '16px' }}>
+                </motion.p>
+                <motion.p
+                  variants={shouldReduceMotion ? reducedMotionFade : fadeUp}
+                  style={{ color: '#cbc3d7', fontSize: '16px', lineHeight: '1.7', marginTop: '16px' }}
+                >
                   We built a single unified platform that combines high-touch sales pipelines with operational rigor, helping agency leaders focus on growth and client satisfaction.
-                </p>
-              </div>
+                </motion.p>
+              </motion.div>
 
-              <div style={{ display: 'grid', gap: '16px' }}>
-                <div style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(208, 188, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d0bcff', flexShrink: 0 }}>
+              <motion.div variants={shouldReduceMotion ? reducedMotionFade : staggerContainer} style={{ display: 'grid', gap: '16px' }}>
+                <motion.div
+                  variants={shouldReduceMotion ? reducedMotionFade : slideInRight}
+                  style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}
+                >
+                  <motion.div
+                    variants={shouldReduceMotion ? reducedMotionFade : subtleScale}
+                    style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(208, 188, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d0bcff', flexShrink: 0 }}
+                  >
                     <span className="material-symbols-outlined">hub</span>
-                  </div>
+                  </motion.div>
                   <div>
                     <h4 style={{ color: '#e2e2e8', fontSize: '16px', fontWeight: 600 }}>Unified Workspace</h4>
                     <p style={{ color: '#cbc3d7', fontSize: '14px', marginTop: '4px', lineHeight: '1.5' }}>Leads, clients, projects, tasks, and billing integrated under one roof.</p>
                   </div>
-                </div>
+                </motion.div>
 
-                <div style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(78, 222, 163, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4edea3', flexShrink: 0 }}>
+                <motion.div
+                  variants={shouldReduceMotion ? reducedMotionFade : slideInRight}
+                  style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}
+                >
+                  <motion.div
+                    variants={shouldReduceMotion ? reducedMotionFade : subtleScale}
+                    style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(78, 222, 163, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4edea3', flexShrink: 0 }}
+                  >
                     <span className="material-symbols-outlined">auto_awesome</span>
-                  </div>
+                  </motion.div>
                   <div>
                     <h4 style={{ color: '#e2e2e8', fontSize: '16px', fontWeight: 600 }}>AI Sales Copilot</h4>
                     <p style={{ color: '#cbc3d7', fontSize: '14px', marginTop: '4px', lineHeight: '1.5' }}>Automated deal scoring, follow-up generation, and intelligent lead insights.</p>
                   </div>
-                </div>
+                </motion.div>
 
-                <div style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(255, 185, 95, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffb95f', flexShrink: 0 }}>
+                <motion.div
+                  variants={shouldReduceMotion ? reducedMotionFade : slideInRight}
+                  style={{ background: '#1a1c20', border: '1px solid rgba(73, 68, 84, 0.3)', borderRadius: '10px', padding: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}
+                >
+                  <motion.div
+                    variants={shouldReduceMotion ? reducedMotionFade : subtleScale}
+                    style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(255, 185, 95, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffb95f', flexShrink: 0 }}
+                  >
                     <span className="material-symbols-outlined">security</span>
-                  </div>
+                  </motion.div>
                   <div>
                     <h4 style={{ color: '#e2e2e8', fontSize: '16px', fontWeight: 600 }}>Enterprise Security</h4>
                     <p style={{ color: '#cbc3d7', fontSize: '14px', marginTop: '4px', lineHeight: '1.5' }}>Role-based permissions, data encryption, and multi-tenant security defaults.</p>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
-        </section>
+        </motion.section>
       </main>
 
       {/* 4. Footer */}
-      <footer style={{ width: '100%', background: '#1a1c20', paddingTop: '80px', paddingBottom: '32px' }}>
+      <motion.footer
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+        variants={shouldReduceMotion ? reducedMotionFade : footerFade}
+        style={{ width: '100%', background: '#1a1c20', paddingTop: '80px', paddingBottom: '32px' }}
+      >
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', marginBottom: '32px' }}>
             
@@ -1020,7 +1101,7 @@ export default function LandingPage() {
             </p>
           </div>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }
