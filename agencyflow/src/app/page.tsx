@@ -423,27 +423,67 @@ export default function LandingPage() {
             No credit card required. 14-day free trial.
           </div>
 
-          {/* macOS-Style Single Browser Frame around Real Dashboard Screenshot */}
+          {/* 3D Dimensional Hero Scene Stage */}
           <div
             style={{
               position: 'relative',
               width: '100%',
-              maxWidth: '1100px',
+              maxWidth: '1180px',
               margin: '0 auto',
+              padding: '20px 0 40px 0',
+              perspective: '1400px',
+              perspectiveOrigin: '50% 40%',
             }}
           >
+            {/* Ambient Background Grid Texture for Spatial Depth */}
             <div
               style={{
+                position: 'absolute',
+                inset: '-60px -40px',
+                backgroundImage: 'radial-gradient(rgba(208, 188, 255, 0.12) 1px, transparent 1px)',
+                backgroundSize: '36px 36px',
+                maskImage: 'radial-gradient(circle at 50% 50%, black 30%, transparent 75%)',
+                WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 30%, transparent 75%)',
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+            />
+
+            {/* Studio Purple/Violet Spotlight Glow Behind Floating Panel */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -55%)',
+                width: '550px',
+                height: '450px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(208, 188, 255, 0.28) 0%, rgba(139, 92, 246, 0.15) 45%, transparent 70%)',
+                filter: 'blur(90px)',
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+            />
+
+            {/* Central Angled 3D Dashboard Main Panel */}
+            <div
+              className="animate-hero-main"
+              style={{
                 position: 'relative',
-                borderRadius: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
+                width: '92%',
+                margin: '0 auto',
+                borderRadius: '14px',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
                 background: '#13151b',
-                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.7), 0 0 60px rgba(208, 188, 255, 0.15)',
-                overflow: 'hidden',
-                transform: 'none',
+                boxShadow: '0 30px 90px rgba(0, 0, 0, 0.85), 0 0 65px rgba(208, 188, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                transformStyle: 'preserve-3d',
+                transform: 'rotateY(-9deg) rotateX(7deg) rotateZ(-1deg)',
+                transition: 'transform 0.4s ease-out',
+                zIndex: 1,
               }}
             >
-              {/* Single macOS Window Titlebar */}
+              {/* macOS Window Header Bar */}
               <div
                 style={{
                   height: '42px',
@@ -453,16 +493,18 @@ export default function LandingPage() {
                   alignItems: 'center',
                   padding: '0 16px',
                   position: 'relative',
+                  borderTopLeftRadius: '13px',
+                  borderTopRightRadius: '13px',
                 }}
               >
-                {/* macOS Traffic Light Buttons */}
+                {/* Traffic Light Buttons */}
                 <div style={{ display: 'flex', gap: '8px', zIndex: 2 }}>
                   <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56', border: '1px solid rgba(0,0,0,0.2)' }} />
                   <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e', border: '1px solid rgba(0,0,0,0.2)' }} />
                   <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f', border: '1px solid rgba(0,0,0,0.2)' }} />
                 </div>
 
-                {/* Centered URL Address Bar */}
+                {/* Address Pill */}
                 <div
                   style={{
                     position: 'absolute',
@@ -497,7 +539,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Real Dashboard Screenshot (Crisp, High Quality) */}
+              {/* Real Dashboard UI Screenshot */}
               <img
                 src="/dashboard-preview.png"
                 alt="AgencyFlow Real Dashboard showing Pipeline Value, Active Projects, and Active Kanban Pipeline"
@@ -505,38 +547,175 @@ export default function LandingPage() {
                   width: '100%',
                   height: 'auto',
                   display: 'block',
-                  borderRadius: '0 0 12px 12px',
+                  borderBottomLeftRadius: '13px',
+                  borderBottomRightRadius: '13px',
                 }}
               />
             </div>
 
-            {/* Glowing Ambient Purple & Green Accent Spotlight behind Frame */}
+            {/* FLOATING UI WIDGET FRAGMENTS (Layered Z-Depth & Spatial Dimensionality) */}
+
+            {/* Floating Card A: Top-Right Foreground (Z +60px, Crisp) */}
             <div
+              className="animate-float-a hidden lg:flex"
               style={{
                 position: 'absolute',
-                top: '-30px',
-                right: '10%',
-                width: '320px',
-                height: '320px',
-                borderRadius: '50%',
-                background: 'rgba(208, 188, 255, 0.18)',
-                filter: 'blur(90px)',
-                pointerEvents: 'none',
-                zIndex: -1,
+                top: '-20px',
+                right: '-15px',
+                transformStyle: 'preserve-3d',
+                transform: 'translateZ(60px) rotate(2deg)',
+                background: 'rgba(26, 28, 34, 0.88)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(208, 188, 255, 0.4)',
+                borderRadius: '12px',
+                padding: '14px 18px',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7), 0 0 30px rgba(208, 188, 255, 0.25)',
+                zIndex: 4,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                maxWidth: '280px',
               }}
-            />
+            >
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(78, 222, 163, 0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4edea3', flexShrink: 0 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>task_alt</span>
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#4edea3', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Deal Closed 🎉
+                </div>
+                <div style={{ fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, color: '#e2e2e8', marginTop: '2px' }}>
+                  TechFlow Inc — $45,000
+                </div>
+                <div style={{ fontSize: '11px', color: '#cbc3d7', opacity: 0.8 }}>
+                  Enterprise Portal Contract
+                </div>
+              </div>
+            </div>
+
+            {/* Floating Card B: Top-Left Background (Z -40px, Depth-of-Field Blur) */}
+            <div
+              className="animate-float-b hidden lg:flex"
+              style={{
+                position: 'absolute',
+                top: '30px',
+                left: '-30px',
+                transformStyle: 'preserve-3d',
+                transform: 'translateZ(-40px) rotate(-3deg)',
+                filter: 'blur(0.8px)',
+                background: 'rgba(23, 25, 30, 0.85)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(78, 222, 163, 0.3)',
+                borderRadius: '12px',
+                padding: '14px 18px',
+                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6)',
+                zIndex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+              }}
+            >
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(208, 188, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d0bcff' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>trending_up</span>
+              </div>
+              <div>
+                <div style={{ fontSize: '10px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#cbc3d7', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  PIPELINE VALUE
+                </div>
+                <div style={{ fontSize: '18px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, color: '#e2e2e8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  $173,500 <span style={{ fontSize: '11px', color: '#4edea3', background: 'rgba(78, 222, 163, 0.15)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>▲ 12.4%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating Card C: Bottom-Left Foreground (Z +45px, Crisp) */}
+            <div
+              className="animate-float-c hidden lg:flex"
+              style={{
+                position: 'absolute',
+                bottom: '40px',
+                left: '-25px',
+                transformStyle: 'preserve-3d',
+                transform: 'translateZ(45px) rotate(-2deg)',
+                background: 'rgba(26, 28, 34, 0.9)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 185, 95, 0.4)',
+                borderRadius: '12px',
+                padding: '14px 18px',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 185, 95, 0.15)',
+                zIndex: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                minWidth: '240px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '11px', fontFamily: "'Geist', sans-serif", fontWeight: 700, color: '#ffb95f', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>local_fire_department</span> URGENT TASK
+                </span>
+                <span style={{ fontSize: '10px', color: '#cbc3d7', opacity: 0.7 }}>Due Today</span>
+              </div>
+              <div style={{ fontSize: '13px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#e2e2e8' }}>
+                Send SOW Proposal to Michael
+              </div>
+              <div style={{ width: '100%', height: '4px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ width: '85%', height: '100%', background: 'linear-gradient(90deg, #ffb95f, #4edea3)', borderRadius: '2px' }} />
+              </div>
+            </div>
+
+            {/* Floating Card D: Bottom-Right Midground (Z +25px) */}
+            <div
+              className="animate-float-d hidden lg:flex"
+              style={{
+                position: 'absolute',
+                bottom: '25px',
+                right: '-20px',
+                transformStyle: 'preserve-3d',
+                transform: 'translateZ(25px) rotate(3deg)',
+                background: 'rgba(26, 28, 34, 0.88)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(208, 188, 255, 0.35)',
+                borderRadius: '12px',
+                padding: '14px 18px',
+                boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7)',
+                zIndex: 3,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', position: 'relative' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#d0bcff', color: '#23005c', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1a1c20' }}>AS</div>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#4edea3', color: '#003822', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1a1c20', marginLeft: '-8px' }}>SJ</div>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ffb95f', color: '#442b00', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1a1c20', marginLeft: '-8px' }}>MC</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', fontFamily: "'Geist', sans-serif", fontWeight: 600, color: '#e2e2e8' }}>
+                  Active Team (4/4)
+                </div>
+                <div style={{ fontSize: '11px', color: '#4edea3', fontFamily: "'Geist', sans-serif", fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4edea3', display: 'inline-block' }} /> 98% Health Score
+                </div>
+              </div>
+            </div>
+
+            {/* Soft Ground Reflection Shadow Plane */}
             <div
               style={{
                 position: 'absolute',
-                bottom: '-30px',
+                bottom: '-50px',
                 left: '10%',
-                width: '320px',
-                height: '320px',
-                borderRadius: '50%',
-                background: 'rgba(78, 222, 163, 0.12)',
-                filter: 'blur(90px)',
+                right: '10%',
+                height: '60px',
+                background: 'radial-gradient(ellipse at 50% 0%, rgba(208, 188, 255, 0.25) 0%, rgba(0, 0, 0, 0.8) 70%, transparent 100%)',
+                filter: 'blur(15px)',
                 pointerEvents: 'none',
-                zIndex: -1,
+                zIndex: 0,
               }}
             />
           </div>

@@ -422,4 +422,66 @@ button {
   animation-play-state: paused;
 }
 
+/* 3D Dimensional Hero Scene Keyframe Animations */
+@keyframes heroFloatMain {
+  0%, 100% {
+    transform: rotateY(-9deg) rotateX(7deg) rotateZ(-1deg) translateY(0px);
+  }
+  50% {
+    transform: rotateY(-9deg) rotateX(7deg) rotateZ(-1deg) translateY(-14px);
+  }
+}
+
+@keyframes floatCardA {
+  0%, 100% {
+    transform: translateZ(60px) translateY(0px) rotate(2deg);
+  }
+  50% {
+    transform: translateZ(60px) translateY(-10px) rotate(1deg);
+  }
+}
+
+@keyframes floatCardB {
+  0%, 100% {
+    transform: translateZ(-40px) translateY(0px) rotate(-3deg);
+  }
+  50% {
+    transform: translateZ(-40px) translateY(-8px) rotate(-2deg);
+  }
+}
+
+@keyframes floatCardC {
+  0%, 100% {
+    transform: translateZ(45px) translateY(0px) rotate(-2deg);
+  }
+  50% {
+    transform: translateZ(45px) translateY(-12px) rotate(-1deg);
+  }
+}
+
+@keyframes floatCardD {
+  0%, 100% {
+    transform: translateZ(25px) translateY(0px) rotate(3deg);
+  }
+  50% {
+    transform: translateZ(25px) translateY(-9px) rotate(2deg);
+  }
+}
+
+.animate-hero-main {
+  animation: heroFloatMain 7s ease-in-out infinite;
+}
+.animate-float-a {
+  animation: floatCardA 5.5s ease-in-out infinite;
+}
+.animate-float-b {
+  animation: floatCardB 6.5s ease-in-out infinite;
+}
+.animate-float-c {
+  animation: floatCardC 5.8s ease-in-out infinite;
+}
+.animate-float-d {
+  animation: floatCardD 6.2s ease-in-out infinite;
+}
+
 
