@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, User, Briefcase, ArrowRight, CheckCircle2, Shield } from 'lucide-react';
 
+import AgencyFlowLogo from '@/components/AgencyFlowLogo';
+
 export default function SignupPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState('');
@@ -50,12 +52,7 @@ export default function SignupPage() {
       >
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', color: 'var(--on-surface)' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '0.6rem', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900, fontSize: '1rem' }}>
-              AF
-            </div>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.03em' }}>AgencyFlow</span>
-          </Link>
+          <AgencyFlowLogo height={40} href="/" />
           <h1 style={{ fontSize: '1.35rem', fontWeight: 800, marginTop: '1.25rem', color: 'var(--on-surface)' }}>Start Your 14-Day Free Trial</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>No credit card required. Full CRM & Operations workspace access.</p>
         </div>

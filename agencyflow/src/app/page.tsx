@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 
 export default function LandingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -47,37 +48,7 @@ export default function LandingPage() {
         >
           {/* 1. LEFT SECTION (Absolute Left Anchor) */}
           <div style={{ justifySelf: 'start' }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #d0bcff 0%, #a078ff 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#23005c',
-                  fontWeight: 900,
-                  fontSize: '1.1rem',
-                  boxShadow: '0 0 20px rgba(208, 188, 255, 0.3)',
-                }}
-              >
-                AF
-              </div>
-              <span
-                style={{
-                  fontFamily: "'Hanken Grotesk', sans-serif",
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  color: '#e2e2e8',
-                  letterSpacing: '-0.02em',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                AgencyFlow
-              </span>
-            </Link>
+            <AgencyFlowLogo height={38} href="/" />
           </div>
 
           {/* 2. CENTER SECTION (True Viewport Centered) */}
@@ -988,26 +959,8 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', marginBottom: '32px' }}>
             
             <div style={{ gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                <div
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '6px',
-                    background: '#d0bcff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#23005c',
-                    fontWeight: 900,
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  AF
-                </div>
-                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '24px', fontWeight: 600, color: '#e2e2e8' }}>
-                  AgencyFlow
-                </span>
+              <div style={{ marginBottom: '16px' }}>
+                <AgencyFlowLogo height={34} href="/" />
               </div>
               <p style={{ color: '#cbc3d7', fontSize: '16px', lineHeight: '1.6', maxWidth: '320px', marginBottom: '16px' }}>
                 The operating system for modern agencies. Streamline your workflow, manage clients, and scale with confidence.

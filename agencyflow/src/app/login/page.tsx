@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, Mail, Lock, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
 
+import AgencyFlowLogo from '@/components/AgencyFlowLogo';
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -48,12 +50,7 @@ export default function LoginPage() {
       >
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', color: 'var(--on-surface)' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '0.6rem', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 900, fontSize: '1rem' }}>
-              AF
-            </div>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.03em' }}>AgencyFlow</span>
-          </Link>
+          <AgencyFlowLogo height={40} href="/" />
           <h1 style={{ fontSize: '1.35rem', fontWeight: 800, marginTop: '1.25rem', color: 'var(--on-surface)' }}>Welcome Back</h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>Sign in to your agency operations workspace.</p>
         </div>
