@@ -400,8 +400,8 @@ export default function DeliverablesPage() {
             alignItems: 'flex-end',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '1.5rem',
-            marginBottom: '1.5rem',
+            gap: '1rem',
+            marginBottom: '1rem',
           }}
         >
           <div>
@@ -412,12 +412,12 @@ export default function DeliverablesPage() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.2em',
                 fontWeight: 700,
-                marginBottom: '0.25rem',
+                marginBottom: '0.2rem',
               }}
             >
               WORKFLOW / CLIENT TOUCHPOINTS
             </p>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)' }}>
+            <h1 style={{ fontSize: '1.85rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)' }}>
               Deliverables & Approvals
             </h1>
           </div>
@@ -427,7 +427,7 @@ export default function DeliverablesPage() {
               onClick={() => setUploadModalOpen(true)}
               className="btn btn-primary"
               style={{
-                padding: '0.65rem 1.25rem',
+                padding: '0.55rem 1.15rem',
                 whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
@@ -449,8 +449,8 @@ export default function DeliverablesPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '1rem',
-            marginBottom: '1.25rem',
+            gap: '0.85rem',
+            marginBottom: '0.75rem',
             flexWrap: 'wrap',
           }}
         >
@@ -464,7 +464,7 @@ export default function DeliverablesPage() {
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: 'var(--on-surface-variant)',
-                fontSize: '20px',
+                fontSize: '18px',
                 pointerEvents: 'none',
               }}
             >
@@ -482,8 +482,8 @@ export default function DeliverablesPage() {
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(192, 193, 255, 0.2)',
                 borderRadius: 'var(--radius-DEFAULT)',
-                padding: '0.65rem 4rem 0.65rem 2.5rem',
-                fontSize: '0.875rem',
+                padding: '0.55rem 4rem 0.55rem 2.3rem',
+                fontSize: '0.85rem',
                 color: 'var(--on-surface)',
                 outline: 'none',
                 transition: 'all 0.2s ease',
@@ -525,7 +525,7 @@ export default function DeliverablesPage() {
                   background: 'rgba(23, 27, 38, 0.8)',
                   border: '1px solid rgba(255, 255, 255, 0.12)',
                   borderRadius: 'var(--radius-DEFAULT)',
-                  padding: '0.6rem 0.85rem',
+                  padding: '0.55rem 0.85rem',
                   fontSize: '0.85rem',
                   color: 'var(--on-surface)',
                   outline: 'none',
@@ -555,7 +555,7 @@ export default function DeliverablesPage() {
                 title="List View"
                 aria-label="List View"
                 style={{
-                  padding: '0.4rem 0.6rem',
+                  padding: '0.35rem 0.55rem',
                   borderRadius: '4px',
                   background: viewMode === 'list' ? 'rgba(192, 193, 255, 0.2)' : 'transparent',
                   color: viewMode === 'list' ? 'var(--primary)' : 'var(--on-surface-variant)',
@@ -572,7 +572,7 @@ export default function DeliverablesPage() {
                 title="Grid View"
                 aria-label="Grid View"
                 style={{
-                  padding: '0.4rem 0.6rem',
+                  padding: '0.35rem 0.55rem',
                   borderRadius: '4px',
                   background: viewMode === 'grid' ? 'rgba(192, 193, 255, 0.2)' : 'transparent',
                   color: viewMode === 'grid' ? 'var(--primary)' : 'var(--on-surface-variant)',
@@ -588,16 +588,15 @@ export default function DeliverablesPage() {
           </div>
         </div>
 
-        {/* Filter Pills Tabs (Horizontally Scrollable on Mobile with Count Badges) */}
+        {/* Filter Pills Tabs (Tight spacing to Toolbar) */}
         <div
           style={{
             display: 'flex',
-            gap: '0.6rem',
-            marginBottom: '1.5rem',
+            gap: '0.5rem',
+            marginBottom: '0.85rem',
             overflowX: 'auto',
-            paddingBottom: '0.5rem',
+            paddingBottom: '0.4rem',
             whiteSpace: 'nowrap',
-            borderBottom: '1px solid rgba(70, 69, 84, 0.15)',
           }}
         >
           {[
@@ -612,9 +611,9 @@ export default function DeliverablesPage() {
                 key={tab.id}
                 onClick={() => setFilter(tab.id as any)}
                 style={{
-                  padding: '0.55rem 1.1rem',
+                  padding: '0.45rem 1rem',
                   borderRadius: '9999px',
-                  fontSize: '0.85rem',
+                  fontSize: '0.825rem',
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
@@ -622,7 +621,7 @@ export default function DeliverablesPage() {
                   position: 'relative',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
+                  gap: '0.45rem',
                   background: isActive ? 'rgba(192, 193, 255, 0.18)' : 'rgba(23, 27, 38, 0.5)',
                   color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
                   border: isActive ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.08)',
@@ -632,9 +631,9 @@ export default function DeliverablesPage() {
                 <span>{tab.label}</span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: '10px',
                     fontWeight: 700,
-                    padding: '0.1rem 0.45rem',
+                    padding: '0.1rem 0.4rem',
                     borderRadius: '9999px',
                     background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.1)',
                     color: isActive ? 'var(--on-primary)' : 'var(--on-surface-variant)',
@@ -645,6 +644,82 @@ export default function DeliverablesPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Compact Summary / Stats Bar (Fills empty space productively) */}
+        <div
+          style={{
+            background: 'rgba(23, 27, 38, 0.6)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '0.75rem',
+            padding: '0.55rem 1rem',
+            marginBottom: '1.15rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            fontSize: '0.8rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
+            <Clock size={14} style={{ color: '#4edea3' }} />
+            <span>Avg. Approval Time:</span>
+            <strong style={{ color: 'var(--on-surface)' }}>1.2 days</strong>
+          </div>
+
+          <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.1)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#ffb95f' }}>
+              schedule
+            </span>
+            <span>Awaiting Review:</span>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '0.05rem 0.4rem',
+                borderRadius: '9999px',
+                background: 'rgba(255, 185, 95, 0.15)',
+                color: '#ffb95f',
+                border: '1px solid rgba(255, 185, 95, 0.3)',
+              }}
+            >
+              4 items
+            </span>
+          </div>
+
+          <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.1)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#ffb4ab' }}>
+              error_outline
+            </span>
+            <span>Overdue SLA:</span>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '0.05rem 0.4rem',
+                borderRadius: '9999px',
+                background: 'rgba(255, 180, 171, 0.15)',
+                color: '#ffb4ab',
+                border: '1px solid rgba(255, 180, 171, 0.3)',
+              }}
+            >
+              2 items
+            </span>
+          </div>
+
+          <div style={{ width: '1px', height: '14px', background: 'rgba(255, 255, 255, 0.1)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--on-surface-variant)' }}>
+            <Calendar size={14} style={{ color: 'var(--primary)' }} />
+            <span>Next Milestone:</span>
+            <strong style={{ color: 'var(--on-surface)' }}>Aug 15 (TechFlow v2.4)</strong>
+          </div>
         </div>
 
         {/* Skeleton Loading State */}
