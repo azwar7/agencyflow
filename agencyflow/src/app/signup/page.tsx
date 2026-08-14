@@ -76,8 +76,8 @@ export default function SignupPage() {
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <AgencyFlowLogo height={40} href="/" />
-          <h1 style={{ fontSize: '1.35rem', fontWeight: 800, marginTop: '1.25rem', color: 'var(--on-surface)' }}>Start Your 14-Day Free Trial</h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>Create a fresh, isolated workspace for your agency.</p>
+          <h1 style={{ fontSize: '1.35rem', fontWeight: 800, marginTop: '1.25rem', color: 'var(--on-surface)' }}>Set Up Your Agency Workspace</h1>
+          <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>Create your account and bring your clients, projects, and team together in one place.</p>
         </div>
 
         {error && (
