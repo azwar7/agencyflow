@@ -480,7 +480,7 @@ export default function LandingPage() {
               margin: '0 auto 24px auto',
             }}
           >
-            Run Your Agency <br />
+            One Workspace. Every Client. <br />
             <span
               style={{
                 background: 'linear-gradient(90deg, #d0bcff 0%, #4edea3 100%)',
@@ -488,7 +488,7 @@ export default function LandingPage() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Without the Chaos.
+              Zero Chaos.
             </span>
           </h1>
 
