@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/context/AuthContext';
 import { NavigationProgress } from '@/components/NavigationProgress';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -28,10 +29,12 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-on-background">
-        <AuthProvider>
-          <NavigationProgress />
-          {children}
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <NavigationProgress />
+            {children}
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

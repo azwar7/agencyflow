@@ -1,64 +1,88 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const deals = await prisma.deal.findMany({
-      include: { company: true, contact: true },
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+
+    const proposals = await prisma.proposal.findMany({
+      where: { workspaceId },
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json({ success: true, data: deals });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to fetch proposals' }, { status: 500 });
+
+    const formatted = proposals.map((p) => ({
+      id: p.id,
+      title: p.title,
+      client: p.client,
+      value: `$${p.value.toLocaleString()}`,
+      status: p.status as any,
+      preparedBy: p.preparedBy || session.fullName,
+      acceptedBy: p.acceptedBy,
+      acceptedTitle: p.acceptedTitle,
+      date: p.date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+    }));
+
+    return NextResponse.json({ success: true, data: formatted });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    const session = await getAuthSession(req);
+    const workspaceId = session.workspaceId;
     const body = await req.json();
-    const workspace = await prisma.workspace.findFirst();
-    if (!workspace) return NextResponse.json({ success: false, error: 'No workspace' }, { status: 400 });
 
-    const newDeal = await prisma.deal.create({
+    const newProposal = await prisma.proposal.create({
       data: {
-        workspaceId: workspace.id,
-        title: body.title,
-        value: Number(body.value) || 25000,
-        stage: 'PROPOSAL',
+        workspaceId,
+        companyId: body.companyId || null,
+        title: body.title || 'Master Services Agreement SOW',
+        client: body.client || 'Client Organization',
+        value: parseFloat(body.value || '25000'),
+        status: body.status || 'SENT',
+        preparedBy: body.preparedBy || session.fullName,
       },
     });
 
-    return NextResponse.json({ success: true, data: newDeal });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to create proposal' }, { status: 500 });
+    return NextResponse.json({ success: true, data: newProposal }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
   }
 }
 
 export async function PATCH(req: Request) {
   try {
+    const session = await getAuthSession(req);
+    const workspaceId = session.workspaceId;
     const body = await req.json();
-    if (!body.id) return NextResponse.json({ success: false, error: 'ID required' }, { status: 400 });
 
-    const updated = await prisma.deal.update({
-      where: { id: body.id },
-      data: { stage: body.stage || 'CLOSED_WON' },
+    await prisma.proposal.updateMany({
+      where: { id: body.id, workspaceId },
+      data: { status: body.status || 'ACCEPTED' },
     });
 
-    return NextResponse.json({ success: true, data: updated });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to update proposal' }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
   }
 }
 
 export async function DELETE(req: Request) {
   try {
+    const session = await getAuthSession(req);
+    const workspaceId = session.workspaceId;
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+
     if (!id) return NextResponse.json({ success: false, error: 'ID required' }, { status: 400 });
 
-    await prisma.deal.delete({ where: { id } });
+    await prisma.proposal.deleteMany({ where: { id, workspaceId } });
     return NextResponse.json({ success: true, message: 'Proposal deleted' });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to delete proposal' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

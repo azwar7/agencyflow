@@ -127,12 +127,34 @@ export default function AnalyticsPage() {
     document.body.removeChild(link);
   };
 
-  const kpis = analyticsData?.kpis;
+  const kpis = analyticsData?.kpis || {
+    avgDealSize: '$0',
+    avgDealTrend: '0%',
+    avgSalesCycle: '0 Days',
+    cycleTrend: '0%',
+    winRate: '0%',
+    winRateTrend: '0%',
+    pipelineValue: '$0',
+    pipelineTrend: '$0',
+    activeDealsCount: 0,
+    revenueGrowth: '0%',
+    totalRevenue: '$0',
+    projectedRevenue: '$0',
+  };
   const monthlyData = analyticsData?.monthlyData || [];
   const funnel = analyticsData?.funnel || [];
-  const pipelineInsights = analyticsData?.pipelineInsights;
+  const pipelineInsights = analyticsData?.pipelineInsights || {
+    overallConversion: '0%',
+    largestDropoff: 'N/A',
+    avgTimeToClose: '0 days',
+  };
   const topClients = analyticsData?.topClients || [];
-  const projectMetrics = analyticsData?.projectMetrics;
+  const projectMetrics = analyticsData?.projectMetrics || {
+    activeProjectsCount: 0,
+    projectsOnTrack: 0,
+    projectsAtRisk: 0,
+    overdueTasksCount: 0,
+  };
   const insights = analyticsData?.insights || [];
 
   return (

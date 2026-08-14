@@ -32,43 +32,11 @@ interface ProposalItem {
   date: string;
 }
 
-const initialProposals: ProposalItem[] = [
-  {
-    id: 'prop-1',
-    title: 'Elevate DTC Brand Campaign Engine SOW',
-    client: 'Elevate Creative Co.',
-    value: '$36,000',
-    status: 'SENT',
-    preparedBy: 'David Miller',
-    acceptedBy: 'Rachel Green',
-    acceptedTitle: 'CEO, Elevate Creative Co.',
-    date: 'Aug 10, 2026',
-  },
-  {
-    id: 'prop-2',
-    title: 'Summit Logistics Operations Architecture',
-    client: 'Summit Logistics',
-    value: '$48,000',
-    status: 'ACCEPTED',
-    preparedBy: 'Marcus Vance',
-    acceptedBy: 'John Summit',
-    acceptedTitle: 'VP Operations',
-    date: 'Aug 05, 2026',
-  },
-  {
-    id: 'prop-3',
-    title: 'Vanguard FinTech Mobile MVP Retainer',
-    client: 'Vanguard FinTech',
-    value: '$65,000',
-    status: 'DRAFT',
-    preparedBy: 'Elena Rostova',
-    date: 'Aug 02, 2026',
-  },
-];
+import { EmptyState } from '@/components/EmptyState';
 
 export default function ProposalsPage() {
-  const [proposals, setProposals] = useState<ProposalItem[]>(initialProposals);
-  const [selectedProposal, setSelectedProposal] = useState<ProposalItem>(initialProposals[0]);
+  const [proposals, setProposals] = useState<ProposalItem[]>([]);
+  const [selectedProposal, setSelectedProposal] = useState<ProposalItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
@@ -87,23 +55,21 @@ export default function ProposalsPage() {
     try {
       const res = await fetch('/api/v1/proposals');
       const json = await res.json();
-      if (json.success && json.data.length > 0) {
-        const mapped = json.data.map((d: any) => ({
-          id: d.id,
-          title: d.title,
-          client: d.company?.name || 'Client Account',
-          value: `$${d.value?.toLocaleString() || '25,000'}`,
-          status: d.stage === 'CLOSED_WON' ? 'ACCEPTED' : d.stage === 'PROPOSAL' ? 'SENT' : 'DRAFT',
-          preparedBy: 'David Miller',
-          acceptedBy: d.stage === 'CLOSED_WON' ? 'Rachel Green' : undefined,
-          acceptedTitle: d.stage === 'CLOSED_WON' ? 'CEO, Elevate Creative Co.' : undefined,
-          date: 'Aug 2026',
-        }));
-        setProposals(mapped);
-        setSelectedProposal(mapped[0]);
+      if (json.success && Array.isArray(json.data)) {
+        setProposals(json.data);
+        if (json.data.length > 0) {
+          setSelectedProposal(json.data[0]);
+        } else {
+          setSelectedProposal(null);
+        }
+      } else {
+        setProposals([]);
+        setSelectedProposal(null);
       }
     } catch (err) {
       console.error(err);
+      setProposals([]);
+      setSelectedProposal(null);
     }
   };
 
@@ -143,6 +109,7 @@ export default function ProposalsPage() {
   };
 
   const handleSignProposal = async () => {
+    if (!selectedProposal) return;
     try {
       await fetch('/api/v1/proposals', {
         method: 'PATCH',
@@ -153,23 +120,28 @@ export default function ProposalsPage() {
       console.error(err);
     }
 
+    const currentId = selectedProposal.id;
     const updated = proposals.map((p) =>
-      p.id === selectedProposal.id
+      p.id === currentId
         ? { ...p, status: 'ACCEPTED' as const, acceptedBy: signerName, acceptedTitle: signerTitle }
         : p
     );
 
     setProposals(updated);
-    setSelectedProposal((prev) => ({ ...prev, status: 'ACCEPTED', acceptedBy: signerName, acceptedTitle: signerTitle }));
+    setSelectedProposal((prev) =>
+      prev ? { ...prev, status: 'ACCEPTED' as const, acceptedBy: signerName, acceptedTitle: signerTitle } : null
+    );
     setIsSignModalOpen(false);
     setIsSigned(true);
     setTimeout(() => setIsSigned(false), 3000);
   };
 
   const handleSendProposal = async () => {
-    const updated = proposals.map((p) => (p.id === selectedProposal.id ? { ...p, status: 'SENT' as const } : p));
+    if (!selectedProposal) return;
+    const currentId = selectedProposal.id;
+    const updated = proposals.map((p) => (p.id === currentId ? { ...p, status: 'SENT' as const } : p));
     setProposals(updated);
-    setSelectedProposal((prev) => ({ ...prev, status: 'SENT' }));
+    setSelectedProposal((prev) => (prev ? { ...prev, status: 'SENT' as const } : null));
   };
 
   const filteredProposals = proposals.filter(
@@ -201,72 +173,89 @@ export default function ProposalsPage() {
         </div>
 
         {/* Master Detail Split Pane Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '1.5rem', alignItems: 'start' }}>
-          
-          {/* Left Master Proposals List */}
-          <div className="glass-card" style={{ padding: '1rem', borderRadius: '1rem', background: 'var(--surface-container)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--surface-container-high)', padding: '0.5rem 0.85rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <Search size={16} color="var(--on-surface-variant)" />
-              <input
-                type="text"
-                placeholder="Filter proposals..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--on-surface)', fontSize: '0.85rem', outline: 'none', width: '100%' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {filteredProposals.map((p) => {
-                const isSelected = selectedProposal.id === p.id;
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => setSelectedProposal(p)}
-                    style={{
-                      padding: '0.85rem 1rem',
-                      borderRadius: '0.75rem',
-                      background: isSelected ? 'rgba(192, 193, 255, 0.12)' : 'var(--surface-container-low)',
-                      border: isSelected ? '1px solid rgba(192, 193, 255, 0.3)' : '1px solid rgba(255,255,255,0.05)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.35rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>{p.client}</span>
-                      <span
-                        style={{
-                          padding: '0.15rem 0.5rem',
-                          borderRadius: '9999px',
-                          fontSize: '0.65rem',
-                          fontWeight: 800,
-                          background: p.status === 'ACCEPTED' ? 'rgba(78, 222, 163, 0.2)' : 'rgba(255, 185, 95, 0.2)',
-                          color: p.status === 'ACCEPTED' ? 'var(--secondary)' : 'var(--tertiary)',
-                        }}
-                      >
-                        {p.status}
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)', margin: 0 }}>{p.title}</p>
-                    <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface-variant)', margin: 0 }}>{p.value}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right Document Preview Workspace */}
-          <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#ffffff', color: '#111827', display: 'flex', flexDirection: 'column', gap: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+        {filteredProposals.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title={searchQuery ? 'No matching proposals' : 'No proposals yet'}
+            description={
+              searchQuery
+                ? 'No proposals matched your search query.'
+                : 'Draft statements of work, send formal contract proposals, and track client e-signatures.'
+            }
+            actionLabel={searchQuery ? 'Clear Search' : '+ Create First Proposal'}
+            onAction={() => {
+              if (searchQuery) setSearchQuery('');
+              else setIsNewModalOpen(true);
+            }}
+          />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '1.5rem', alignItems: 'start' }}>
             
-            {/* Toolbar Header (Dark Overlay Actions) */}
-            <div style={{ background: '#1c1f2a', padding: '0.85rem 1.25rem', borderRadius: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FileCheck size={18} color="var(--primary)" />
-                <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{selectedProposal.title}</span>
+            {/* Left Master Proposals List */}
+            <div className="glass-card" style={{ padding: '1rem', borderRadius: '1rem', background: 'var(--surface-container)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--surface-container-high)', padding: '0.5rem 0.85rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <Search size={16} color="var(--on-surface-variant)" />
+                <input
+                  type="text"
+                  placeholder="Filter proposals..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--on-surface)', fontSize: '0.85rem', outline: 'none', width: '100%' }}
+                />
               </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {filteredProposals.map((p) => {
+                  const isSelected = selectedProposal?.id === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => setSelectedProposal(p)}
+                      style={{
+                        padding: '0.85rem 1rem',
+                        borderRadius: '0.75rem',
+                        background: isSelected ? 'rgba(192, 193, 255, 0.12)' : 'var(--surface-container-low)',
+                        border: isSelected ? '1px solid rgba(192, 193, 255, 0.3)' : '1px solid rgba(255,255,255,0.05)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>{p.client}</span>
+                        <span
+                          style={{
+                            padding: '0.15rem 0.5rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            background: p.status === 'ACCEPTED' ? 'rgba(78, 222, 163, 0.2)' : 'rgba(255, 185, 95, 0.2)',
+                            color: p.status === 'ACCEPTED' ? 'var(--secondary)' : 'var(--tertiary)',
+                          }}
+                        >
+                          {p.status}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)', margin: 0 }}>{p.title}</p>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface-variant)', margin: 0 }}>{p.value}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Document Preview Workspace */}
+            {selectedProposal && (
+              <div className="glass-card" style={{ padding: '2rem', borderRadius: '1rem', background: '#ffffff', color: '#111827', display: 'flex', flexDirection: 'column', gap: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                
+                {/* Toolbar Header (Dark Overlay Actions) */}
+                <div style={{ background: '#1c1f2a', padding: '0.85rem 1.25rem', borderRadius: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FileCheck size={18} color="var(--primary)" />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{selectedProposal.title}</span>
+                  </div>
 
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {selectedProposal.status === 'DRAFT' && (
@@ -346,10 +335,10 @@ export default function ProposalsPage() {
             </div>
 
           </div>
-
-        </div>
+        )}
 
       </div>
+    )}
 
       {/* New Proposal Modal */}
       {isNewModalOpen && (
@@ -446,7 +435,7 @@ export default function ProposalsPage() {
               </div>
 
               <div style={{ padding: '0.85rem', borderRadius: '0.5rem', background: 'rgba(78, 222, 163, 0.15)', border: '1px solid rgba(78, 222, 163, 0.3)', color: 'var(--secondary)', fontSize: '0.75rem' }}>
-                By clicking "Approve & Sign", you confirm authorization to accept commercial terms on behalf of {selectedProposal.client}.
+                By clicking "Approve & Sign", you confirm authorization to accept commercial terms on behalf of {selectedProposal?.client || 'the client'}.
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -461,7 +450,7 @@ export default function ProposalsPage() {
           </div>
         </div>
       )}
-
+      </div>
     </AppShell>
   );
 }

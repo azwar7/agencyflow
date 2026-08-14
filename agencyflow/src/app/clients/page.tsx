@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
+import { EmptyState } from '@/components/EmptyState';
 import {
   ArrowRight,
   Eye,
@@ -123,7 +124,7 @@ const defaultInitialClients: ClientItem[] = [
 
 export default function ClientsOverviewPage() {
   const router = useRouter();
-  const [clients, setClients] = useState<ClientItem[]>(defaultInitialClients);
+  const [clients, setClients] = useState<ClientItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -154,44 +155,14 @@ export default function ClientsOverviewPage() {
       setLoading(true);
       const res = await fetch('/api/v1/clients');
       const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-        const mapped: ClientItem[] = json.data.map((c: any, idx: number) => {
-          const primaryContact = c.contacts && c.contacts[0];
-          const contactName = primaryContact
-            ? `${primaryContact.firstName} ${primaryContact.lastName}`
-            : 'Primary Contact';
-          const contactEmail = primaryContact?.email || `contact@${c.domain || 'company.com'}`;
-          const contactPhone = primaryContact?.phone || '+1 (555) 000-0000';
-          const retainerVal = (idx + 1) * 6500 + 6000;
-
-          return {
-            id: c.id,
-            name: c.name,
-            domain: c.domain || `${c.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-            industry: c.industry || 'Enterprise Technology',
-            contact: contactName,
-            email: contactEmail,
-            phone: contactPhone,
-            retainerValue: retainerVal,
-            retainerFormatted: `$${retainerVal.toLocaleString()}/mo`,
-            status: idx === 2 ? 'At Risk' : 'Active',
-            projectsCount: c.deals && c.deals.length > 0 ? c.deals.length : 1,
-            projects: c.deals && c.deals.length > 0
-              ? c.deals.map((d: any) => ({
-                  title: d.title,
-                  stage: d.stage,
-                  value: d.value,
-                  progress: d.stage === 'CLOSED_WON' ? 100 : d.stage === 'PROPOSAL' ? 45 : 75,
-                }))
-              : [{ title: `${c.name} Core Retainer`, stage: 'IN_PROGRESS', value: 25000, progress: 68 }],
-            lastActivity: `${idx + 1 * 2} hours ago`,
-            createdAt: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '2026-01-15',
-          };
-        });
-        setClients(mapped);
+      if (json.success && Array.isArray(json.data)) {
+        setClients(json.data);
+      } else {
+        setClients([]);
       }
-    } catch (err) {
-      console.error('Failed to load clients:', err);
+    } catch (err: any) {
+      console.error(err);
+      setClients([]);
     } finally {
       setLoading(false);
     }
@@ -224,6 +195,7 @@ export default function ClientsOverviewPage() {
       const json = await res.json();
       if (res.ok && json.success) {
         fetchClients();
+        window.dispatchEvent(new Event('agencyflow-refresh'));
       }
     } catch (err) {
       console.error('Client creation error:', err);
@@ -539,25 +511,25 @@ export default function ClientsOverviewPage() {
               Loading agency client accounts...
             </div>
           ) : filteredClients.length === 0 ? (
-            <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--on-surface-variant)' }}>
-              <Building2 size={40} style={{ opacity: 0.4, marginBottom: '1rem' }} />
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--on-surface)', margin: '0 0 0.5rem 0' }}>
-                No clients found
-              </h3>
-              <p style={{ fontSize: '0.85rem', margin: '0 0 1.5rem 0' }}>
-                {searchQuery
-                  ? `No client accounts matching "${searchQuery}". Try clearing search or filters.`
-                  : 'Add your first client account to start managing retainers, projects, and relationships.'}
-              </p>
-              {searchQuery ? (
-                <button onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); }} className="btn btn-secondary">
-                  Clear Filters
-                </button>
-              ) : (
-                <button onClick={() => setIsAddModalOpen(true)} className="btn btn-primary">
-                  + Add Client Account
-                </button>
-              )}
+            <div style={{ padding: '2rem' }}>
+              <EmptyState
+                icon={Building2}
+                title={searchQuery ? 'No matching clients found' : 'No clients yet'}
+                description={
+                  searchQuery
+                    ? `No client accounts matching "${searchQuery}". Try clearing search or filters.`
+                    : 'Add your first client account to start managing retainers, projects, and client portal access.'
+                }
+                actionLabel={searchQuery ? 'Clear Filters' : '+ Add First Client'}
+                onAction={() => {
+                  if (searchQuery) {
+                    setSearchQuery('');
+                    setStatusFilter('ALL');
+                  } else {
+                    setIsAddModalOpen(true);
+                  }
+                }}
+              />
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>

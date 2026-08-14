@@ -1,36 +1,72 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
-export async function GET() {
-  const sampleInvoices = [
-    { id: 'inv-001', number: 'INV-2026-001', client: 'Elevate Creative Co.', amount: '$18,000', status: 'PAID', dueDate: 'Aug 01, 2026' },
-    { id: 'inv-002', number: 'INV-2026-002', client: 'TechFlow Systems', amount: '$12,500', status: 'UNPAID', dueDate: 'Aug 15, 2026' },
-    { id: 'inv-003', number: 'INV-2026-003', client: 'Summit Logistics', amount: '$9,500', status: 'OVERDUE', dueDate: 'Jul 28, 2026' },
-  ];
-  return NextResponse.json({ success: true, data: sampleInvoices });
+export async function GET(request: Request) {
+  try {
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+
+    const invoices = await prisma.invoice.findMany({
+      where: { workspaceId },
+      orderBy: { issuedDate: 'desc' },
+    });
+
+    const formatted = invoices.map((inv) => ({
+      id: inv.number || inv.id,
+      realId: inv.id,
+      client: inv.client,
+      amount: inv.amount,
+      issued: inv.issuedDate.toISOString().split('T')[0],
+      due: inv.dueDate.toISOString().split('T')[0],
+      status: inv.status as any,
+    }));
+
+    return NextResponse.json({ success: true, data: formatted });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
   try {
+    const session = await getAuthSession(req);
+    const workspaceId = session.workspaceId;
     const body = await req.json();
-    const newInvoice = {
-      id: `inv-${Date.now()}`,
-      number: `INV-2026-00${Math.floor(Math.random() * 90) + 10}`,
-      client: body.client || 'Client Account',
-      amount: `$${Number(body.amount || 10000).toLocaleString()}`,
-      status: 'UNPAID',
-      dueDate: 'Aug 30, 2026',
-    };
-    return NextResponse.json({ success: true, data: newInvoice });
-  } catch (err) {
-    return NextResponse.json({ success: false, error: 'Failed to create invoice' }, { status: 500 });
+
+    const randomNum = Math.floor(100 + Math.random() * 900);
+    const newInvoice = await prisma.invoice.create({
+      data: {
+        workspaceId,
+        companyId: body.companyId || null,
+        number: `INV-2026-${randomNum}`,
+        client: body.client || 'Client Account',
+        amount: parseFloat(body.amount || '0'),
+        status: body.status || 'PENDING',
+        issuedDate: new Date(),
+        dueDate: body.dueDate ? new Date(body.dueDate) : new Date(Date.now() + 86400000 * 14),
+      },
+    });
+
+    return NextResponse.json({ success: true, data: newInvoice }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message || 'Failed to create invoice' }, { status: 500 });
   }
 }
 
 export async function PATCH(req: Request) {
   try {
+    const session = await getAuthSession(req);
+    const workspaceId = session.workspaceId;
     const body = await req.json();
-    return NextResponse.json({ success: true, data: { id: body.id, status: body.status || 'PAID' } });
-  } catch (err) {
-    return NextResponse.json({ success: false, error: 'Failed to update invoice' }, { status: 500 });
+
+    await prisma.invoice.updateMany({
+      where: { id: body.id, workspaceId },
+      data: { status: body.status || 'PAID' },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message || 'Failed to update invoice' }, { status: 500 });
   }
 }

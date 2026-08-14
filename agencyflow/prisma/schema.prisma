@@ -23,6 +23,11 @@ model Workspace {
   deals      Deal[]
   activities Activity[]
   tasks      Task[]
+  projects   Project[]
+  deliverables Deliverable[]
+  invoices   Invoice[]
+  proposals  Proposal[]
+  files      FileRecord[]
 }
 
 model User {
@@ -48,11 +53,15 @@ model Company {
   name        String
   domain      String?
   industry    String?
+  isSample    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   contacts  Contact[]
   deals     Deal[]
+  projects  Project[]
+  invoices  Invoice[]
+  proposals Proposal[]
 }
 
 model Contact {
@@ -64,6 +73,7 @@ model Contact {
   email       String
   phone       String?
   title       String?
+  isSample    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -84,6 +94,7 @@ model Lead {
   leadScore    Int      @default(0)
   aiSummary    String?
   source       String   @default("Website Inbound")
+  isSample     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -103,6 +114,7 @@ model Deal {
   stage             String    @default("DISCOVERY") // DISCOVERY, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST
   lossReason        String?
   expectedCloseDate DateTime?
+  isSample          Boolean   @default(false)
   createdAt         DateTime  @default(now())
 
   workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -121,6 +133,7 @@ model Activity {
   dealId      String?
   type        String   // NOTE, CALL, EMAIL, MEETING, STAGE_CHANGE
   content     String
+  isSample    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -139,10 +152,105 @@ model Task {
   dueDate      DateTime
   priority     String   @default("MEDIUM") // LOW, MEDIUM, HIGH
   status       String   @default("PENDING") // PENDING, COMPLETED
+  isSample     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   workspace  Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   assignedTo User      @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: Cascade)
   lead       Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
   deal       Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  workspaceId String
+  companyId   String?
+  title       String
+  clientName  String?
+  status      String    @default("ON TRACK") // ON TRACK, AT RISK, COMPLETED
+  statusType  String    @default("success")  // success, warning, info
+  progress    Int       @default(0)
+  budget      Float     @default(0.0)
+  dueDate     DateTime?
+  nextMilestone String?
+  isSample    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company      Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  deliverables Deliverable[]
+}
+
+model Deliverable {
+  id            String    @id @default(uuid())
+  workspaceId   String
+  projectId     String?
+  title         String
+  fileName      String?
+  fileType      String    @default("pdf")
+  status        String    @default("PENDING CLIENT REVIEW")
+  statusType    String    @default("pending") // pending, approved, revisions
+  version       String    @default("v1.0")
+  clientContact String?
+  dueDate       DateTime?
+  sentDate      DateTime  @default(now())
+  accentColor   String    @default("#ffb95f")
+  isSample      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+model Invoice {
+  id          String   @id @default(uuid())
+  workspaceId String
+  companyId   String?
+  number      String
+  client      String
+  amount      Float    @default(0.0)
+  status      String   @default("PENDING") // PAID, PENDING, OVERDUE
+  issuedDate  DateTime @default(now())
+  dueDate     DateTime
+  isSample    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+}
+
+model Proposal {
+  id            String   @id @default(uuid())
+  workspaceId   String
+  companyId     String?
+  title         String
+  client        String
+  value         Float    @default(0.0)
+  status        String   @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
+  preparedBy    String?
+  acceptedBy    String?
+  acceptedTitle String?
+  date          DateTime @default(now())
+  isSample      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+}
+
+model FileRecord {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  type        String   // PDF, IMAGE, SPREADSHEET, ARCHIVE, DOC
+  size        String
+  category    String   // Contract, Proposal, Deliverable, Brand Asset
+  client      String
+  project     String?
+  uploadedBy  String
+  isSample    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }

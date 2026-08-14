@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
@@ -17,9 +17,14 @@ import {
 } from '@/lib/animations';
 
 export default function LandingPage() {
+  const [mounted, setMounted] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const { isAuthenticated, user, isLoading, logout } = useAuth();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const faqData = [
     {
@@ -50,7 +55,11 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsAccountMenuOpen(false);
     logout();
   };
@@ -106,7 +115,7 @@ export default function LandingPage() {
 
           {/* 3. RIGHT SECTION (Absolute Right Anchor) */}
           <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
-            {isLoading ? (
+            {!mounted || isLoading ? (
               <div style={{ width: '120px', height: '36px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)' }} />
             ) : isAuthenticated ? (
               <>
@@ -343,7 +352,7 @@ export default function LandingPage() {
               About
             </a>
 
-            {isAuthenticated ? (
+            {!mounted || isLoading ? null : isAuthenticated ? (
               <div style={{ paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} style={{ color: '#d0bcff', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
                   Open Dashboard

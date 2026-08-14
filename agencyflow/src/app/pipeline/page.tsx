@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '@/components/AppShell';
-import { UIStateCard } from '@/components/UIStateCard';
-import { DollarSign, Clock, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
+import { DollarSign, Clock, AlertTriangle, CheckCircle, XCircle, Briefcase } from 'lucide-react';
 
 export default function PipelinePage() {
   const [pipelineData, setPipelineData] = useState<any>(null);
@@ -105,9 +105,22 @@ export default function PipelinePage() {
           ))}
         </div>
       ) : error ? (
-        <UIStateCard type="error" description={error} onRetry={fetchPipeline} />
-      ) : !pipelineData || pipelineData.columns.length === 0 ? (
-        <UIStateCard type="empty" title="No Deals in Pipeline" description="Click '+ New Deal' to create your first sales opportunity." />
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--error)' }}>
+          <p>{error}</p>
+          <button onClick={fetchPipeline} className="btn btn-secondary" style={{ marginTop: '1rem' }}>
+            Retry
+          </button>
+        </div>
+      ) : !pipelineData?.columns || pipelineData.columns.every((c: any) => !c.deals || c.deals.length === 0) ? (
+        <div style={{ marginTop: '1.5rem' }}>
+          <EmptyState
+            icon={Briefcase}
+            title="No active pipeline deals"
+            description="Track high-value agency opportunities, milestone probabilities, and projected revenue."
+            actionLabel="View Dashboard"
+            onAction={() => window.location.href = '/dashboard'}
+          />
+        </div>
       ) : (
         <div className="kanban-grid">
           {pipelineData.columns.map((col: any) => (

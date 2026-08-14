@@ -7,6 +7,8 @@ import { AppShell } from '@/components/AppShell';
 import { UIStateCard } from '@/components/UIStateCard';
 import { Sparkles, X, CheckCircle, AlertTriangle, ArrowRight, FolderKanban, Settings } from 'lucide-react';
 
+import { EmptyState } from '@/components/EmptyState';
+
 export default function ProjectsOverviewPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
@@ -14,77 +16,19 @@ export default function ProjectsOverviewPage() {
   const [error, setError] = useState('');
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
 
-  // Default realistic AgencyFlow project data
-  const defaultProjects = [
-    {
-      id: 'proj-1',
-      clientName: 'TechFlow Systems',
-      title: 'TechFlow Cloud Portal Re-architecture',
-      status: 'ON TRACK',
-      statusType: 'success',
-      progress: 68,
-      nextMilestone: 'Phase 3 API Security Audit',
-      dueDate: 'Aug 18, 2026',
-      team: [
-        { name: 'Sarah Jenkins', avatar: 'SJ', color: 'var(--primary)' },
-        { name: 'Alex Rivera', avatar: 'AR', color: 'var(--secondary)' },
-      ],
-      budget: '$48,000',
-    },
-    {
-      id: 'proj-2',
-      clientName: 'Acme Digital',
-      title: 'Acme Brand Identity Refresh',
-      status: 'AT RISK',
-      statusType: 'warning',
-      progress: 42,
-      nextMilestone: 'Concept Presentation',
-      dueDate: 'Aug 22, 2026',
-      team: [{ name: 'Elena Rostova', avatar: 'ER', color: 'var(--tertiary)' }],
-      budget: '$32,500',
-    },
-    {
-      id: 'proj-3',
-      clientName: 'Horizon Media Group',
-      title: 'Horizon Media SEO Campaign',
-      status: 'ON TRACK',
-      statusType: 'success',
-      progress: 85,
-      nextMilestone: 'Final Report Delivery',
-      dueDate: 'Aug 15, 2026',
-      team: [
-        { name: 'David Patel', avatar: 'DP', color: 'var(--primary)' },
-        { name: 'Marcus Vance', avatar: 'MV', color: 'var(--secondary)' },
-      ],
-      budget: '$18,000',
-    },
-    {
-      id: 'proj-4',
-      clientName: 'Nexus Cloud Infrastructure',
-      title: 'Nexus Cloud Infrastructure Agency Project',
-      status: 'ON TRACK',
-      statusType: 'success',
-      progress: 15,
-      nextMilestone: 'Infrastructure Setup',
-      dueDate: 'Sep 05, 2026',
-      team: [{ name: 'Sarah Jenkins', avatar: 'SJ', color: 'var(--primary)' }],
-      budget: '$65,000',
-    },
-  ];
-
   const fetchProjects = async () => {
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/v1/projects');
       const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      if (json.success && Array.isArray(json.data)) {
         setProjects(json.data);
       } else {
-        setProjects(defaultProjects);
+        setProjects([]);
       }
     } catch (err: any) {
-      setProjects(defaultProjects);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -197,6 +141,14 @@ export default function ProjectsOverviewPage() {
           </div>
         ) : error ? (
           <UIStateCard type="error" description={error} onRetry={fetchProjects} />
+        ) : projects.length === 0 ? (
+          <EmptyState
+            icon={FolderKanban}
+            title="No projects yet"
+            description="Track client delivery milestones, budget health, timelines, and deliverables in real time."
+            actionLabel="Explore Pipeline Deals"
+            onAction={() => router.push('/pipeline')}
+          />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1.5rem' }}>
             {projects.map((proj) => {

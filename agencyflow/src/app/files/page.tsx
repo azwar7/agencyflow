@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppShell } from '@/components/AppShell';
 import {
   FolderOpen,
@@ -36,75 +36,10 @@ interface FileItem {
   uploadedDate: string;
 }
 
-const initialFiles: FileItem[] = [
-  {
-    id: 'FILE-001',
-    name: 'Elevate_DTC_Master_Services_Agreement_2026.pdf',
-    type: 'PDF',
-    size: '4.8 MB',
-    category: 'Contract',
-    client: 'Elevate Creative Co.',
-    project: 'DTC Brand Campaign Engine',
-    uploadedBy: 'David Miller',
-    uploadedDate: 'Aug 10, 2026',
-  },
-  {
-    id: 'FILE-002',
-    name: 'Summit_Logistics_Architecture_Blueprint_v2.1.pdf',
-    type: 'PDF',
-    size: '12.4 MB',
-    category: 'Deliverable',
-    client: 'Summit Logistics',
-    project: 'Summit Operations Tracking System',
-    uploadedBy: 'Marcus Vance',
-    uploadedDate: 'Aug 08, 2026',
-  },
-  {
-    id: 'FILE-003',
-    name: 'Vanguard_FinTech_Design_Tokens_&_Figma_Kit.zip',
-    type: 'ARCHIVE',
-    size: '48.2 MB',
-    category: 'Brand Asset',
-    client: 'Vanguard FinTech',
-    project: 'Vanguard Mobile App MVP',
-    uploadedBy: 'Elena Rostova',
-    uploadedDate: 'Aug 05, 2026',
-  },
-  {
-    id: 'FILE-004',
-    name: 'TechFlow_Q3_Revenue_Forecast_Model.xlsx',
-    type: 'SPREADSHEET',
-    size: '2.1 MB',
-    category: 'Proposal',
-    client: 'Internal Operations',
-    uploadedBy: 'Alex Rivera',
-    uploadedDate: 'Aug 04, 2026',
-  },
-  {
-    id: 'FILE-005',
-    name: 'Elevate_Brand_Style_Guide_DarkTheme.png',
-    type: 'IMAGE',
-    size: '8.6 MB',
-    category: 'Brand Asset',
-    client: 'Elevate Creative Co.',
-    project: 'DTC Brand Campaign Engine',
-    uploadedBy: 'Elena Rostova',
-    uploadedDate: 'Aug 01, 2026',
-  },
-  {
-    id: 'FILE-006',
-    name: 'Statement_of_Work_Cloud_DevOps_Retainer.pdf',
-    type: 'PDF',
-    size: '3.2 MB',
-    category: 'Contract',
-    client: 'TechFlow Systems',
-    uploadedBy: 'David Miller',
-    uploadedDate: 'Jul 28, 2026',
-  },
-];
+import { EmptyState } from '@/components/EmptyState';
 
 export default function FilesPage() {
-  const [files, setFiles] = useState<FileItem[]>(initialFiles);
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -116,7 +51,25 @@ export default function FilesPage() {
   const [uploadCategory, setUploadCategory] = useState<FileItem['category']>('Deliverable');
   const [uploadClient, setUploadClient] = useState('');
 
-  const handleUpload = (e: React.FormEvent) => {
+  const fetchFiles = async () => {
+    try {
+      const res = await fetch('/api/v1/files');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setFiles(json.data);
+      } else {
+        setFiles([]);
+      }
+    } catch {
+      setFiles([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadName) return;
 
@@ -127,18 +80,23 @@ export default function FilesPage() {
     if (['.xlsx', '.csv'].includes(extension)) fileType = 'SPREADSHEET';
     if (['.docx', '.txt'].includes(extension)) fileType = 'DOC';
 
-    const newFile: FileItem = {
-      id: `FILE-00${files.length + 1}`,
-      name: uploadName,
-      type: fileType,
-      size: '2.5 MB',
-      category: uploadCategory,
-      client: uploadClient || 'General',
-      uploadedBy: 'Alex Sterling',
-      uploadedDate: 'Just now',
-    };
+    try {
+      await fetch('/api/v1/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: uploadName,
+          type: fileType,
+          size: '2.5 MB',
+          category: uploadCategory,
+          client: uploadClient || 'General',
+        }),
+      });
+      fetchFiles();
+    } catch (err) {
+      console.error(err);
+    }
 
-    setFiles([newFile, ...files]);
     setIsUploadModalOpen(false);
     setUploadName('');
     setUploadClient('');
@@ -150,9 +108,9 @@ export default function FilesPage() {
 
   const filteredFiles = files.filter((f) => {
     const matchesSearch =
-      f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.uploadedBy.toLowerCase().includes(searchQuery.toLowerCase());
+      (f.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (f.client || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (f.uploadedBy || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     if (!matchesSearch) return false;
     if (typeFilter !== 'ALL' && f.type !== typeFilter) return false;
@@ -330,102 +288,118 @@ export default function FilesPage() {
         </div>
 
         {/* Files Data Table */}
-        <div className="glass-card" style={{ padding: '0', borderRadius: '0.85rem', background: 'var(--surface-container)', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>DOCUMENT NAME</th>
-                <th>CATEGORY</th>
-                <th>CLIENT / PROJECT</th>
-                <th>SIZE</th>
-                <th>UPLOADED BY</th>
-                <th>DATE</th>
-                <th style={{ textAlign: 'right' }}>ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredFiles.map((file) => (
-                <tr key={file.id}>
-                  {/* File Icon & Name */}
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      <div
-                        style={{
-                          width: '38px',
-                          height: '38px',
-                          borderRadius: '0.5rem',
-                          background: 'var(--surface-container-high)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {getFileIcon(file.type)}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {file.name}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Category */}
-                  <td>{getCategoryBadge(file.category)}</td>
-
-                  {/* Client / Project */}
-                  <td>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
-                      {file.client}
-                    </span>
-                    {file.project && (
-                      <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0 }}>
-                        {file.project}
-                      </p>
-                    )}
-                  </td>
-
-                  {/* Size */}
-                  <td>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>{file.size}</span>
-                  </td>
-
-                  {/* Uploaded By */}
-                  <td>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>{file.uploadedBy}</span>
-                  </td>
-
-                  {/* Date */}
-                  <td>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>{file.uploadedDate}</span>
-                  </td>
-
-                  {/* Actions */}
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
-                      <button
-                        onClick={() => alert(`Downloading ${file.name}`)}
-                        style={{ padding: '0.35rem 0.6rem', borderRadius: '0.35rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--on-surface)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                      >
-                        <Download size={14} /> Download
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteFile(file.id)}
-                        style={{ padding: '0.35rem 0.5rem', borderRadius: '0.35rem', background: 'rgba(255, 180, 171, 0.1)', border: '1px solid rgba(255, 180, 171, 0.2)', color: 'var(--error)', fontSize: '0.75rem', cursor: 'pointer' }}
-                        title="Delete file"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+        {filteredFiles.length === 0 ? (
+          <EmptyState
+            icon={FolderOpen}
+            title={searchQuery || typeFilter !== 'ALL' || categoryFilter !== 'ALL' ? 'No matching files found' : 'No files uploaded yet'}
+            description={
+              searchQuery || typeFilter !== 'ALL' || categoryFilter !== 'ALL'
+                ? 'Try adjusting your search query or reset file type/category filters.'
+                : 'Upload contract PDFs, design kits, project spreadsheets, and creative deliverables.'
+            }
+            actionLabel={searchQuery || typeFilter !== 'ALL' || categoryFilter !== 'ALL' ? 'Clear Filters' : '+ Upload First File'}
+            onAction={() => {
+              if (searchQuery || typeFilter !== 'ALL' || categoryFilter !== 'ALL') {
+                setSearchQuery('');
+                setTypeFilter('ALL');
+                setCategoryFilter('ALL');
+              } else {
+                setIsUploadModalOpen(true);
+              }
+            }}
+          />
+        ) : (
+          <div className="glass-card" style={{ padding: '0', borderRadius: '0.85rem', background: 'var(--surface-container)', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>DOCUMENT NAME</th>
+                  <th>CATEGORY</th>
+                  <th>CLIENT / PROJECT</th>
+                  <th>SIZE</th>
+                  <th>UPLOADED BY</th>
+                  <th>DATE</th>
+                  <th style={{ textAlign: 'right' }}>ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredFiles.map((file) => (
+                  <tr key={file.id}>
+                    {/* File Icon & Name */}
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <div
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '0.5rem',
+                            background: 'var(--surface-container-high)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {getFileIcon(file.type)}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {file.name}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Category */}
+                    <td>{getCategoryBadge(file.category)}</td>
+
+                    {/* Client / Project */}
+                    <td>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+                        {file.client}
+                      </span>
+                      {file.project && (
+                        <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0 }}>
+                          {file.project}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Size */}
+                    <td style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>{file.size}</td>
+
+                    {/* Uploaded By */}
+                    <td style={{ fontSize: '0.85rem', color: 'var(--on-surface)' }}>{file.uploadedBy}</td>
+
+                    {/* Date */}
+                    <td style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>{file.uploadedDate}</td>
+
+                    {/* Actions */}
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => alert(`Downloading ${file.name}`)}
+                          style={{ padding: '0.35rem 0.65rem', borderRadius: '0.35rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--on-surface)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                          <Download size={14} /> Download
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteFile(file.id)}
+                          style={{ padding: '0.35rem 0.5rem', borderRadius: '0.35rem', background: 'rgba(255, 180, 171, 0.1)', border: '1px solid rgba(255, 180, 171, 0.2)', color: 'var(--error)', fontSize: '0.75rem', cursor: 'pointer' }}
+                          title="Delete file"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Upload File Modal */}

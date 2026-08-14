@@ -82,7 +82,11 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
     { id: 3, title: 'High Priority Task Due', desc: 'Prepare architecture deck for TechFlow.', time: '3 hours ago' },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsAccountOpen(false);
     logout();
   };

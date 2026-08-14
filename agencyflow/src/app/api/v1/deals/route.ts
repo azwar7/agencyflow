@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const workspace = await prisma.workspace.findFirst();
-    if (!workspace) return NextResponse.json({ success: false, error: 'Workspace required' }, { status: 404 });
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
 
     const deals = await prisma.deal.findMany({
-      where: { workspaceId: workspace.id },
+      where: { workspaceId },
       orderBy: { createdAt: 'desc' },
       include: {
         company: { select: { name: true } },
@@ -44,19 +45,31 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+    const userId = session.userId;
+
     const body = await request.json();
-    const workspace = await prisma.workspace.findFirst();
-    const user = await prisma.user.findFirst();
-    if (!workspace || !user) return NextResponse.json({ success: false, error: 'Setup required' }, { status: 400 });
 
     const deal = await prisma.deal.create({
       data: {
-        workspaceId: workspace.id,
-        assignedToId: user.id,
+        workspaceId,
+        assignedToId: userId,
         title: body.title,
         value: parseFloat(body.value || '0'),
         stage: body.stage || 'DISCOVERY',
         expectedCloseDate: body.expectedCloseDate ? new Date(body.expectedCloseDate) : null,
+      },
+    });
+
+    // Log Activity
+    await prisma.activity.create({
+      data: {
+        workspaceId,
+        userId,
+        dealId: deal.id,
+        type: 'STAGE_CHANGE',
+        content: `Deal created in stage: ${deal.stage} with value $${deal.value.toLocaleString()}`,
       },
     });
 

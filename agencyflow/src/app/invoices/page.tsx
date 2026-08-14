@@ -25,45 +25,12 @@ interface Invoice {
   status: 'PAID' | 'PENDING' | 'OVERDUE';
 }
 
-const initialInvoices: Invoice[] = [
-  {
-    id: 'INV-2026-094',
-    client: 'Elevate Creative Co.',
-    amount: 28000,
-    issued: '2026-08-01',
-    due: '2026-08-15',
-    status: 'PAID',
-  },
-  {
-    id: 'INV-2026-095',
-    client: 'TechFlow Systems',
-    amount: 14500,
-    issued: '2026-08-05',
-    due: '2026-08-19',
-    status: 'PENDING',
-  },
-  {
-    id: 'INV-2026-092',
-    client: 'Summit Logistics',
-    amount: 42000,
-    issued: '2026-07-15',
-    due: '2026-07-30',
-    status: 'OVERDUE',
-  },
-  {
-    id: 'INV-2026-090',
-    client: 'Vanguard FinTech',
-    amount: 19500,
-    issued: '2026-07-10',
-    due: '2026-07-24',
-    status: 'PAID',
-  },
-];
+import { EmptyState } from '@/components/EmptyState';
 
 export default function InvoicesPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'PAID' | 'PENDING' | 'OVERDUE'>('ALL');
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,19 +42,14 @@ export default function InvoicesPage() {
     try {
       const res = await fetch('/api/v1/invoices');
       const json = await res.json();
-      if (json.success && json.data.length > 0) {
-        const mapped = json.data.map((inv: any) => ({
-          id: inv.number || inv.id,
-          client: inv.client,
-          amount: typeof inv.amount === 'string' ? parseFloat(inv.amount.replace(/[^0-9.]/g, '')) : inv.amount,
-          issued: '2026-08-01',
-          due: inv.dueDate || '2026-08-15',
-          status: inv.status as any,
-        }));
-        setInvoices(mapped);
+      if (json.success && Array.isArray(json.data)) {
+        setInvoices(json.data);
+      } else {
+        setInvoices([]);
       }
     } catch (err) {
       console.error(err);
+      setInvoices([]);
     }
   };
 
@@ -260,45 +222,66 @@ export default function InvoicesPage() {
         </div>
 
         {/* Invoices Data Table */}
-        <div className="glass-card" style={{ borderRadius: '1rem', background: 'var(--surface-container)', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-container-high)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>INVOICE ID</th>
-                <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CLIENT</th>
-                <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>AMOUNT</th>
-                <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ISSUED DATE</th>
-                <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>DUE DATE</th>
-                <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>STATUS</th>
-                <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'right' }}>ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInvoices.map((inv) => (
-                <tr key={inv.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--primary)' }}>{inv.id}</td>
-                  <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)' }}>{inv.client}</td>
-                  <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--on-surface)' }}>${inv.amount.toLocaleString()}.00</td>
-                  <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>{inv.issued}</td>
-                  <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>{inv.due}</td>
-                  <td style={{ padding: '1rem 1.25rem' }}>{getStatusBadge(inv.status)}</td>
-                  <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                      {inv.status !== 'PAID' && (
-                        <button onClick={() => handleMarkPaid(inv.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '0.4rem', background: 'rgba(78, 222, 163, 0.2)', border: '1px solid rgba(78, 222, 163, 0.3)', color: 'var(--secondary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}>
-                          Mark Paid
-                        </button>
-                      )}
-                      <button onClick={() => handleSendReminder(inv.id, inv.client)} style={{ padding: '0.4rem 0.75rem', borderRadius: '0.4rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--on-surface)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <Send size={14} /> Remind
-                      </button>
-                    </div>
-                  </td>
+        {filteredInvoices.length === 0 ? (
+          <EmptyState
+            icon={CreditCard}
+            title={search || filterStatus !== 'ALL' ? 'No matching invoices found' : 'No invoices yet'}
+            description={
+              search || filterStatus !== 'ALL'
+                ? 'Try adjusting your search criteria or clear status filters.'
+                : 'Create invoices, manage retainer billing cycles, and record client payment transactions.'
+            }
+            actionLabel={search || filterStatus !== 'ALL' ? 'Clear Filters' : '+ Create First Invoice'}
+            onAction={() => {
+              if (search || filterStatus !== 'ALL') {
+                setSearch('');
+                setFilterStatus('ALL');
+              } else {
+                setIsModalOpen(true);
+              }
+            }}
+          />
+        ) : (
+          <div className="glass-card" style={{ borderRadius: '1rem', background: 'var(--surface-container)', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: 'var(--surface-container-high)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>INVOICE ID</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>CLIENT</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>AMOUNT</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ISSUED DATE</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>DUE DATE</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>STATUS</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'right' }}>ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredInvoices.map((inv) => (
+                  <tr key={inv.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--primary)' }}>{inv.id}</td>
+                    <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)' }}>{inv.client}</td>
+                    <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', fontWeight: 700, color: 'var(--on-surface)' }}>${inv.amount.toLocaleString()}.00</td>
+                    <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>{inv.issued}</td>
+                    <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>{inv.due}</td>
+                    <td style={{ padding: '1rem 1.25rem' }}>{getStatusBadge(inv.status)}</td>
+                    <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        {inv.status !== 'PAID' && (
+                          <button onClick={() => handleMarkPaid(inv.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '0.4rem', background: 'rgba(78, 222, 163, 0.2)', border: '1px solid rgba(78, 222, 163, 0.3)', color: 'var(--secondary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}>
+                            Mark Paid
+                          </button>
+                        )}
+                        <button onClick={() => handleSendReminder(inv.id, inv.client)} style={{ padding: '0.4rem 0.75rem', borderRadius: '0.4rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--on-surface)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Send size={14} /> Remind
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Create Invoice Modal */}

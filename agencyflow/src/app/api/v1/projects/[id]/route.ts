@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { defaultProjects } from '../route';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-
-    // Check baseline default projects first
-    const defaultMatch = defaultProjects.find((p) => p.id === id);
-    if (defaultMatch) {
-      return NextResponse.json({ success: true, data: defaultMatch });
-    }
 
     // Query Prisma Deal
     const deal = await prisma.deal.findUnique({

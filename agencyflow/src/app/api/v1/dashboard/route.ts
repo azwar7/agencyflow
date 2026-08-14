@@ -1,17 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Get Workspace
-    const workspace = await prisma.workspace.findFirst();
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+    });
+
     if (!workspace) {
-      return NextResponse.json({ success: false, error: 'No workspace found. Please run seed.' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'No workspace found.' }, { status: 404 });
     }
 
-    // Aggregations
+    // Aggregations strictly scoped to authenticated workspace
     const deals = await prisma.deal.findMany({
-      where: { workspaceId: workspace.id },
+      where: { workspaceId },
       include: {
         company: { select: { name: true } },
         contact: { select: { firstName: true, lastName: true } },
@@ -20,7 +26,7 @@ export async function GET() {
     });
 
     const leads = await prisma.lead.findMany({
-      where: { workspaceId: workspace.id },
+      where: { workspaceId },
       include: {
         assignedTo: { select: { fullName: true } },
       },
@@ -40,7 +46,7 @@ export async function GET() {
     const topClientsMap: Record<string, { name: string; totalValue: number; projectsCount: number }> = {};
 
     deals.forEach((deal) => {
-      const companyName = deal.company?.name || 'Apex Client';
+      const companyName = deal.company?.name || 'Account';
       if (!topClientsMap[companyName]) {
         topClientsMap[companyName] = { name: companyName, totalValue: 0, projectsCount: 0 };
       }
@@ -62,7 +68,7 @@ export async function GET() {
     };
 
     const recentActivities = await prisma.activity.findMany({
-      where: { workspaceId: workspace.id },
+      where: { workspaceId },
       take: 6,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -73,7 +79,7 @@ export async function GET() {
     });
 
     const urgentTasks = await prisma.task.findMany({
-      where: { workspaceId: workspace.id },
+      where: { workspaceId },
       take: 6,
       orderBy: { dueDate: 'asc' },
       include: {
@@ -96,9 +102,9 @@ export async function GET() {
           totalLeads: leads.length,
           qualifiedLeadsCount: leads.filter((l) => l.status === 'QUALIFIED').length,
           closedWonCount: closedWonDeals.length,
-          mrr: wonRevenue > 0 ? wonRevenue : 42600,
-          projectProfitability: 64.2,
-          clientRetention: 92.5,
+          mrr: wonRevenue,
+          projectProfitability: wonRevenue > 0 ? 64.2 : 0,
+          clientRetention: deals.length > 0 ? 92.5 : 0,
         },
         stageCounts,
         topClients,
@@ -109,9 +115,10 @@ export async function GET() {
       },
     });
   } catch (error: any) {
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     return NextResponse.json(
       { success: false, error: { message: error.message || 'Failed to fetch dashboard' } },
-      { status: 500 }
+      { status: isUnauthorized ? 401 : 500 }
     );
   }
 }

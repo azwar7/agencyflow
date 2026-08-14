@@ -2,16 +2,25 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/AppShell';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   const [hoveredChartIndex, setHoveredChartIndex] = useState<number | null>(null);
+
+  const chartPoints = [
+    { label: 'Week 1', cx: 80, cyCurrent: 140, cyPrev: 150, current: 8500, previous: 7200 },
+    { label: 'Week 2', cx: 270, cyCurrent: 105, cyPrev: 120, current: 18200, previous: 14500 },
+    { label: 'Week 3', cx: 460, cyCurrent: 60, cyPrev: 80, current: 31000, previous: 26000 },
+    { label: 'Week 4', cx: 650, cyCurrent: 25, cyPrev: 50, current: 42600, previous: 36040 },
+  ];
 
   const fetchDashboard = async () => {
     try {
@@ -86,99 +95,18 @@ export default function DashboardPage() {
     }
   };
 
-  // Extract pipeline leads or fallback to initial seeded leads
-  const urgentTasksList = data?.urgentTasks && data.urgentTasks.length > 0
-    ? data.urgentTasks
-    : [
-        {
-          id: 'TSK-001',
-          title: 'Send MSA proposal - Michael Chang',
-          dueDate: 'Due today',
-          priority: 'HIGH',
-          status: 'PENDING',
-          leadId: 'Michael Chang',
-        },
-        {
-          id: 'TSK-002',
-          title: 'Follow up on DTC proposal - Rachel Green',
-          dueDate: 'Due tomorrow',
-          priority: 'MED',
-          status: 'PENDING',
-          leadId: 'Rachel Green',
-        },
-        {
-          id: 'TSK-003',
-          title: 'Prepare client presentation - Sarah Jenkins',
-          dueDate: 'Due Friday',
-          priority: 'MED',
-          status: 'PENDING',
-          leadId: 'Sarah Jenkins',
-        },
-      ];
-
-  const recentActivitiesList = data?.recentActivities && data.recentActivities.length > 0
-    ? data.recentActivities
-    : [
-        {
-          id: 'act-1',
-          user: 'Alex Rivera',
-          userColor: 'var(--primary-fixed-dim)',
-          icon: 'sync_alt',
-          iconBg: 'var(--primary)',
-          iconColor: 'var(--on-primary)',
-          text: 'moved TechFlow Cloud Portal to Contract Negotiation',
-          time: '12m ago',
-          target: '/pipeline',
-        },
-        {
-          id: 'act-2',
-          user: 'Sarah Jenkins',
-          userColor: 'var(--secondary)',
-          icon: 'monetization_on',
-          iconBg: 'var(--secondary)',
-          iconColor: 'var(--on-secondary)',
-          text: 'closed $75k Retainer deal',
-          time: '1h ago',
-          target: '/pipeline',
-        },
-        {
-          id: 'act-3',
-          user: 'Marcus Vance',
-          userColor: 'var(--on-surface)',
-          icon: 'call',
-          iconBg: 'var(--surface-container-highest)',
-          iconColor: 'var(--on-surface)',
-          text: 'logged discovery call with Michael Chang',
-          time: '3h ago',
-          target: '/leads?leadId=Michael Chang',
-        },
-      ];
-
-  // Revenue chart data series (Current Month vs Previous Month)
-  const chartPoints = [
-    { label: 'Week 1', current: 8500, previous: 7200, cx: 80, cyCurrent: 140, cyPrev: 150 },
-    { label: 'Week 2', current: 18200, previous: 15400, cx: 270, cyCurrent: 105, cyPrev: 120 },
-    { label: 'Week 3', current: 31400, previous: 26800, cx: 460, cyCurrent: 60, cyPrev: 80 },
-    { label: 'Week 4', current: 42600, previous: 36040, cx: 650, cyCurrent: 25, cyPrev: 50 },
-  ];
-
-  // Top Clients list from server or fallback real seeded accounts
-  const topClientsList = data?.topClients && data.topClients.length > 0
-    ? data.topClients
-    : [
-        { name: 'TechFlow Systems', totalValue: 123500, projectsCount: 2 },
-        { name: 'Summit Global Logistics', totalValue: 62000, projectsCount: 1 },
-        { name: 'Elevate Creative Co', totalValue: 46500, projectsCount: 2 },
-        { name: 'Nexus Cloud Infrastructure', totalValue: 45000, projectsCount: 1 },
-      ];
+  // Extract pipeline leads, tasks, and activities directly from server data
+  const urgentTasksList = data?.urgentTasks || [];
+  const recentActivitiesList = data?.recentActivities || [];
+  const topClientsList = data?.topClients || [];
 
   // Pipeline funnel stage breakdown
   const stageBreakdown = [
-    { name: 'New Leads', count: data?.stageCounts?.newLeads ?? 4, width: '100%', color: '#c0c1ff', status: 'NEW' },
-    { name: 'Qualified', count: data?.stageCounts?.qualified ?? 3, width: '75%', color: '#4edea3', status: 'QUALIFIED' },
-    { name: 'Proposal Sent', count: data?.stageCounts?.proposal ?? 2, width: '50%', color: '#ffb95f', status: 'PROPOSAL' },
-    { name: 'Negotiation', count: data?.stageCounts?.negotiation ?? 1, width: '25%', color: '#ffb4ab', status: 'NEGOTIATION' },
-    { name: 'Closed Won', count: data?.stageCounts?.closedWon ?? 2, width: '50%', color: '#6ffbbe', status: 'CONVERTED' },
+    { name: 'New Leads', count: data?.stageCounts?.newLeads ?? 0, width: data?.stageCounts?.newLeads ? '100%' : '5%', color: '#c0c1ff', status: 'NEW' },
+    { name: 'Qualified', count: data?.stageCounts?.qualified ?? 0, width: data?.stageCounts?.qualified ? '75%' : '5%', color: '#4edea3', status: 'QUALIFIED' },
+    { name: 'Proposal Sent', count: data?.stageCounts?.proposal ?? 0, width: data?.stageCounts?.proposal ? '50%' : '5%', color: '#ffb95f', status: 'PROPOSAL' },
+    { name: 'Negotiation', count: data?.stageCounts?.negotiation ?? 0, width: data?.stageCounts?.negotiation ? '25%' : '5%', color: '#ffb4ab', status: 'NEGOTIATION' },
+    { name: 'Closed Won', count: data?.stageCounts?.closedWon ?? 0, width: data?.stageCounts?.closedWon ? '50%' : '5%', color: '#6ffbbe', status: 'CONVERTED' },
   ];
 
   return (
@@ -204,7 +132,7 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)' }}>
-              Good morning, Alex
+              Good morning, {user?.name ? user.name.split(' ')[0] : 'there'}
             </h1>
             <p style={{ fontSize: '1rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem' }}>
               Here's what's happening across your agency today.
@@ -535,101 +463,111 @@ export default function DashboardPage() {
                 View All
               </button>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {urgentTasksList.map((task: any) => {
-                const isCompleted = task.status === 'COMPLETED';
-                const isUpdating = updatingTaskId === task.id;
+              {urgentTasksList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--on-surface-variant)', fontSize: '0.85rem' }}>
+                  <p style={{ marginBottom: '0.75rem' }}>No urgent tasks pending in this workspace.</p>
+                  <button onClick={() => router.push('/tasks')} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: '0.375rem' }}>
+                    + Create First Task
+                  </button>
+                </div>
+              ) : (
+                urgentTasksList.map((task: any) => {
+                  const isCompleted = task.status === 'COMPLETED';
+                  const isUpdating = updatingTaskId === task.id;
 
-                return (
-                  <div
-                    key={task.id}
-                    onClick={() => router.push(`/tasks?taskId=${encodeURIComponent(task.id)}`)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-DEFAULT)',
-                      background: 'var(--surface-container-high)',
-                      cursor: 'pointer',
-                      transition: 'background 0.15s ease',
-                      opacity: isUpdating ? 0.6 : 1,
-                    }}
-                  >
-                    {/* Interactive Checkbox */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleTask(task.id, task.status);
-                      }}
-                      disabled={isUpdating}
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => router.push(`/tasks?taskId=${encodeURIComponent(task.id)}`)}
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '4px',
-                        border: isCompleted ? 'none' : '1px solid var(--outline)',
-                        background: isCompleted ? 'var(--secondary)' : 'transparent',
-                        color: isCompleted ? 'var(--on-secondary)' : 'transparent',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: isUpdating ? 'wait' : 'pointer',
-                        flexShrink: 0,
+                        gap: '0.75rem',
+                        padding: '0.5rem',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
                       }}
-                      title={isCompleted ? 'Mark task pending' : 'Mark task completed'}
-                      aria-label="Toggle task status"
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      {isCompleted && (
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px', fontWeight: 'bold' }}>
-                          check
-                        </span>
-                      )}
-                    </button>
-
-                    {/* Task Title & Due Date */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
+                      {/* Checkbox Target */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleTask(task.id, task.status);
+                        }}
                         style={{
-                          fontSize: '14px',
-                          color: isCompleted ? 'var(--on-surface-variant)' : 'var(--on-surface)',
-                          fontWeight: 500,
-                          textDecoration: isCompleted ? 'line-through' : 'none',
-                          margin: 0,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '4px',
+                          border: isCompleted
+                            ? '1px solid var(--secondary)'
+                            : '1px solid var(--outline-variant)',
+                          background: isCompleted ? 'var(--secondary)' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          opacity: isUpdating ? 0.5 : 1,
+                        }}
+                        title={isCompleted ? 'Mark task as pending' : 'Mark task as completed'}
+                      >
+                        {isCompleted && (
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: '14px', color: 'var(--on-secondary)' }}
+                          >
+                            check
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Task Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          style={{
+                            fontSize: '14px',
+                            color: isCompleted ? 'var(--on-surface-variant)' : 'var(--on-surface)',
+                            fontWeight: 500,
+                            textDecoration: isCompleted ? 'line-through' : 'none',
+                            margin: 0,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {task.title}
+                        </p>
+                        <span style={{ fontSize: '12px', color: 'var(--on-surface-variant)' }}>
+                          {typeof task.dueDate === 'string' && task.dueDate.includes('T')
+                            ? new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                            : task.dueDate || 'Due soon'}
+                        </span>
+                      </div>
+
+                      {/* Priority Badge */}
+                      <span
+                        style={{
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '4px',
+                          background:
+                            task.priority === 'HIGH'
+                              ? 'rgba(255, 180, 171, 0.15)'
+                              : 'rgba(255, 185, 95, 0.15)',
+                          color: task.priority === 'HIGH' ? 'var(--error)' : 'var(--tertiary)',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          flexShrink: 0,
                         }}
                       >
-                        {task.title}
-                      </p>
-                      <span style={{ fontSize: '12px', color: 'var(--on-surface-variant)' }}>
-                        {typeof task.dueDate === 'string' && task.dueDate.includes('T')
-                          ? new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                          : task.dueDate || 'Due soon'}
+                        {task.priority || 'MED'}
                       </span>
                     </div>
-
-                    {/* Priority Badge */}
-                    <span
-                      style={{
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '4px',
-                        background:
-                          task.priority === 'HIGH'
-                            ? 'rgba(255, 180, 171, 0.15)'
-                            : 'rgba(255, 185, 95, 0.15)',
-                        color: task.priority === 'HIGH' ? 'var(--error)' : 'var(--tertiary)',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {task.priority || 'MED'}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -646,58 +584,64 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {recentActivitiesList.map((act: any, idx: number) => {
-                const targetUrl = act.target || (act.leadId ? `/leads?leadId=${act.leadId}` : '/pipeline');
-                const userName = act.user?.fullName || act.user || 'Team Member';
-                const actText = act.content || act.text || 'performed an update';
-                const timeAgo = act.createdAt
-                  ? new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                  : act.time || 'recently';
+              {recentActivitiesList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--on-surface-variant)', fontSize: '0.85rem' }}>
+                  <p>No activity logged yet. Lead updates and deal stage changes will appear here.</p>
+                </div>
+              ) : (
+                recentActivitiesList.map((act: any, idx: number) => {
+                  const targetUrl = act.target || (act.leadId ? `/leads?leadId=${act.leadId}` : '/pipeline');
+                  const userName = act.user?.fullName || act.user || 'Team Member';
+                  const actText = act.content || act.text || 'performed an update';
+                  const timeAgo = act.createdAt
+                    ? new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : act.time || 'recently';
 
-                return (
-                  <div
-                    key={act.id || idx}
-                    onClick={() => router.push(targetUrl)}
-                    style={{
-                      display: 'flex',
-                      gap: '0.85rem',
-                      alignItems: 'flex-start',
-                      padding: '0.5rem',
-                      borderRadius: '0.5rem',
-                      cursor: 'pointer',
-                      transition: 'background 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
+                  return (
                     <div
+                      key={act.id || idx}
+                      onClick={() => router.push(targetUrl)}
                       style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: act.iconBg || 'var(--primary)',
-                        color: act.iconColor || 'var(--on-primary)',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        marginTop: '2px',
+                        gap: '0.85rem',
+                        alignItems: 'flex-start',
+                        padding: '0.5rem',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
                       }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
-                        {act.icon || 'sync_alt'}
-                      </span>
+                      <div
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          background: act.iconBg || 'var(--primary)',
+                          color: act.iconColor || 'var(--on-primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          marginTop: '2px',
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                          {act.icon || 'history'}
+                        </span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '13px', color: 'var(--on-surface)', margin: 0, lineHeight: 1.4 }}>
+                          <strong style={{ color: act.userColor || 'var(--primary)' }}>{userName} </strong>
+                          {actText}
+                        </p>
+                        <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)' }}>{timeAgo}</span>
+                      </div>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '13px', color: 'var(--on-surface)', margin: 0, lineHeight: 1.4 }}>
-                        <strong style={{ color: act.userColor || 'var(--primary)' }}>{userName} </strong>
-                        {actText}
-                      </p>
-                      <span style={{ fontSize: '11px', color: 'var(--on-surface-variant)' }}>{timeAgo}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

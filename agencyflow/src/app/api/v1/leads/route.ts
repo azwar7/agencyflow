@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { getAuthSession } from '@/lib/auth-session';
 
 const createLeadSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -13,16 +14,16 @@ const createLeadSchema = z.object({
 
 export async function GET(request: Request) {
   try {
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
 
-    const workspace = await prisma.workspace.findFirst();
-    if (!workspace) return NextResponse.json({ success: false, error: 'No workspace found' }, { status: 404 });
-
     const leads = await prisma.lead.findMany({
       where: {
-        workspaceId: workspace.id,
+        workspaceId,
         ...(status ? { status } : {}),
         ...(search
           ? {
@@ -49,17 +50,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+    const userId = session.userId;
+
     const body = await request.json();
     const validated = createLeadSchema.parse(body);
 
-    const workspace = await prisma.workspace.findFirst();
-    const defaultUser = await prisma.user.findFirst();
-    if (!workspace || !defaultUser) return NextResponse.json({ success: false, error: 'Setup required' }, { status: 400 });
-
     const newLead = await prisma.lead.create({
       data: {
-        workspaceId: workspace.id,
-        assignedToId: defaultUser.id,
+        workspaceId,
+        assignedToId: userId,
         firstName: validated.firstName,
         lastName: validated.lastName,
         email: validated.email,
@@ -67,17 +68,32 @@ export async function POST(request: Request) {
         companyName: validated.companyName || null,
         source: validated.source,
         status: 'NEW',
-        leadScore: 50, // default baseline
-        aiSummary: 'New inbound lead ingested. Initial discovery contact required.',
+        leadScore: 60,
+        aiSummary: 'New inbound prospect ingested into CRM.',
       },
       include: { assignedTo: { select: { fullName: true } } },
     });
 
+    // Also auto-create company if companyName provided
+    if (validated.companyName) {
+      const existingCompany = await prisma.company.findFirst({
+        where: { workspaceId, name: validated.companyName },
+      });
+      if (!existingCompany) {
+        await prisma.company.create({
+          data: {
+            workspaceId,
+            name: validated.companyName,
+          },
+        });
+      }
+    }
+
     // Log Activity
     await prisma.activity.create({
       data: {
-        workspaceId: workspace.id,
-        userId: defaultUser.id,
+        workspaceId,
+        userId,
         leadId: newLead.id,
         type: 'NOTE',
         content: `Lead created from source: ${validated.source}`,

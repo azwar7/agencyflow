@@ -85,211 +85,31 @@ export default function DeliverablesPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Rich Deliverables Dataset
-  const deliverables: DeliverableItem[] = [
-    {
-      id: 'del-1',
-      fileName: 'v2.4_Database_Schema_Architecture.pdf',
-      fileType: 'pdf',
-      projectName: 'TechFlow Cloud Portal',
-      version: 'v2.4',
-      status: 'PENDING CLIENT REVIEW',
-      statusType: 'pending',
-      accentColor: '#ffb95f',
-      sentDate: 'Aug 12, 2:00 PM',
-      dueDate: 'Due in 2 days',
-      hoursAgo: 4,
-      clientContact: 'Marcus Vance',
-      clientAvatar: 'MV',
-      commentsCount: 0,
-      isNew: true,
-    },
-    {
-      id: 'del-2',
-      fileName: 'Brand_Identity_Guidelines_Final.zip',
-      fileType: 'zip',
-      projectName: 'Acme Brand Identity',
-      version: 'v1.0',
-      status: 'APPROVED',
-      statusType: 'approved',
-      accentColor: '#4edea3',
-      sentDate: 'Aug 10, 11:00 AM',
-      dueDate: 'Completed Aug 12',
-      approvedBy: 'Alex Rivera',
-      approvedDate: 'Aug 12',
-      approvedAvatar: 'AR',
-      commentsCount: 2,
-    },
-    {
-      id: 'del-3',
-      fileName: 'UI_Kit_Component_Library_Draft.fig',
-      fileType: 'figma',
-      projectName: 'Nexus Cloud Infrastructure',
-      version: 'v0.8',
-      status: 'REVISION REQUESTED',
-      statusType: 'revisions',
-      accentColor: '#ffb4ab',
-      sentDate: 'Aug 11, 9:30 AM',
-      dueDate: 'Overdue by 1 day',
-      isOverdue: true,
-      commenterName: 'Sarah Jenkins',
-      commenterAvatar: 'SJ',
-      commentTime: 'Yesterday, 2:45 PM',
-      commentText:
-        '"Please update section 3.2 to include OAuth2 details. The current flow doesn\'t match our latest security requirements. Everything else looks solid."',
-      commentsCount: 3,
-      threadCount: 3,
-    },
-    {
-      id: 'del-4',
-      fileName: 'Q3_Marketing_Campaign_Video_Cut.mp4',
-      fileType: 'video',
-      projectName: 'Apex Global Marketing',
-      version: 'v1.2',
-      status: 'PENDING CLIENT REVIEW',
-      statusType: 'pending',
-      accentColor: '#ffb95f',
-      sentDate: 'Aug 11, 4:15 PM',
-      dueDate: 'Due Tomorrow',
-      hoursAgo: 30,
-      clientContact: 'David Kim',
-      clientAvatar: 'DK',
-      commentsCount: 0,
-    },
-    {
-      id: 'del-5',
-      fileName: 'Enterprise_SaaS_SLA_Agreement.pdf',
-      fileType: 'pdf',
-      projectName: 'CloudScale Enterprise',
-      version: 'v2.0',
-      status: 'APPROVED',
-      statusType: 'approved',
-      accentColor: '#4edea3',
-      sentDate: 'Aug 09, 3:00 PM',
-      dueDate: 'Completed Aug 11',
-      approvedBy: 'Elena Rostova',
-      approvedDate: 'Aug 11',
-      approvedAvatar: 'ER',
-      commentsCount: 1,
-    },
-    {
-      id: 'del-6',
-      fileName: 'Product_Strategy_Deck_2026.pdf',
-      fileType: 'pdf',
-      projectName: 'Horizon Media',
-      version: 'v1.5',
-      status: 'PENDING CLIENT REVIEW',
-      statusType: 'pending',
-      accentColor: '#ffb95f',
-      sentDate: 'Aug 08, 10:00 AM',
-      dueDate: 'Overdue by 2 days',
-      isOverdue: true,
-      hoursAgo: 84,
-      clientContact: 'Samantha Reed',
-      clientAvatar: 'SR',
-      commentsCount: 0,
-    },
-    {
-      id: 'del-7',
-      fileName: 'Mobile_App_Wireframes_v3.fig',
-      fileType: 'figma',
-      projectName: 'Nova Mobile Systems',
-      version: 'v3.0',
-      status: 'APPROVED',
-      statusType: 'approved',
-      accentColor: '#4edea3',
-      sentDate: 'Aug 07, 1:45 PM',
-      dueDate: 'Completed Aug 10',
-      approvedBy: 'Jason Wu',
-      approvedDate: 'Aug 10',
-      approvedAvatar: 'JW',
-      commentsCount: 4,
-    },
-    {
-      id: 'del-8',
-      fileName: 'API_Integration_Documentation.zip',
-      fileType: 'zip',
-      projectName: 'TechFlow Cloud Portal',
-      version: 'v1.1',
-      status: 'REVISION REQUESTED',
-      statusType: 'revisions',
-      accentColor: '#ffb4ab',
-      sentDate: 'Aug 09, 2:30 PM',
-      dueDate: 'Due Today',
-      commenterName: 'Michael Chang',
-      commenterAvatar: 'MC',
-      commentTime: 'Aug 10, 5:12 PM',
-      commentText:
-        '"Endpoint rate limit specs are missing for webhooks. Please revise section 4 before final sign-off."',
-      commentsCount: 5,
-      threadCount: 5,
-    },
-    {
-      id: 'del-9',
-      fileName: 'Hero_Animation_Assets.zip',
-      fileType: 'zip',
-      projectName: 'Acme Brand Identity',
-      version: 'v2.1',
-      status: 'APPROVED',
-      statusType: 'approved',
-      accentColor: '#4edea3',
-      sentDate: 'Aug 06, 11:20 AM',
-      dueDate: 'Completed Aug 09',
-      approvedBy: 'Alex Rivera',
-      approvedDate: 'Aug 09',
-      approvedAvatar: 'AR',
-      commentsCount: 0,
-    },
-    {
-      id: 'del-10',
-      fileName: 'Financial_Audit_Report_2026.pdf',
-      fileType: 'pdf',
-      projectName: 'Zenith Capital',
-      version: 'v1.0',
-      status: 'APPROVED',
-      statusType: 'approved',
-      accentColor: '#4edea3',
-      sentDate: 'Aug 05, 4:00 PM',
-      dueDate: 'Completed Aug 08',
-      approvedBy: 'Patricia Moore',
-      approvedDate: 'Aug 08',
-      approvedAvatar: 'PM',
-      commentsCount: 1,
-    },
-    {
-      id: 'del-11',
-      fileName: 'Promo_Explainer_Video_Final.mp4',
-      fileType: 'video',
-      projectName: 'Horizon Media',
-      version: 'v2.0',
-      status: 'APPROVED',
-      statusType: 'approved',
-      accentColor: '#4edea3',
-      sentDate: 'Aug 04, 10:15 AM',
-      dueDate: 'Completed Aug 07',
-      approvedBy: 'Samantha Reed',
-      approvedDate: 'Aug 07',
-      approvedAvatar: 'SR',
-      commentsCount: 2,
-    },
-    {
-      id: 'del-12',
-      fileName: 'Customer_Onboarding_Flow_Mockups.fig',
-      fileType: 'figma',
-      projectName: 'CloudScale Enterprise',
-      version: 'v1.0',
-      status: 'PENDING CLIENT REVIEW',
-      statusType: 'pending',
-      accentColor: '#ffb95f',
-      sentDate: 'Aug 12, 8:00 AM',
-      dueDate: 'Due in 3 days',
-      hoursAgo: 18,
-      clientContact: 'Elena Rostova',
-      clientAvatar: 'ER',
-      commentsCount: 0,
-      isNew: true,
-    },
-  ];
+  const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
+
+  const fetchDeliverables = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/v1/deliverables');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setDeliverables(json.data);
+      } else {
+        setDeliverables([]);
+      }
+    } catch {
+      setDeliverables([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDeliverables();
+    const handleRefresh = () => fetchDeliverables();
+    window.addEventListener('agencyflow-refresh', handleRefresh);
+    return () => window.removeEventListener('agencyflow-refresh', handleRefresh);
+  }, []);
 
   // Dynamic counts for Filter Tabs
   const counts = {
@@ -1397,9 +1217,27 @@ export default function DeliverablesPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/v1/deliverables', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        title: 'Interactive Design Deliverable v1.0',
+                        fileName: 'Client_Deliverable_v1.0.pdf',
+                        fileType: 'pdf',
+                        version: 'v1.0',
+                        clientContact: 'Client Product Lead',
+                      }),
+                    });
+                    if (res.ok) {
+                      fetchDeliverables();
+                      window.dispatchEvent(new Event('agencyflow-refresh'));
+                    }
+                  } catch (err) {
+                    console.error('Deliverable upload error:', err);
+                  }
                   setUploadModalOpen(false);
-                  alert('Deliverable uploaded & sent for client review!');
                 }}
                 className="btn btn-primary"
               >

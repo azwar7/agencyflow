@@ -39,6 +39,7 @@ export function NewDealModal({ isOpen, onClose, onSuccess }: NewDealModalProps) 
 
       setFormData({ title: '', value: '', stage: 'DISCOVERY' });
       onSuccess();
+      window.dispatchEvent(new Event('agencyflow-refresh'));
       onClose();
     } catch (err: any) {
       setError(err.message || 'An error occurred');

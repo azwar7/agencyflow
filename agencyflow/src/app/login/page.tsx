@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 
@@ -13,24 +13,45 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    setTimeout(() => {
-      login({
-        email: email || 'alex@agencyflow.io',
-        name: 'Alex Sterling',
-        role: 'OWNER',
-        agency: 'Sterling Digital Agency',
-      });
-    }, 400);
+    const success = await login({
+      email: email.trim(),
+      password,
+    });
+
+    if (!success) {
+      setError('Invalid email or password. Please try again or create an account.');
+      setLoading(false);
+    }
   };
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0d14', color: 'var(--on-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
       
+      {/* Back to Home Link */}
+      <Link
+        href="/"
+        style={{
+          position: 'absolute',
+          top: '2rem',
+          left: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          color: 'var(--on-surface-variant)',
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          textDecoration: 'none',
+          zIndex: 10,
+        }}
+      >
+        <ArrowLeft size={16} /> Back to home
+      </Link>
+
       {/* Glow Orbs */}
       <div style={{ position: 'absolute', top: '-10%', left: '20%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(128, 131, 255, 0.15) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '-10%', right: '20%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(78, 222, 163, 0.1) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
@@ -56,8 +77,9 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div style={{ padding: '0.65rem 0.85rem', borderRadius: '0.5rem', background: 'rgba(255, 180, 171, 0.12)', border: '1px solid rgba(255, 180, 171, 0.3)', color: '#ffb4ab', fontSize: '0.8rem', marginBottom: '1rem' }}>
-            {error}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', background: 'rgba(255, 180, 171, 0.12)', border: '1px solid rgba(255, 180, 171, 0.3)', color: '#ffb4ab', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+            <AlertCircle size={16} />
+            <span>{error}</span>
           </div>
         )}
 
@@ -80,7 +102,7 @@ export default function LoginPage() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
-              <Link href="/forgot-password" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Forgot password?</Link>
+              <span style={{ fontSize: '0.75rem', color: 'var(--outline)', cursor: 'default' }}>Demo: Any password</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0.5rem', padding: '0.65rem 0.85rem', marginTop: '0.35rem' }}>
               <Lock size={16} color="var(--on-surface-variant)" />
@@ -99,7 +121,7 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem', borderRadius: '0.5rem' }}
+            style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem', borderRadius: '0.5rem', opacity: loading ? 0.7 : 1 }}
           >
             {loading ? 'Authenticating...' : <>Sign In to Dashboard <ArrowRight size={16} /></>}
           </button>

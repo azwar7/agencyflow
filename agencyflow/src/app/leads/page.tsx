@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { UIStateCard } from '@/components/UIStateCard';
-import { X, Sparkles, Send, ArrowRight } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
+import { X, Sparkles, Send, ArrowRight, Users } from 'lucide-react';
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -300,6 +301,14 @@ export default function LeadsPage() {
           </div>
         ) : error ? (
           <UIStateCard type="error" description={error} onRetry={fetchLeads} />
+        ) : leads.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No leads yet"
+            description="Capture inbound inquiries, qualify prospective accounts, and score opportunities with AI."
+            actionLabel="+ Add First Lead"
+            onAction={() => window.dispatchEvent(new Event('agencyflow-open-new-lead'))}
+          />
         ) : viewMode === 'kanban' ? (
           <div className="kanban-row">
             {stages.map((stg) => {

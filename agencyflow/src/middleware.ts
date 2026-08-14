@@ -22,7 +22,9 @@ const AUTH_ROUTES = ['/login', '/signup'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAuthenticated = request.cookies.get('agencyflow_auth')?.value === 'true';
+  const hasAuthCookie = request.cookies.get('agencyflow_auth')?.value === 'true';
+  const hasSessionCookie = Boolean(request.cookies.get('agencyflow_session')?.value);
+  const isAuthenticated = hasSessionCookie || hasAuthCookie;
 
   const isProtectedRoute = PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)

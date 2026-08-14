@@ -37,55 +37,7 @@ interface TaskItem {
   deal?: { id?: string; title: string; value?: number };
 }
 
-// Fallback demo tasks if database is empty
-const initialDemoTasks: TaskItem[] = [
-  {
-    id: 'TSK-001',
-    title: 'Send formal MSA and statement of work proposal to Michael Chang',
-    dueDate: new Date().toISOString(),
-    priority: 'HIGH',
-    status: 'PENDING',
-    assignedTo: { fullName: 'Alex Rivera' },
-    deal: { title: 'Michael Chang — Enterprise Retainer' },
-  },
-  {
-    id: 'TSK-002',
-    title: 'Follow up with Rachel Green regarding proposal slide deck feedback',
-    dueDate: '2026-08-13T10:00:00.000Z',
-    priority: 'MEDIUM',
-    status: 'PENDING',
-    assignedTo: { fullName: 'Alex Rivera' },
-    lead: { firstName: 'Rachel', lastName: 'Green', companyName: 'Elevate Creative Co.' },
-    deal: { title: 'Elevate DTC Brand Campaign Engine' },
-  },
-  {
-    id: 'TSK-003',
-    title: 'Schedule technical architecture review with Summit Logistics engineering team',
-    dueDate: '2026-08-15T14:30:00.000Z',
-    priority: 'HIGH',
-    status: 'PENDING',
-    assignedTo: { fullName: 'Marcus Vance' },
-    lead: { firstName: 'Marcus', lastName: 'Vance', companyName: 'Summit Logistics' },
-    deal: { title: 'Summit Operations Tracking System' },
-  },
-  {
-    id: 'TSK-004',
-    title: 'Review and approve final deliverables for Vanguard FinTech MVP launch',
-    dueDate: '2026-08-10T17:00:00.000Z',
-    priority: 'HIGH',
-    status: 'PENDING',
-    assignedTo: { fullName: 'Elena Rostova' },
-    deal: { title: 'Vanguard Mobile App MVP' },
-  },
-  {
-    id: 'TSK-005',
-    title: 'Prepare quarterly revenue forecasting report for executive board meeting',
-    dueDate: '2026-08-08T09:00:00.000Z',
-    priority: 'MEDIUM',
-    status: 'COMPLETED',
-    assignedTo: { fullName: 'Alex Rivera' },
-  },
-];
+import { EmptyState } from '@/components/EmptyState';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -119,13 +71,13 @@ export default function TasksPage() {
     try {
       const res = await fetch('/api/v1/tasks');
       const json = await res.json();
-      if (res.ok && json.success && json.data && json.data.length > 0) {
+      if (res.ok && json.success && Array.isArray(json.data)) {
         setTasks(json.data);
       } else {
-        setTasks(initialDemoTasks);
+        setTasks([]);
       }
     } catch (err: any) {
-      setTasks(initialDemoTasks);
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -209,7 +161,7 @@ export default function TasksPage() {
     resetForm();
 
     try {
-      await fetch('/api/v1/tasks', {
+      const res = await fetch('/api/v1/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -218,6 +170,10 @@ export default function TasksPage() {
           dueDate: taskFormDueDate,
         }),
       });
+      if (res.ok) {
+        fetchTasks();
+        window.dispatchEvent(new Event('agencyflow-refresh'));
+      }
     } catch (err) {
       console.error(err);
     }

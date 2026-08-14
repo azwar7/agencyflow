@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppShell } from '@/components/AppShell';
 import {
   Users,
@@ -37,75 +37,6 @@ interface TeamMember {
   avatarInitials: string;
 }
 
-const initialTeamMembers: TeamMember[] = [
-  {
-    id: 'USR-001',
-    fullName: 'Alex Sterling',
-    email: 'alex@agencyflow.io',
-    role: 'OWNER',
-    status: 'ACTIVE',
-    title: 'Agency Owner & CEO',
-    assignedCount: 14,
-    lastActive: 'Active now',
-    avatarInitials: 'AS',
-  },
-  {
-    id: 'USR-002',
-    fullName: 'David Miller',
-    email: 'david@agencyflow.io',
-    role: 'ADMIN',
-    status: 'ACTIVE',
-    title: 'Lead Solutions Architect',
-    assignedCount: 9,
-    lastActive: '12 mins ago',
-    avatarInitials: 'DM',
-  },
-  {
-    id: 'USR-003',
-    fullName: 'Alex Rivera',
-    email: 'arivera@agencyflow.io',
-    role: 'SALES_REP',
-    status: 'ACTIVE',
-    title: 'Senior Account Executive',
-    assignedCount: 12,
-    lastActive: '1 hour ago',
-    avatarInitials: 'AR',
-  },
-  {
-    id: 'USR-004',
-    fullName: 'Elena Rostova',
-    email: 'elena@agencyflow.io',
-    role: 'MANAGER',
-    status: 'AWAY',
-    title: 'Senior UX & Product Strategist',
-    assignedCount: 6,
-    lastActive: '3 hours ago',
-    avatarInitials: 'ER',
-  },
-  {
-    id: 'USR-005',
-    fullName: 'Marcus Vance',
-    email: 'marcus@agencyflow.io',
-    role: 'MEMBER',
-    status: 'ACTIVE',
-    title: 'DevOps & Infrastructure Engineer',
-    assignedCount: 5,
-    lastActive: 'Yesterday',
-    avatarInitials: 'MV',
-  },
-  {
-    id: 'USR-006',
-    fullName: 'Sarah Chen',
-    email: 'sarah.c@elevate.co',
-    role: 'MEMBER',
-    status: 'PENDING_INVITE',
-    title: 'Client Marketing Specialist',
-    assignedCount: 0,
-    lastActive: 'Invited Aug 11',
-    avatarInitials: 'SC',
-  },
-];
-
 // Helper to generate consistent avatar gradient based on user name string
 const getAvatarGradient = (name: string) => {
   const gradients = [
@@ -122,7 +53,8 @@ const getAvatarGradient = (name: string) => {
 };
 
 export default function TeamPage() {
-  const [team, setTeam] = useState<TeamMember[]>(initialTeamMembers);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -142,30 +74,46 @@ export default function TeamPage() {
   const [inviteRole, setInviteRole] = useState<TeamMember['role']>('SALES_REP');
   const [editRoleValue, setEditRoleValue] = useState<TeamMember['role']>('MEMBER');
 
-  const handleInvite = (e: React.FormEvent) => {
+  const fetchTeam = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/v1/team');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setTeam(json.data);
+      } else {
+        setTeam([]);
+      }
+    } catch {
+      setTeam([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeam();
+  }, []);
+
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail || !inviteName) return;
 
-    const initials = inviteName
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    try {
+      await fetch('/api/v1/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: inviteName,
+          email: inviteEmail,
+          role: inviteRole,
+        }),
+      });
+      fetchTeam();
+    } catch (err) {
+      console.error(err);
+    }
 
-    const newMember: TeamMember = {
-      id: `USR-00${team.length + 1}`,
-      fullName: inviteName,
-      email: inviteEmail,
-      role: inviteRole,
-      status: 'PENDING_INVITE',
-      title: inviteTitle || 'Team Member',
-      assignedCount: 0,
-      lastActive: 'Invited just now',
-      avatarInitials: initials,
-    };
-
-    setTeam([newMember, ...team]);
     setIsInviteModalOpen(false);
     setInviteName('');
     setInviteEmail('');

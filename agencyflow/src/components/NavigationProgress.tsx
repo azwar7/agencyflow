@@ -117,7 +117,9 @@ export function NavigationProgress() {
             targetUrl.pathname !== currentUrl.pathname ||
             targetUrl.search !== currentUrl.search
           ) {
-            startProgress();
+            setTimeout(() => {
+              startProgress();
+            }, 0);
           }
         } catch {}
       }

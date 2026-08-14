@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const workspace = await prisma.workspace.findFirst();
-    if (!workspace) return NextResponse.json({ success: false, error: 'Workspace required' }, { status: 404 });
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
 
     const tasks = await prisma.task.findMany({
-      where: { workspaceId: workspace.id },
+      where: { workspaceId },
       orderBy: { dueDate: 'asc' },
       include: {
-        assignedTo: { select: { id: true, fullName: true, avatarUrl: true } },
+        assignedTo: { select: { id: true, fullName: true } },
         lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
         deal: { select: { id: true, title: true, value: true } },
       },
@@ -24,37 +25,29 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+    const userId = session.userId;
+
     const body = await request.json();
-    const { title, dueDate, priority, leadId, dealId, assignedToId } = body;
 
-    const workspace = await prisma.workspace.findFirst();
-    if (!workspace) return NextResponse.json({ success: false, error: 'Workspace required' }, { status: 404 });
-
-    const user = assignedToId
-      ? await prisma.user.findUnique({ where: { id: assignedToId } })
-      : await prisma.user.findFirst({ where: { workspaceId: workspace.id } });
-
-    if (!user) return NextResponse.json({ success: false, error: 'User required' }, { status: 400 });
-
-    const newTask = await prisma.task.create({
+    const task = await prisma.task.create({
       data: {
-        workspaceId: workspace.id,
-        assignedToId: user.id,
-        title,
-        dueDate: dueDate ? new Date(dueDate) : new Date(),
-        priority: priority || 'MEDIUM',
-        status: 'PENDING',
-        leadId: leadId || null,
-        dealId: dealId || null,
+        workspaceId,
+        assignedToId: body.assignedToId || userId,
+        leadId: body.leadId || null,
+        dealId: body.dealId || null,
+        title: body.title,
+        dueDate: body.dueDate ? new Date(body.dueDate) : new Date(),
+        priority: body.priority || 'MEDIUM',
+        status: body.status || 'PENDING',
       },
       include: {
-        assignedTo: { select: { id: true, fullName: true } },
-        lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
-        deal: { select: { id: true, title: true } },
+        assignedTo: { select: { fullName: true } },
       },
     });
 
-    return NextResponse.json({ success: true, data: newTask }, { status: 201 });
+    return NextResponse.json({ success: true, data: task }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: { message: error.message } }, { status: 400 });
   }
@@ -62,39 +55,18 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const session = await getAuthSession(request);
+    const workspaceId = session.workspaceId;
+
     const body = await request.json();
-    const { taskId, status, priority, title, dueDate } = body;
+    const { taskId, status } = body;
 
-    const updateData: any = {};
-    if (status !== undefined) updateData.status = status;
-    if (priority !== undefined) updateData.priority = priority;
-    if (title !== undefined) updateData.title = title;
-    if (dueDate !== undefined) updateData.dueDate = new Date(dueDate);
-
-    const updated = await prisma.task.update({
-      where: { id: taskId },
-      data: updateData,
-      include: {
-        assignedTo: { select: { id: true, fullName: true } },
-        lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
-        deal: { select: { id: true, title: true } },
-      },
+    const updatedTask = await prisma.task.updateMany({
+      where: { id: taskId, workspaceId },
+      data: { status },
     });
 
-    return NextResponse.json({ success: true, data: updated });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 400 });
-  }
-}
-
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const taskId = searchParams.get('id');
-    if (!taskId) return NextResponse.json({ success: false, error: 'Task ID required' }, { status: 400 });
-
-    await prisma.task.delete({ where: { id: taskId } });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data: updatedTask });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: { message: error.message } }, { status: 400 });
   }
