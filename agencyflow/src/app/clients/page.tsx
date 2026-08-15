@@ -281,11 +281,11 @@ export default function ClientsOverviewPage() {
   return (
     <AppShell>
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        
+
         {/* Page Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--primary)', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--primary)', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem', marginTop: '0.75rem' }}>
               AGENCY DIRECTORY
             </p>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
@@ -643,20 +643,20 @@ export default function ClientsOverviewPage() {
                                 c.status === 'Active'
                                   ? 'rgba(0, 165, 114, 0.15)'
                                   : c.status === 'At Risk'
-                                  ? 'rgba(255, 185, 95, 0.15)'
-                                  : 'rgba(255, 255, 255, 0.1)',
+                                    ? 'rgba(255, 185, 95, 0.15)'
+                                    : 'rgba(255, 255, 255, 0.1)',
                               color:
                                 c.status === 'Active'
                                   ? 'var(--secondary)'
                                   : c.status === 'At Risk'
-                                  ? 'var(--tertiary)'
-                                  : 'var(--on-surface-variant)',
+                                    ? 'var(--tertiary)'
+                                    : 'var(--on-surface-variant)',
                               border:
                                 c.status === 'Active'
                                   ? '1px solid rgba(0, 165, 114, 0.35)'
                                   : c.status === 'At Risk'
-                                  ? '1px solid rgba(255, 185, 95, 0.35)'
-                                  : '1px solid rgba(255, 255, 255, 0.2)',
+                                    ? '1px solid rgba(255, 185, 95, 0.35)'
+                                    : '1px solid rgba(255, 255, 255, 0.2)',
                             }}
                           >
                             <span

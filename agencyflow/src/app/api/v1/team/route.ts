@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { requireRole } from '@/lib/authorization';
+import { hashPassword } from '@/lib/password';
 
 export async function GET(request: Request) {
   try {
@@ -35,17 +37,38 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: formatted });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: isUnauthorized ? 401 : 500 }
+    );
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await getAuthSession(req);
+    
+    // Server-side RBAC: Only OWNER or ADMIN may invite team members
+    requireRole(session, ['OWNER', 'ADMIN']);
+
     const workspaceId = session.workspaceId;
     const body = await req.json();
 
     const emailNormalized = (body.email || '').toLowerCase().trim();
+    if (!emailNormalized) {
+      return NextResponse.json({ success: false, error: 'Email is required.' }, { status: 400 });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: emailNormalized },
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ success: false, error: 'User with this email already exists.' }, { status: 400 });
+    }
+
+    const initialPasswordHash = await hashPassword('AgencyFlow2026!');
 
     const newUser = await prisma.user.create({
       data: {
@@ -53,12 +76,25 @@ export async function POST(req: Request) {
         email: emailNormalized,
         fullName: body.fullName || 'Team Member',
         role: body.role || 'SALES_REP',
-        passwordHash: 'invited_team_member',
+        passwordHash: initialPasswordHash,
       },
     });
 
-    return NextResponse.json({ success: true, data: newUser }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: newUser.id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        role: newUser.role,
+      },
+    }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    const isForbidden = error.message?.includes('Forbidden');
+    const isUnauthorized = error.message?.includes('Unauthorized');
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: isForbidden ? 403 : isUnauthorized ? 401 : 400 }
+    );
   }
 }

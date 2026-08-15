@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   try {
     const session = await getAuthSession(request);
 
-    // Get workspace with counts to determine if brand new or has items
+    // Get workspace with counts strictly scoped to the session's workspace
     const workspace = await prisma.workspace.findUnique({
       where: { id: session.workspaceId },
       include: {
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
           role: session.role,
           agency: session.agencyName,
           workspaceId: session.workspaceId,
-          isFirstLogin: session.isFirstLogin || false,
+          isFirstLogin: false,
         },
         workspace: {
           id: workspace.id,

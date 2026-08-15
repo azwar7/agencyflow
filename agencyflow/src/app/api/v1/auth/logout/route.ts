@@ -1,35 +1,24 @@
 import { NextResponse } from 'next/server';
-import { SESSION_COOKIE_NAME, AUTH_COOKIE_NAME } from '@/lib/auth-session';
+import { deleteSession, clearSessionCookie } from '@/lib/auth-session';
 
-export async function POST() {
+export async function POST(request: Request) {
+  // 1. Invalidate session in database
+  await deleteSession(request);
+
   const response = NextResponse.json({
     success: true,
     message: 'Logged out successfully',
   });
 
-  // Expire session cookie
-  response.cookies.set(SESSION_COOKIE_NAME, '', {
-    path: '/',
-    maxAge: 0,
-    expires: new Date(0),
-    sameSite: 'lax',
-    httpOnly: false,
-  });
+  // 2. Clear httpOnly session cookies
+  clearSessionCookie(response);
 
-  // Expire auth status cookie
-  response.cookies.set(AUTH_COOKIE_NAME, '', {
-    path: '/',
-    maxAge: 0,
-    expires: new Date(0),
-    sameSite: 'lax',
-  });
-
-  // Ensure response is not cached
+  // 3. Prevent cache
   response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
 
   return response;
 }
 
-export async function GET() {
-  return POST();
+export async function GET(request: Request) {
+  return POST(request);
 }

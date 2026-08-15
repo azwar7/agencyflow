@@ -35,14 +35,8 @@ export function GettingStartedWidget() {
   const fetchLatestStatus = useCallback(async () => {
     if (typeof window === 'undefined') return;
     try {
-      const headers: Record<string, string> = {};
-      const token = localStorage.getItem('agencyflow_session');
-      if (token) headers['x-session-token'] = token;
-      if (workspaceId) headers['x-workspace-id'] = workspaceId;
-
       const res = await fetch('/api/v1/auth/me', {
         credentials: 'include',
-        headers,
       });
 
       if (res.ok) {

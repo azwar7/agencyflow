@@ -35,7 +35,7 @@ export default function SignupPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0d14', color: 'var(--on-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-      
+
       {/* Back to Home Link */}
       <Link
         href="/"
@@ -55,7 +55,7 @@ export default function SignupPage() {
       >
         <ArrowLeft size={16} /> Back to home
       </Link>
-      
+
       {/* Glow Orbs */}
       <div style={{ position: 'absolute', top: '-10%', right: '20%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(128, 131, 255, 0.15) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '-10%', left: '15%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(78, 222, 163, 0.1) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
@@ -95,7 +95,6 @@ export default function SignupPage() {
               <input
                 type="text"
                 required
-                placeholder="Alex Sterling"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--on-surface)', fontSize: '0.85rem', width: '100%' }}
@@ -110,7 +109,6 @@ export default function SignupPage() {
               <input
                 type="email"
                 required
-                placeholder="alex@youragency.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--on-surface)', fontSize: '0.85rem', width: '100%' }}
@@ -125,7 +123,6 @@ export default function SignupPage() {
               <input
                 type="text"
                 required
-                placeholder="Sterling Digital Agency"
                 value={agencyName}
                 onChange={(e) => setAgencyName(e.target.value)}
                 style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--on-surface)', fontSize: '0.85rem', width: '100%' }}
@@ -140,7 +137,7 @@ export default function SignupPage() {
               <input
                 type="password"
                 required
-                placeholder="Must be at least 6 characters"
+                placeholder="Must be at least 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--on-surface)', fontSize: '0.85rem', width: '100%' }}

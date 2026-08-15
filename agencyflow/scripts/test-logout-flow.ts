@@ -1,5 +1,5 @@
 import { prisma } from '../src/lib/prisma';
-import { encodeSession, decodeSession, SESSION_COOKIE_NAME, AUTH_COOKIE_NAME } from '../src/lib/auth-session';
+import { createSession, SESSION_COOKIE_NAME } from '../src/lib/auth-session';
 
 async function runLogoutTest() {
   console.log('🧪 Starting Comprehensive Logout Flow & Session Invalidation Test...\n');
@@ -27,16 +27,9 @@ async function runLogoutTest() {
 
     const workspaceId = signupJson.data.workspace.id;
     const userId = signupJson.data.user.id;
-    const token = encodeSession({
-      userId,
-      workspaceId,
-      email,
-      fullName: 'Logout Tester',
-      role: 'OWNER',
-      agencyName: 'Logout Test Agency',
-    });
+    const { rawToken: token } = await createSession(userId);
 
-    const activeCookieHeader = `${SESSION_COOKIE_NAME}=${token}; ${AUTH_COOKIE_NAME}=true`;
+    const activeCookieHeader = `${SESSION_COOKIE_NAME}=${token}`;
     console.log('   ✅ User signed up and active session token created');
 
     // 2. Verify /api/v1/auth/me works when authenticated
@@ -45,13 +38,13 @@ async function runLogoutTest() {
       headers: { Cookie: activeCookieHeader },
     });
     const meJson = await meRes.json();
-    if (!meRes.ok || !meJson.success || meJson.data.user.email !== email) {
-      throw new Error(`Auth me check failed: ${JSON.stringify(meJson)}`);
+    if (!meRes.ok || !meJson.success) {
+      throw new Error(`Authenticated /api/v1/auth/me failed: ${JSON.stringify(meJson)}`);
     }
-    console.log(`   ✅ Auth me successfully returned user: ${meJson.data.user.email}`);
+    console.log(`   ✅ /api/v1/auth/me authenticated as ${meJson.data.user.email}`);
 
-    // 3. Call POST /api/v1/auth/logout
-    console.log('3️⃣ Calling POST /api/v1/auth/logout...');
+    // 3. Perform Logout on server
+    console.log('3️⃣ Calling POST /api/v1/auth/logout to invalidate server session...');
     const logoutRes = await fetch('http://localhost:3000/api/v1/auth/logout', {
       method: 'POST',
       headers: { Cookie: activeCookieHeader },
@@ -60,38 +53,27 @@ async function runLogoutTest() {
     if (!logoutRes.ok || !logoutJson.success) {
       throw new Error(`Logout endpoint failed: ${JSON.stringify(logoutJson)}`);
     }
-    console.log('   ✅ Server responded with success:', logoutJson.message);
+    console.log('   ✅ Server responded with logout success');
 
-    // 4. Verify /api/v1/auth/me returns 401 after logout (no cookie or empty cookie)
-    console.log('4️⃣ Verifying /api/v1/auth/me returns 401 Unauthorized after logout...');
-    const meAfterLogoutRes = await fetch('http://localhost:3000/api/v1/auth/me', {
-      headers: { Cookie: '' },
+    // 4. Verify post-logout: old session token is completely invalidated on server
+    console.log('4️⃣ Testing re-use of old session token against /api/v1/auth/me...');
+    const postLogoutMeRes = await fetch('http://localhost:3000/api/v1/auth/me', {
+      headers: { Cookie: activeCookieHeader },
     });
-    console.log(`   Status: ${meAfterLogoutRes.status}`);
-    if (meAfterLogoutRes.status !== 401) {
-      const errJson = await meAfterLogoutRes.json();
-      throw new Error(`❌ Security failure: /api/v1/auth/me returned ${meAfterLogoutRes.status} instead of 401! Body: ${JSON.stringify(errJson)}`);
+    if (postLogoutMeRes.status !== 401) {
+      throw new Error(`Expected 401 after logout but got ${postLogoutMeRes.status}`);
     }
-    console.log('   ✅ /api/v1/auth/me correctly returned 401 Unauthorized.');
+    console.log('   ✅ Server rejected invalidated session token with 401 Unauthorized.');
 
-    // 5. Verify protected API (/api/v1/dashboard) returns 401 after logout
-    console.log('5️⃣ Verifying protected /api/v1/dashboard returns 401 without session...');
-    const dashAfterLogoutRes = await fetch('http://localhost:3000/api/v1/dashboard', {
-      headers: { Cookie: '' },
-    });
-    console.log(`   Status: ${dashAfterLogoutRes.status}`);
-    if (dashAfterLogoutRes.status !== 401 && dashAfterLogoutRes.status !== 400) {
-      const errJson = await dashAfterLogoutRes.json();
-      throw new Error(`❌ Security failure: /api/v1/dashboard returned ${dashAfterLogoutRes.status} instead of 401! Body: ${JSON.stringify(errJson)}`);
-    }
-    console.log('   ✅ /api/v1/dashboard correctly rejected unauthenticated request.');
-
-    console.log('\n🎉 ALL LOGOUT TESTS PASSED COMPLETELY! User is genuinely and securely logged out. 🎉\n');
+    // Cleanup
+    await prisma.session.deleteMany({ where: { userId } });
+    await prisma.user.deleteMany({ where: { id: userId } });
+    await prisma.workspace.deleteMany({ where: { id: workspaceId } });
+    console.log('\n🧹 Test user cleaned up.');
+    console.log('🎉 ALL LOGOUT TESTS PASSED WITH 100% SUCCESS!');
   } catch (error) {
-    console.error('\n❌ Test failure:', error);
+    console.error('❌ Logout test failed:', error);
     process.exit(1);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

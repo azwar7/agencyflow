@@ -41,10 +41,22 @@ model User {
   createdAt    DateTime  @default(now())
 
   workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sessions   Session[]
   leads      Lead[]     @relation("AssignedLeads")
   deals      Deal[]     @relation("AssignedDeals")
   activities Activity[]
   tasks      Task[]     @relation("AssignedTasks")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Company {

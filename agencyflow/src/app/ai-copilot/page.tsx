@@ -78,7 +78,7 @@ AgencyFlow Lead`
         {/* Workspace Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700, marginBottom: '0.25rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700, marginBottom: '0.25rem', marginTop: '0.75rem' }}>
               WORKSPACE
             </p>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--on-surface)' }}>

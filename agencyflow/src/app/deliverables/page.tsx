@@ -232,7 +232,8 @@ export default function DeliverablesPage() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.18em',
                 fontWeight: 700,
-                marginBottom: '0.1rem',
+                marginBottom: '0.25rem',
+                marginTop: '0.75rem',
               }}
             >
               WORKFLOW / CLIENT TOUCHPOINTS
@@ -633,8 +634,8 @@ export default function DeliverablesPage() {
                 item.statusType === 'pending'
                   ? 'rgba(245, 158, 11, 0.03)'
                   : item.statusType === 'approved'
-                  ? 'rgba(78, 222, 163, 0.03)'
-                  : 'rgba(255, 180, 171, 0.04)';
+                    ? 'rgba(78, 222, 163, 0.03)'
+                    : 'rgba(255, 180, 171, 0.04)';
 
               return (
                 <div
@@ -775,8 +776,8 @@ export default function DeliverablesPage() {
                               item.statusType === 'pending'
                                 ? 'rgba(245, 158, 11, 0.15)'
                                 : item.statusType === 'approved'
-                                ? 'rgba(78, 222, 163, 0.15)'
-                                : 'rgba(255, 180, 171, 0.15)',
+                                  ? 'rgba(78, 222, 163, 0.15)'
+                                  : 'rgba(255, 180, 171, 0.15)',
                             border: `1px solid ${item.accentColor}`,
                             display: 'flex',
                             alignItems: 'center',
@@ -789,8 +790,8 @@ export default function DeliverablesPage() {
                             {item.statusType === 'pending'
                               ? 'schedule'
                               : item.statusType === 'approved'
-                              ? 'check_circle'
-                              : 'flag'}
+                                ? 'check_circle'
+                                : 'flag'}
                           </span>
                           <span style={{ fontSize: '0.7rem', fontWeight: 700, color: item.accentColor, letterSpacing: '0.05em' }}>
                             {item.status}

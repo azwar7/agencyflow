@@ -1,74 +1,75 @@
+import crypto from 'crypto';
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export interface SessionData {
+  sessionId?: string;
   userId: string;
   workspaceId: string;
   email: string;
   fullName: string;
   role: string;
   agencyName: string;
-  isFirstLogin?: boolean;
 }
 
 export const SESSION_COOKIE_NAME = 'agencyflow_session';
-export const AUTH_COOKIE_NAME = 'agencyflow_auth';
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
-export function encodeSession(data: SessionData): string {
-  return Buffer.from(JSON.stringify(data)).toString('base64');
-}
+export const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: SESSION_MAX_AGE_SECONDS,
+};
 
-export function decodeSession(token: string): SessionData | null {
-  if (!token) return null;
-  try {
-    // 1. Clean token from surrounding quotes or whitespace
-    const clean = decodeURIComponent(token.trim().replace(/^"|"$/g, ''));
-
-    // 2. Try base64 decode first
-    try {
-      const json = Buffer.from(clean, 'base64').toString('utf-8');
-      if (json.startsWith('{') && json.endsWith('}')) {
-        return JSON.parse(json) as SessionData;
-      }
-    } catch {}
-
-    // 3. Try raw JSON parse
-    try {
-      if (clean.startsWith('{') && clean.endsWith('}')) {
-        return JSON.parse(clean) as SessionData;
-      }
-    } catch {}
-
-    // 4. Try double-decoded parse
-    const doubleDecoded = decodeURIComponent(clean);
-    return JSON.parse(doubleDecoded) as SessionData;
-  } catch {
-    return null;
-  }
+/**
+ * Computes a SHA-256 hash of the raw session token for secure database storage.
+ */
+export function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token.trim()).digest('hex');
 }
 
 /**
- * Extracts and verifies the active tenant workspace from incoming request or headers/cookies.
- * Guarantees zero cross-tenant data leakage by enforcing database-level workspace validation.
+ * Generates a cryptographically random 256-bit session token.
+ */
+export function generateSessionToken(): string {
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+/**
+ * Creates a new database session record associated with the user and returns the raw token.
+ */
+export async function createSession(userId: string): Promise<{ rawToken: string; expiresAt: Date }> {
+  const rawToken = generateSessionToken();
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
+
+  await prisma.session.create({
+    data: {
+      userId,
+      tokenHash,
+      expiresAt,
+    },
+  });
+
+  return { rawToken, expiresAt };
+}
+
+/**
+ * Resolves the authenticated user & workspace from the database-backed session token.
+ * Strictly derives the workspace from session -> user -> workspace (zero client trust).
  */
 export async function getAuthSession(request?: Request): Promise<SessionData> {
   let sessionToken: string | null = null;
-  let headerWorkspaceId: string | null = null;
 
-  // 1. Check direct request headers
+  // 1. Check incoming request cookie header
   if (request) {
-    headerWorkspaceId = request.headers.get('x-workspace-id');
-    const headerToken = request.headers.get('x-session-token');
-    if (headerToken) {
-      sessionToken = headerToken;
-    }
-
-    if (!sessionToken) {
-      const cookieHeader = request.headers.get('cookie') || '';
-      const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`));
-      if (match) {
-        sessionToken = match[1];
-      }
+    const cookieHeader = request.headers.get('cookie') || '';
+    const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE_NAME}=([^;]+)`));
+    if (match) {
+      sessionToken = decodeURIComponent(match[1].trim().replace(/^"|"$/g, ''));
     }
   }
 
@@ -78,44 +79,108 @@ export async function getAuthSession(request?: Request): Promise<SessionData> {
       const cookieStore = await cookies();
       sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value || null;
     } catch {
-      // Ignore if called in contexts without next cookies
+      // Ignore if called outside Server Component / Action / Route Handler context
     }
   }
 
-  let session: SessionData | null = null;
+  if (!sessionToken) {
+    throw new Error('Unauthorized: No active session. Please log in.');
+  }
+
+  const tokenHash = hashToken(sessionToken);
+
+  // Look up session in database with User and Workspace
+  const session = await prisma.session.findUnique({
+    where: { tokenHash },
+    include: {
+      user: {
+        include: {
+          workspace: true,
+        },
+      },
+    },
+  });
+
+  if (!session) {
+    throw new Error('Unauthorized: Invalid session. Please log in.');
+  }
+
+  // Verify expiration
+  if (session.expiresAt < new Date()) {
+    // Asynchronously delete expired session
+    prisma.session.delete({ where: { id: session.id } }).catch(() => {});
+    throw new Error('Unauthorized: Session expired. Please log in again.');
+  }
+
+  const user = session.user;
+  if (!user || !user.workspace) {
+    throw new Error('Unauthorized: User or associated workspace not found.');
+  }
+
+  return {
+    sessionId: session.id,
+    userId: user.id,
+    workspaceId: user.workspace.id,
+    email: user.email,
+    fullName: user.fullName,
+    role: user.role,
+    agencyName: user.workspace.name,
+  };
+}
+
+/**
+ * Invalidates and deletes the server-side session from the database.
+ */
+export async function deleteSession(request?: Request): Promise<void> {
+  let sessionToken: string | null = null;
+
+  if (request) {
+    const cookieHeader = request.headers.get('cookie') || '';
+    const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE_NAME}=([^;]+)`));
+    if (match) {
+      sessionToken = decodeURIComponent(match[1].trim().replace(/^"|"$/g, ''));
+    }
+  }
+
+  if (!sessionToken) {
+    try {
+      const cookieStore = await cookies();
+      sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value || null;
+    } catch {}
+  }
+
   if (sessionToken) {
-    session = decodeSession(sessionToken);
-  }
-
-  // If header provided a specific workspace override from authenticated client context
-  if (headerWorkspaceId) {
-    const existingWs = await prisma.workspace.findUnique({
-      where: { id: headerWorkspaceId },
-      include: { users: true },
-    });
-    if (existingWs) {
-      const user = existingWs.users[0];
-      return {
-        userId: user ? user.id : 'anonymous',
-        workspaceId: existingWs.id,
-        email: user ? user.email : 'user@agencyflow.io',
-        fullName: user ? user.fullName : existingWs.name,
-        role: user ? user.role : 'OWNER',
-        agencyName: existingWs.name,
-        isFirstLogin: false,
-      };
+    const tokenHash = hashToken(sessionToken);
+    try {
+      await prisma.session.deleteMany({
+        where: { tokenHash },
+      });
+    } catch (err) {
+      console.warn('[auth-session] Failed to delete session from DB:', err);
     }
   }
+}
 
-  if (session?.workspaceId) {
-    // Validate workspace exists in DB
-    const ws = await prisma.workspace.findUnique({
-      where: { id: session.workspaceId },
-    });
-    if (ws) {
-      return session;
-    }
-  }
+/**
+ * Attaches the httpOnly session cookie to an outgoing HTTP response.
+ */
+export function setSessionCookie(response: NextResponse, rawToken: string): void {
+  response.cookies.set(SESSION_COOKIE_NAME, rawToken, SESSION_COOKIE_OPTIONS);
+}
 
-  throw new Error('Unauthorized: No active tenant workspace session found. Please log in.');
+/**
+ * Clears the session cookie from the client browser.
+ */
+export function clearSessionCookie(response: NextResponse): void {
+  response.cookies.set(SESSION_COOKIE_NAME, '', {
+    ...SESSION_COOKIE_OPTIONS,
+    maxAge: 0,
+    expires: new Date(0),
+  });
+  // Clear legacy auth cookie if present
+  response.cookies.set('agencyflow_auth', '', {
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+  });
 }

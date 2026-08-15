@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { encodeSession, SESSION_COOKIE_NAME, AUTH_COOKIE_NAME } from '@/lib/auth-session';
+import { createSession, setSessionCookie } from '@/lib/auth-session';
+import { verifyPassword } from '@/lib/password';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -15,84 +16,59 @@ export async function POST(request: Request) {
 
     const emailNormalized = validated.email.toLowerCase().trim();
 
-    // Look up user
-    let user = await prisma.user.findUnique({
+    // 1. Look up user by email
+    const user = await prisma.user.findUnique({
       where: { email: emailNormalized },
       include: { workspace: true },
     });
 
-    // If demo account and user doesn't exist yet, check or attach to seed workspace
-    if (!user) {
-      const demoWorkspace = await prisma.workspace.findFirst({
-        include: { users: true },
-      });
+    // Generic error message to prevent account enumeration
+    const genericAuthError = { success: false, error: { message: 'Invalid email or password.' } };
 
-      if (demoWorkspace) {
-        user = await prisma.user.create({
-          data: {
-            workspaceId: demoWorkspace.id,
-            email: emailNormalized,
-            fullName: 'Alex Sterling',
-            role: 'OWNER',
-            passwordHash: 'seeded_demo_hash',
-          },
-          include: { workspace: true },
-        });
-      } else {
-        return NextResponse.json(
-          { success: false, error: { message: 'Invalid credentials. User not found.' } },
-          { status: 401 }
-        );
-      }
+    if (!user || !user.workspace) {
+      return NextResponse.json(genericAuthError, { status: 401 });
     }
 
-    const sessionPayload = {
-      userId: user.id,
-      workspaceId: user.workspaceId,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-      agencyName: user.workspace.name,
-      isFirstLogin: false,
-    };
+    // 2. Real cryptographic password verification
+    const isPasswordValid = await verifyPassword(validated.password, user.passwordHash);
+    if (!isPasswordValid) {
+      return NextResponse.json(genericAuthError, { status: 401 });
+    }
 
-    const token = encodeSession(sessionPayload);
+    // 3. Create database-backed session (generates 256-bit token & stores SHA-256 hash in DB)
+    const { rawToken } = await createSession(user.id);
 
+    // 4. Construct safe response payload (raw token is NOT exposed in JSON)
     const response = NextResponse.json({
       success: true,
       data: {
-        token,
         user: {
           id: user.id,
           email: user.email,
           name: user.fullName,
           role: user.role,
           agency: user.workspace.name,
-          workspaceId: user.workspaceId,
+          workspaceId: user.workspace.id,
           isFirstLogin: false,
         },
       },
     });
 
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
-      path: '/',
-      maxAge: 86400 * 7,
-      sameSite: 'lax',
-      httpOnly: false,
-    });
-
-    response.cookies.set(AUTH_COOKIE_NAME, 'true', {
-      path: '/',
-      maxAge: 86400 * 7,
-      sameSite: 'lax',
-    });
+    // 5. Attach secure httpOnly cookie
+    setSessionCookie(response, rawToken);
 
     return response;
   } catch (error: any) {
-    console.error('Login Error:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
+    console.error('[Login Route] Unexpected error:', error);
     return NextResponse.json(
-      { success: false, error: { message: error.message || 'Login failed.' } },
-      { status: 400 }
+      { success: false, error: { message: 'An unexpected error occurred during login.' } },
+      { status: 500 }
     );
   }
 }
