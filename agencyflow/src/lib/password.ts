@@ -4,46 +4,29 @@ const BCRYPT_SALT_ROUNDS = 12;
 
 /**
  * Hashes a plaintext password using bcrypt with a cost factor of 12.
+ * Rejects empty or non-string inputs.
  */
 export async function hashPassword(password: string): Promise<string> {
-  if (!password || typeof password !== 'string') {
+  if (!password || typeof password !== 'string' || password.trim().length === 0) {
     throw new Error('Password must be a non-empty string');
   }
   return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 }
 
 /**
- * Verifies a plaintext password against a stored password hash.
- * Supports standard bcrypt hashes and gracefully handles legacy dev mock hashes.
+ * Verifies a plaintext password strictly against a real bcrypt password hash.
+ * Returns false for empty inputs, malformed hashes, or mismatched passwords.
+ * Never throws exceptions on malformed hashes and contains ZERO fallback mechanisms.
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  if (!password || !hash) {
+  if (!password || !hash || typeof password !== 'string' || typeof hash !== 'string') {
     return false;
   }
 
   try {
-    // 1. Primary verification: real bcrypt comparison
-    const isMatch = await bcrypt.compare(password, hash);
-    if (isMatch) return true;
+    return await bcrypt.compare(password, hash);
   } catch {
-    // If bcrypt throws due to invalid salt format in legacy test data, fall through to check legacy formats
+    // If bcrypt throws due to an invalid/malformed salt or hash format, safely reject
+    return false;
   }
-
-  // 2. Backward compatibility fallback for legacy dev mock hashes ($2b$12$<base64>)
-  try {
-    if (hash.startsWith('$2b$12$')) {
-      const base64Part = hash.slice(7);
-      const decoded = Buffer.from(base64Part, 'base64').toString('utf-8');
-      if (decoded === password) {
-        return true;
-      }
-    }
-  } catch {}
-
-  // 3. Fallback for seeded development test strings
-  if (hash === 'seeded_demo_hash' && (password === 'password123' || password === 'Password123!')) {
-    return true;
-  }
-
-  return false;
 }

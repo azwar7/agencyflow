@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { hashPassword } from './password';
 
 export async function seedDatabase() {
   // Clear existing records
@@ -10,6 +11,8 @@ export async function seedDatabase() {
   await prisma.company.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.workspace.deleteMany({});
+
+  const defaultPasswordHash = await hashPassword('ApexDigital2026!');
 
   // 1. Create Organization Workspace
   const workspace = await prisma.workspace.create({
@@ -26,7 +29,7 @@ export async function seedDatabase() {
       email: 'sarah@apexdigital.com',
       fullName: 'Sarah Jenkins',
       role: 'OWNER',
-      passwordHash: '$2b$12$e8Y6bF0Z69cK05w...', // Mocked hashed pass
+      passwordHash: defaultPasswordHash,
       avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
     },
   });
@@ -37,7 +40,7 @@ export async function seedDatabase() {
       email: 'marcus@apexdigital.com',
       fullName: 'Marcus Vance',
       role: 'MANAGER',
-      passwordHash: '$2b$12$e8Y6bF0Z69cK05w...',
+      passwordHash: defaultPasswordHash,
       avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
     },
   });
@@ -48,7 +51,7 @@ export async function seedDatabase() {
       email: 'alex@apexdigital.com',
       fullName: 'Alex Rivera',
       role: 'SALES_REP',
-      passwordHash: '$2b$12$e8Y6bF0Z69cK05w...',
+      passwordHash: defaultPasswordHash,
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     },
   });
