@@ -1,17 +1,28 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthSession(request);
     const { leadId } = await request.json();
-    if (!leadId) return NextResponse.json({ success: false, error: 'leadId is required' }, { status: 400 });
 
-    const lead = await prisma.lead.findUnique({
-      where: { id: leadId },
+    if (!leadId) {
+      return NextResponse.json({ success: false, error: 'leadId is required' }, { status: 400 });
+    }
+
+    // Strictly scope lead lookup to authenticated workspace to prevent cross-tenant IDOR
+    const lead = await prisma.lead.findFirst({
+      where: {
+        id: leadId,
+        workspaceId: session.workspaceId,
+      },
       include: { activities: true },
     });
 
-    if (!lead) return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+    if (!lead) {
+      return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+    }
 
     // AI Lead Qualification Evaluation Logic
     let score = 60;
@@ -64,6 +75,13 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+
+    return NextResponse.json(
+      { success: false, error: { message: error.message } },
+      { status }
+    );
   }
 }

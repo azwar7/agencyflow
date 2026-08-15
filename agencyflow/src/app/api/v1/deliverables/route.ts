@@ -33,7 +33,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: formatted });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+    return NextResponse.json({ success: false, error: error.message }, { status });
   }
 }
 
@@ -42,6 +45,19 @@ export async function POST(req: Request) {
     const session = await getAuthSession(req);
     const workspaceId = session.workspaceId;
     const body = await req.json();
+
+    // Validate projectId belongs strictly to authenticated workspace
+    if (body.projectId) {
+      const project = await prisma.project.findFirst({
+        where: { id: body.projectId, workspaceId },
+      });
+      if (!project) {
+        return NextResponse.json(
+          { success: false, error: { message: 'Referenced project does not exist in this workspace.' } },
+          { status: 400 }
+        );
+      }
+    }
 
     const newDeliverable = await prisma.deliverable.create({
       data: {
@@ -60,6 +76,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: newDeliverable }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message || 'Failed to create deliverable' }, { status: 500 });
+    const isUnauthorized = err.message?.includes('Unauthorized') || err.message?.includes('session');
+    const isForbidden = err.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+    return NextResponse.json({ success: false, error: err.message || 'Failed to create deliverable' }, { status });
   }
 }

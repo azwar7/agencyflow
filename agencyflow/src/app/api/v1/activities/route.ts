@@ -20,7 +20,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: activities });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
@@ -31,6 +34,32 @@ export async function POST(request: Request) {
     const userId = session.userId;
 
     const body = await request.json();
+
+    // Validate leadId belongs strictly to authenticated workspace
+    if (body.leadId) {
+      const lead = await prisma.lead.findFirst({
+        where: { id: body.leadId, workspaceId },
+      });
+      if (!lead) {
+        return NextResponse.json(
+          { success: false, error: { message: 'Referenced lead does not exist in this workspace.' } },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate dealId belongs strictly to authenticated workspace
+    if (body.dealId) {
+      const deal = await prisma.deal.findFirst({
+        where: { id: body.dealId, workspaceId },
+      });
+      if (!deal) {
+        return NextResponse.json(
+          { success: false, error: { message: 'Referenced deal does not exist in this workspace.' } },
+          { status: 400 }
+        );
+      }
+    }
 
     const newActivity = await prisma.activity.create({
       data: {
@@ -48,6 +77,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: newActivity }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { requireRole } from '@/lib/authorization';
 
 export async function GET(request: Request) {
   try {
@@ -10,13 +11,19 @@ export async function GET(request: Request) {
     });
     return NextResponse.json({ success: true, data: { isSampleData: count > 0 } });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 401 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getAuthSession(request);
+    // RBAC: Loading sample data requires OWNER or ADMIN role
+    requireRole(session, ['OWNER', 'ADMIN']);
+
     const workspaceId = session.workspaceId;
 
     // First delete any previous sample data to avoid duplicates
@@ -376,14 +383,19 @@ export async function POST(request: Request) {
       message: 'Sample demo data successfully loaded into workspace.',
     });
   } catch (error: any) {
-    console.error('Failed to load sample data:', error);
-    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
     const session = await getAuthSession(request);
+    // RBAC: Resetting/deleting sample data requires OWNER or ADMIN role
+    requireRole(session, ['OWNER', 'ADMIN']);
+
     await clearWorkspaceSampleData(session.workspaceId);
 
     return NextResponse.json({
@@ -391,7 +403,10 @@ export async function DELETE(request: Request) {
       message: 'Sample data removed. Workspace reset to clean empty state.',
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 

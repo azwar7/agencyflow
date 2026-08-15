@@ -1,27 +1,38 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getAuthSession(request);
     const { id } = await params;
     const body = await request.json();
     const dealTitle = body.dealTitle || 'New Agency Service Deal';
     const dealValue = parseFloat(body.dealValue || '25000');
 
-    const lead = await prisma.lead.findUnique({ where: { id } });
-    if (!lead) return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+    // Strict workspace-scoped lookup
+    const lead = await prisma.lead.findFirst({
+      where: {
+        id,
+        workspaceId: session.workspaceId,
+      },
+    });
 
-    const user = await prisma.user.findFirst();
-    if (!user) return NextResponse.json({ success: false, error: 'No user context' }, { status: 400 });
+    if (!lead) {
+      return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+    }
 
-    // Transactional conversion
+    const userId = session.userId;
+    const workspaceId = session.workspaceId;
+
+    // Atomic Transaction scoped strictly to authenticated tenant
     const result = await prisma.$transaction(async (tx) => {
       // 1. Company
       let company = null;
       if (lead.companyName) {
         company = await tx.company.create({
           data: {
-            workspaceId: lead.workspaceId,
+            workspaceId,
             name: lead.companyName,
           },
         });
@@ -30,7 +41,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       // 2. Contact
       const contact = await tx.contact.create({
         data: {
-          workspaceId: lead.workspaceId,
+          workspaceId,
           companyId: company ? company.id : null,
           firstName: lead.firstName,
           lastName: lead.lastName,
@@ -42,10 +53,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       // 3. Deal
       const deal = await tx.deal.create({
         data: {
-          workspaceId: lead.workspaceId,
+          workspaceId,
           contactId: contact.id,
           companyId: company ? company.id : null,
-          assignedToId: lead.assignedToId || user.id,
+          assignedToId: lead.assignedToId || userId,
           title: dealTitle,
           value: dealValue,
           stage: 'DISCOVERY',
@@ -62,8 +73,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       // 5. Activity
       await tx.activity.create({
         data: {
-          workspaceId: lead.workspaceId,
-          userId: user.id,
+          workspaceId,
+          userId,
           dealId: deal.id,
           type: 'STAGE_CHANGE',
           content: `Converted Lead (${lead.firstName} ${lead.lastName}) into Deal: "${dealTitle}" ($${dealValue.toLocaleString()}).`,
@@ -79,9 +90,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       data: result,
     });
   } catch (error: any) {
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+
     return NextResponse.json(
       { success: false, error: { message: error.message || 'Conversion failed' } },
-      { status: 500 }
+      { status }
     );
   }
 }

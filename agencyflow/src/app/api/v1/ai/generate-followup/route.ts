@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth-session';
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthSession(request);
     const { leadId, tone } = await request.json();
 
     let recipientName = 'Prospect';
@@ -10,12 +12,21 @@ export async function POST(request: Request) {
     let score = 75;
 
     if (leadId) {
-      const lead = await prisma.lead.findUnique({ where: { id: leadId } });
-      if (lead) {
-        recipientName = `${lead.firstName} ${lead.lastName}`;
-        companyName = lead.companyName || 'your team';
-        score = lead.leadScore;
+      // Scope lookup strictly to authenticated workspace to prevent cross-tenant enumeration
+      const lead = await prisma.lead.findFirst({
+        where: {
+          id: leadId,
+          workspaceId: session.workspaceId,
+        },
+      });
+
+      if (!lead) {
+        return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
       }
+
+      recipientName = `${lead.firstName} ${lead.lastName}`;
+      companyName = lead.companyName || 'your team';
+      score = lead.leadScore;
     }
 
     const isUrgent = tone === 'urgent';
@@ -56,6 +67,13 @@ AgencyFlow Team`;
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+
+    return NextResponse.json(
+      { success: false, error: { message: error.message } },
+      { status }
+    );
   }
 }
