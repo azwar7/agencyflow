@@ -28,7 +28,7 @@ export const SESSION_COOKIE_OPTIONS = {
  * Computes a SHA-256 hash of the raw session token for secure database storage.
  */
 export function hashToken(token: string): string {
-  return crypto.createHash('sha256').update(token.trim()).digest('hex');
+  return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 /**

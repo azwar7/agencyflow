@@ -42,10 +42,15 @@ export function requireRole(session: SessionData, allowedRoles: (UserRole | stri
 
 /**
  * Checks if a user's role meets or exceeds a minimum role in the role hierarchy.
+ * Fails closed (returns false) if userRole or minimumRole is missing or not recognized in ROLE_HIERARCHY.
  */
 export function hasMinimumRole(userRole: string, minimumRole: UserRole | string): boolean {
-  const userLevel = ROLE_HIERARCHY[userRole] ?? 0;
-  const requiredLevel = ROLE_HIERARCHY[minimumRole] ?? 0;
+  if (!userRole || !minimumRole) return false;
+  const userLevel = ROLE_HIERARCHY[userRole];
+  const requiredLevel = ROLE_HIERARCHY[minimumRole];
+  if (typeof userLevel !== 'number' || typeof requiredLevel !== 'number') {
+    return false;
+  }
   return userLevel >= requiredLevel;
 }
 
