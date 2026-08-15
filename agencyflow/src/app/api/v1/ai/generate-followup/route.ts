@@ -1,11 +1,33 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { checkRateLimit, getClientIp, createRateLimitResponse } from '@/lib/rate-limiter';
+
+const generateFollowupSchema = z.object({
+  leadId: z.string().optional(),
+  tone: z.enum(['professional', 'urgent', 'executive', 'friendly']).optional().default('professional'),
+});
 
 export async function POST(request: Request) {
   try {
     const session = await getAuthSession(request);
-    const { leadId, tone } = await request.json();
+    const ip = getClientIp(request);
+
+    // Rate Limiting: Max 60 AI followups per minute per workspace
+    const rateLimit = checkRateLimit(`${session.workspaceId}:${ip}`, 'ai-generate-followup', 60, 60);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(
+        rateLimit.retryAfterSeconds,
+        'AI generation rate limit reached. Please wait before generating additional drafts.'
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const validated = generateFollowupSchema.parse(body);
+
+    const leadId = validated.leadId;
+    const tone = validated.tone;
 
     let recipientName = 'Prospect';
     let companyName = 'your organization';
@@ -21,7 +43,7 @@ export async function POST(request: Request) {
       });
 
       if (!lead) {
-        return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+        return NextResponse.json({ success: false, error: { message: 'Lead not found' } }, { status: 404 });
       }
 
       recipientName = `${lead.firstName} ${lead.lastName}`;
@@ -38,7 +60,7 @@ export async function POST(request: Request) {
       ? `Executive Briefing & Strategic Proposal for ${companyName}`
       : `Following up on our discovery discussion for ${companyName}`;
 
-    const body = `Hi ${recipientName},
+    const bodyText = `Hi ${recipientName},
 
 ${
   isExecutive
@@ -62,11 +84,17 @@ AgencyFlow Team`;
       success: true,
       data: {
         subject,
-        body,
-        tone: tone || 'professional',
+        body: bodyText,
+        tone,
       },
     });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;

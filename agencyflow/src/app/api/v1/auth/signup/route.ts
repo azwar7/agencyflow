@@ -3,16 +3,28 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { createSession, setSessionCookie } from '@/lib/auth-session';
 import { hashPassword } from '@/lib/password';
+import { checkRateLimit, getClientIp, createRateLimitResponse } from '@/lib/rate-limiter';
 
 const signupSchema = z.object({
   fullName: z.string().min(1, 'Full name is required').max(100),
   email: z.string().email('Invalid email address').max(255),
   agencyName: z.string().min(1, 'Agency name is required').max(100),
-  password: z.string().min(6, 'Password must be at least 6 characters').max(128),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
 });
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+
+    // Rate Limiting: Max 10 signup attempts per hour per IP
+    const rateLimit = checkRateLimit(ip, 'auth-signup', 10, 60 * 60);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(
+        rateLimit.retryAfterSeconds,
+        'Too many account creation attempts. Please try again later.'
+      );
+    }
+
     const body = await request.json();
     const validated = signupSchema.parse(body);
 

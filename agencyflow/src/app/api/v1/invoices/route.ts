@@ -1,7 +1,26 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
 import { requireRole } from '@/lib/authorization';
+
+const createInvoiceSchema = z.object({
+  companyId: z.string().optional().nullable(),
+  client: z.string().min(1, 'Client name is required').max(255).optional().default('Client Account'),
+  amount: z.coerce
+    .number()
+    .min(0, 'Invoice amount cannot be negative')
+    .max(100_000_000, 'Invoice amount exceeds maximum allowed limit')
+    .optional()
+    .default(0),
+  status: z.enum(['PENDING', 'PAID', 'OVERDUE']).optional().default('PENDING'),
+  dueDate: z.string().optional().nullable(),
+});
+
+const patchInvoiceSchema = z.object({
+  id: z.string().min(1, 'Invoice ID is required'),
+  status: z.enum(['PENDING', 'PAID', 'OVERDUE']).optional().default('PAID'),
+});
 
 export async function GET(request: Request) {
   try {
@@ -28,7 +47,7 @@ export async function GET(request: Request) {
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
-    return NextResponse.json({ success: false, error: error.message }, { status });
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
@@ -40,11 +59,12 @@ export async function POST(req: Request) {
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
+    const validated = createInvoiceSchema.parse(body);
 
     // Validate companyId belongs strictly to authenticated workspace
-    if (body.companyId) {
+    if (validated.companyId) {
       const company = await prisma.company.findFirst({
-        where: { id: body.companyId, workspaceId },
+        where: { id: validated.companyId, workspaceId },
       });
       if (!company) {
         return NextResponse.json(
@@ -58,22 +78,28 @@ export async function POST(req: Request) {
     const newInvoice = await prisma.invoice.create({
       data: {
         workspaceId,
-        companyId: body.companyId || null,
+        companyId: validated.companyId || null,
         number: `INV-2026-${randomNum}`,
-        client: body.client || 'Client Account',
-        amount: parseFloat(body.amount || '0'),
-        status: body.status || 'PENDING',
+        client: validated.client.trim(),
+        amount: validated.amount,
+        status: validated.status,
         issuedDate: new Date(),
-        dueDate: body.dueDate ? new Date(body.dueDate) : new Date(Date.now() + 86400000 * 14),
+        dueDate: validated.dueDate ? new Date(validated.dueDate) : new Date(Date.now() + 86400000 * 14),
       },
     });
 
     return NextResponse.json({ success: true, data: newInvoice }, { status: 201 });
   } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: err.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     const isUnauthorized = err.message?.includes('Unauthorized') || err.message?.includes('session');
     const isForbidden = err.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
-    return NextResponse.json({ success: false, error: err.message || 'Failed to create invoice' }, { status });
+    return NextResponse.json({ success: false, error: { message: err.message || 'Failed to create invoice' } }, { status });
   }
 }
 
@@ -85,17 +111,31 @@ export async function PATCH(req: Request) {
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
+    const validated = patchInvoiceSchema.parse(body);
 
-    await prisma.invoice.updateMany({
-      where: { id: body.id, workspaceId },
-      data: { status: body.status || 'PAID' },
+    const updateResult = await prisma.invoice.updateMany({
+      where: { id: validated.id, workspaceId },
+      data: { status: validated.status },
     });
+
+    if (updateResult.count === 0) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Invoice not found or does not belong to this workspace.' } },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: err.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     const isUnauthorized = err.message?.includes('Unauthorized') || err.message?.includes('session');
     const isForbidden = err.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
-    return NextResponse.json({ success: false, error: err.message || 'Failed to update invoice' }, { status });
+    return NextResponse.json({ success: false, error: { message: err.message || 'Failed to update invoice' } }, { status });
   }
 }

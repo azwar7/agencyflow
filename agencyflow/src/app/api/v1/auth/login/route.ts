@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { createSession, setSessionCookie } from '@/lib/auth-session';
 import { verifyPassword } from '@/lib/password';
+import { checkRateLimit, getClientIp, createRateLimitResponse } from '@/lib/rate-limiter';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -11,6 +12,17 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+
+    // Rate Limiting: Max 15 login attempts per 15 minutes per IP
+    const rateLimit = checkRateLimit(ip, 'auth-login', 15, 15 * 60);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(
+        rateLimit.retryAfterSeconds,
+        'Too many login attempts. Please try again later.'
+      );
+    }
+
     const body = await request.json();
     const validated = loginSchema.parse(body);
 

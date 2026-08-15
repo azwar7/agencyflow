@@ -100,10 +100,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
-              <span style={{ fontSize: '0.75rem', color: 'var(--outline)', cursor: 'default' }}>Demo: Any password</span>
-            </div>
+            <label style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0.5rem', padding: '0.65rem 0.85rem', marginTop: '0.35rem' }}>
               <Lock size={16} color="var(--on-surface-variant)" />
               <input

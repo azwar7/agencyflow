@@ -1,6 +1,22 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+
+const createProjectSchema = z.object({
+  companyId: z.string().optional().nullable(),
+  clientName: z.string().min(1).max(255).optional().default('Client'),
+  title: z.string().min(1, 'Project title is required').max(255),
+  progress: z.coerce.number().min(0).max(100).optional().default(0),
+  budget: z.coerce
+    .number()
+    .min(0, 'Project budget cannot be negative')
+    .max(100_000_000, 'Project budget exceeds maximum allowed limit')
+    .optional()
+    .default(0),
+  nextMilestone: z.string().max(255).optional().default('Kickoff & Discovery'),
+  dueDate: z.string().optional().nullable(),
+});
 
 export async function GET(request: Request) {
   try {
@@ -39,7 +55,7 @@ export async function GET(request: Request) {
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
-    return NextResponse.json({ success: false, error: error.message }, { status });
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
@@ -49,11 +65,12 @@ export async function POST(request: Request) {
     const workspaceId = session.workspaceId;
 
     const body = await request.json();
+    const validated = createProjectSchema.parse(body);
 
     // Validate companyId belongs strictly to authenticated workspace
-    if (body.companyId) {
+    if (validated.companyId) {
       const company = await prisma.company.findFirst({
-        where: { id: body.companyId, workspaceId },
+        where: { id: validated.companyId, workspaceId },
       });
       if (!company) {
         return NextResponse.json(
@@ -66,23 +83,29 @@ export async function POST(request: Request) {
     const project = await prisma.project.create({
       data: {
         workspaceId,
-        companyId: body.companyId || null,
-        clientName: body.clientName || 'Client',
-        title: body.title,
+        companyId: validated.companyId || null,
+        clientName: validated.clientName.trim(),
+        title: validated.title.trim(),
         status: 'ON TRACK',
         statusType: 'success',
-        progress: body.progress || 0,
-        budget: parseFloat(body.budget || '0'),
-        nextMilestone: body.nextMilestone || 'Kickoff & Discovery',
-        dueDate: body.dueDate ? new Date(body.dueDate) : null,
+        progress: validated.progress,
+        budget: validated.budget,
+        nextMilestone: validated.nextMilestone.trim(),
+        dueDate: validated.dueDate ? new Date(validated.dueDate) : null,
       },
     });
 
     return NextResponse.json({ success: true, data: project }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
-    return NextResponse.json({ success: false, error: error.message }, { status });
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }

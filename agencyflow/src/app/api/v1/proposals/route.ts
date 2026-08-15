@@ -1,7 +1,27 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
 import { requireRole } from '@/lib/authorization';
+
+const createProposalSchema = z.object({
+  companyId: z.string().optional().nullable(),
+  title: z.string().min(1, 'Proposal title is required').max(255).optional().default('Master Services Agreement SOW'),
+  client: z.string().min(1, 'Client name is required').max(255).optional().default('Client Organization'),
+  value: z.coerce
+    .number()
+    .min(0, 'Proposal value cannot be negative')
+    .max(100_000_000, 'Proposal value exceeds maximum allowed limit')
+    .optional()
+    .default(25000),
+  status: z.enum(['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED']).optional().default('SENT'),
+  preparedBy: z.string().max(100).optional(),
+});
+
+const patchProposalSchema = z.object({
+  id: z.string().min(1, 'Proposal ID is required'),
+  status: z.enum(['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED']).optional().default('ACCEPTED'),
+});
 
 export async function GET(request: Request) {
   try {
@@ -30,7 +50,7 @@ export async function GET(request: Request) {
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
-    return NextResponse.json({ success: false, error: error.message }, { status });
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
@@ -42,11 +62,12 @@ export async function POST(req: Request) {
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
+    const validated = createProposalSchema.parse(body);
 
     // Validate companyId belongs strictly to authenticated workspace
-    if (body.companyId) {
+    if (validated.companyId) {
       const company = await prisma.company.findFirst({
-        where: { id: body.companyId, workspaceId },
+        where: { id: validated.companyId, workspaceId },
       });
       if (!company) {
         return NextResponse.json(
@@ -59,21 +80,27 @@ export async function POST(req: Request) {
     const newProposal = await prisma.proposal.create({
       data: {
         workspaceId,
-        companyId: body.companyId || null,
-        title: body.title || 'Master Services Agreement SOW',
-        client: body.client || 'Client Organization',
-        value: parseFloat(body.value || '25000'),
-        status: body.status || 'SENT',
-        preparedBy: body.preparedBy || session.fullName,
+        companyId: validated.companyId || null,
+        title: validated.title.trim(),
+        client: validated.client.trim(),
+        value: validated.value,
+        status: validated.status,
+        preparedBy: validated.preparedBy?.trim() || session.fullName,
       },
     });
 
     return NextResponse.json({ success: true, data: newProposal }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
-    return NextResponse.json({ success: false, error: error.message }, { status });
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
@@ -85,18 +112,32 @@ export async function PATCH(req: Request) {
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
+    const validated = patchProposalSchema.parse(body);
 
-    await prisma.proposal.updateMany({
-      where: { id: body.id, workspaceId },
-      data: { status: body.status || 'ACCEPTED' },
+    const updateResult = await prisma.proposal.updateMany({
+      where: { id: validated.id, workspaceId },
+      data: { status: validated.status },
     });
+
+    if (updateResult.count === 0) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Proposal not found or does not belong to this workspace.' } },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
-    return NextResponse.json({ success: false, error: error.message }, { status });
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }
 
@@ -110,14 +151,21 @@ export async function DELETE(req: Request) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    if (!id) return NextResponse.json({ success: false, error: 'ID required' }, { status: 400 });
+    if (!id) return NextResponse.json({ success: false, error: { message: 'ID required' } }, { status: 400 });
 
-    await prisma.proposal.deleteMany({ where: { id, workspaceId } });
+    const deleteResult = await prisma.proposal.deleteMany({ where: { id, workspaceId } });
+    if (deleteResult.count === 0) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Proposal not found or does not belong to this workspace.' } },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({ success: true, message: 'Proposal deleted' });
   } catch (error: any) {
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
-    return NextResponse.json({ success: false, error: error.message }, { status });
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status });
   }
 }

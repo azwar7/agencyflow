@@ -1,15 +1,30 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { checkRateLimit, getClientIp, createRateLimitResponse } from '@/lib/rate-limiter';
+
+const scoreLeadSchema = z.object({
+  leadId: z.string().min(1, 'leadId is required'),
+});
 
 export async function POST(request: Request) {
   try {
     const session = await getAuthSession(request);
-    const { leadId } = await request.json();
+    const ip = getClientIp(request);
 
-    if (!leadId) {
-      return NextResponse.json({ success: false, error: 'leadId is required' }, { status: 400 });
+    // Rate Limiting: Max 60 AI evaluations per minute per workspace
+    const rateLimit = checkRateLimit(`${session.workspaceId}:${ip}`, 'ai-score-lead', 60, 60);
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(
+        rateLimit.retryAfterSeconds,
+        'AI evaluation rate limit reached. Please wait before generating additional evaluations.'
+      );
     }
+
+    const body = await request.json().catch(() => ({}));
+    const validated = scoreLeadSchema.parse(body);
+    const leadId = validated.leadId;
 
     // Strictly scope lead lookup to authenticated workspace to prevent cross-tenant IDOR
     const lead = await prisma.lead.findFirst({
@@ -21,7 +36,7 @@ export async function POST(request: Request) {
     });
 
     if (!lead) {
-      return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: { message: 'Lead not found' } }, { status: 404 });
     }
 
     // AI Lead Qualification Evaluation Logic
@@ -75,6 +90,12 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;

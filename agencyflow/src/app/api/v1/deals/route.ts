@@ -1,6 +1,22 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+
+const createDealSchema = z.object({
+  title: z.string().min(1, 'Deal title is required').max(255),
+  value: z.coerce
+    .number()
+    .min(0, 'Deal value cannot be negative')
+    .max(100_000_000, 'Deal value exceeds maximum allowed limit')
+    .optional()
+    .default(0),
+  stage: z
+    .enum(['DISCOVERY', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'])
+    .optional()
+    .default('DISCOVERY'),
+  expectedCloseDate: z.string().optional().nullable(),
+});
 
 export async function GET(request: Request) {
   try {
@@ -39,7 +55,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: { columns, totalDeals: deals.length } });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 500 });
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    return NextResponse.json(
+      { success: false, error: { message: error.message } },
+      { status: isUnauthorized ? 401 : 500 }
+    );
   }
 }
 
@@ -50,15 +70,16 @@ export async function POST(request: Request) {
     const userId = session.userId;
 
     const body = await request.json();
+    const validated = createDealSchema.parse(body);
 
     const deal = await prisma.deal.create({
       data: {
         workspaceId,
         assignedToId: userId,
-        title: body.title,
-        value: parseFloat(body.value || '0'),
-        stage: body.stage || 'DISCOVERY',
-        expectedCloseDate: body.expectedCloseDate ? new Date(body.expectedCloseDate) : null,
+        title: validated.title.trim(),
+        value: validated.value,
+        stage: validated.stage,
+        expectedCloseDate: validated.expectedCloseDate ? new Date(validated.expectedCloseDate) : null,
       },
     });
 
@@ -75,6 +96,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: deal }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 400 });
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    return NextResponse.json(
+      { success: false, error: { message: error.message } },
+      { status: isUnauthorized ? 401 : 400 }
+    );
   }
 }
