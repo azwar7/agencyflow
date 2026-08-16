@@ -13,7 +13,10 @@ async function runTenantIsolationTest() {
     console.log('1️⃣ Creating Workspace A (Agency Alpha) & User A...');
     const signupARes = await fetch('http://localhost:3000/api/v1/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': `10.0.0.${timestamp % 200}`,
+      },
       body: JSON.stringify({
         fullName: 'Alice Sterling',
         email: emailA,
@@ -32,6 +35,7 @@ async function runTenantIsolationTest() {
 
     const headersA = {
       Cookie: `${SESSION_COOKIE_NAME}=${tokenA}`,
+      'X-Forwarded-For': `10.0.0.${timestamp % 200}`,
     };
     console.log(`   ✅ Workspace A created: ${workspaceIdA}`);
 
@@ -67,7 +71,10 @@ async function runTenantIsolationTest() {
     console.log('4️⃣ Creating Workspace B (Agency Beta) & User B...');
     const signupBRes = await fetch('http://localhost:3000/api/v1/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': `10.0.1.${timestamp % 200}`,
+      },
       body: JSON.stringify({
         fullName: 'Bob Roberts',
         email: emailB,

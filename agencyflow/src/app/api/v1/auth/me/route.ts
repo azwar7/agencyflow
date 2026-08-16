@@ -75,9 +75,18 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: any) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       { success: false, error: { message: error.message || 'Unauthorized' } },
       { status: 401 }
     );
+    response.cookies.set('agencyflow_session', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+      expires: new Date(0),
+    });
+    return response;
   }
 }

@@ -1,19 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Mail, Lock, User, Briefcase, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 
 export default function SignupPage() {
-  const { signup } = useAuth();
+  const router = useRouter();
+  const { signup, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [agencyName, setAgencyName] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated) {
+      router.replace('/dashboard');
+    }
+  }, [isAuthLoading, isAuthenticated, router]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();

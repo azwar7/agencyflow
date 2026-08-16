@@ -20,17 +20,12 @@ const PROTECTED_ROUTES = [
   '/ai-copilot',
 ];
 
-const AUTH_ROUTES = ['/login', '/signup'];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const hasSessionCookie = Boolean(sessionToken && sessionToken.trim().length > 0);
 
   const isProtectedRoute = PROTECTED_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-  const isAuthRoute = AUTH_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
@@ -41,12 +36,6 @@ export function middleware(request: NextRequest) {
     const response = NextResponse.redirect(loginUrl);
     response.headers.set('Cache-Control', 'no-store, max-age=0');
     return response;
-  }
-
-  // 2. User with session cookie trying to access login/signup pages
-  if (isAuthRoute && hasSessionCookie) {
-    const dashboardUrl = new URL('/dashboard', request.url);
-    return NextResponse.redirect(dashboardUrl);
   }
 
   const response = NextResponse.next();
@@ -72,7 +61,5 @@ export const config = {
     '/settings/:path*',
     '/team/:path*',
     '/ai-copilot/:path*',
-    '/login',
-    '/signup',
   ],
 };

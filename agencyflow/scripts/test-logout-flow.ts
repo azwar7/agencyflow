@@ -12,7 +12,10 @@ async function runLogoutTest() {
     console.log('1️⃣ Creating user & active session...');
     const signupRes = await fetch('http://localhost:3000/api/v1/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': `10.2.0.${timestamp % 200}`,
+      },
       body: JSON.stringify({
         fullName: 'Logout Tester',
         email,

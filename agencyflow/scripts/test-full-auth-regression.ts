@@ -15,7 +15,10 @@ async function runAuthRegressionTest() {
     console.log('1️⃣ Testing Signup for User 1 (Omega Agency)...');
     const signup1Res = await fetch('http://localhost:3000/api/v1/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': `10.1.0.${timestamp % 200}`,
+      },
       body: JSON.stringify({
         fullName: 'Omega Founder',
         email: email1,
@@ -34,6 +37,7 @@ async function runAuthRegressionTest() {
 
     const headers1 = {
       Cookie: `${SESSION_COOKIE_NAME}=${token1}`,
+      'X-Forwarded-For': `10.1.0.${timestamp % 200}`,
     };
     console.log(`   ✅ User 1 created with Workspace ID: ${ws1Id}`);
 
@@ -59,26 +63,31 @@ async function runAuthRegressionTest() {
       method: 'POST',
       headers: { ...headers1, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        firstName: 'Secret',
+        firstName: 'Omega VIP',
         lastName: 'Client',
-        email: 'secret@omegainvestor.com',
-        companyName: 'Omega Confidential Inc',
-        source: 'Referral Partner',
+        email: 'vip@omega-client.test',
+        companyName: 'Omega Client LLC',
+        source: 'Referral',
+        value: 25000,
       }),
     });
     const lead1Json = await lead1Res.json();
     if (!lead1Res.ok || !lead1Json.success) {
-      throw new Error(`Failed to create lead in Workspace 1: ${JSON.stringify(lead1Json)}`);
+      throw new Error('Failed to create lead in Workspace 1');
     }
-    console.log(`   ✅ Lead created in Workspace 1 (ID: ${lead1Json.data.id})`);
+    const lead1Id = lead1Json.data.id;
+    console.log(`   ✅ Lead created in Workspace 1 (ID: ${lead1Id})`);
 
     // ==========================================
-    // STEP 4: SIGNUP USER 2 (Isolated Workspace)
+    // STEP 4: SIGNUP USER 2 (Second Workspace)
     // ==========================================
     console.log('4️⃣ Testing Signup for User 2 (Zeta Digital)...');
     const signup2Res = await fetch('http://localhost:3000/api/v1/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': `10.1.1.${timestamp % 200}`,
+      },
       body: JSON.stringify({
         fullName: 'Zeta Leader',
         email: email2,

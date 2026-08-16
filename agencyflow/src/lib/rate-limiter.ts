@@ -8,6 +8,13 @@ interface RateLimitRecord {
 // In-memory sliding-window bucket store
 const rateLimitStore = new Map<string, RateLimitRecord>();
 
+/**
+ * Resets the in-memory rate limit store (useful for test runs).
+ */
+export function resetRateLimitStore(): void {
+  rateLimitStore.clear();
+}
+
 // Periodic garbage collection for expired rate limit records (runs every 5 minutes)
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
