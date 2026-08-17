@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const ip = getClientIp(request);
 
     // Rate Limiting: Max 60 AI evaluations per minute per workspace
-    const rateLimit = checkRateLimit(`${session.workspaceId}:${ip}`, 'ai-score-lead', 60, 60);
+    const rateLimit = await checkRateLimit(`${session.workspaceId}:${ip}`, 'ai-score-lead', 60, 60);
     if (!rateLimit.allowed) {
       return createRateLimitResponse(
         rateLimit.retryAfterSeconds,

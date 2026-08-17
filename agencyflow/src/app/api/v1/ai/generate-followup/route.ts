@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const ip = getClientIp(request);
 
     // Rate Limiting: Max 60 AI followups per minute per workspace
-    const rateLimit = checkRateLimit(`${session.workspaceId}:${ip}`, 'ai-generate-followup', 60, 60);
+    const rateLimit = await checkRateLimit(`${session.workspaceId}:${ip}`, 'ai-generate-followup', 60, 60);
     if (!rateLimit.allowed) {
       return createRateLimitResponse(
         rateLimit.retryAfterSeconds,

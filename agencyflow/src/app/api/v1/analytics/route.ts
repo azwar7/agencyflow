@@ -10,11 +10,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const range = searchParams.get('range') || 'YTD';
 
-    // Fetch Deals, Leads, Companies, Tasks strictly scoped to workspace
-    const deals = await prisma.deal.findMany({ where: { workspaceId }, include: { company: true } });
-    const leads = await prisma.lead.findMany({ where: { workspaceId } });
-    const companies = await prisma.company.findMany({ where: { workspaceId } });
-    const tasks = await prisma.task.findMany({ where: { workspaceId } });
+    // Parallelize independent database queries strictly scoped to workspace
+    const [deals, leads, companies, tasks, projects] = await Promise.all([
+      prisma.deal.findMany({ where: { workspaceId }, include: { company: true } }),
+      prisma.lead.findMany({ where: { workspaceId } }),
+      prisma.company.findMany({ where: { workspaceId } }),
+      prisma.task.findMany({ where: { workspaceId } }),
+      prisma.project.findMany({ where: { workspaceId } }),
+    ]);
 
     const closedWonDeals = deals.filter((d) => d.stage === 'CLOSED_WON');
     const closedLostDeals = deals.filter((d) => d.stage === 'CLOSED_LOST');
@@ -52,7 +55,6 @@ export async function GET(request: Request) {
     });
 
     // Project metrics
-    const projects = await prisma.project.findMany({ where: { workspaceId } });
     const activeProjects = projects.filter((p) => p.status === 'IN_PROGRESS');
     const projectsOnTrack = activeProjects.filter((p) => (p.progress || 0) >= 50);
     const projectsAtRisk = activeProjects.filter((p) => (p.progress || 0) < 50);

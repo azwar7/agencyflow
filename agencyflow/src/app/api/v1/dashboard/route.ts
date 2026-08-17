@@ -7,30 +7,50 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId },
-    });
+    // Parallelize independent database queries strictly scoped to authenticated workspace
+    const [workspace, deals, leads, recentActivities, urgentTasks] = await Promise.all([
+      prisma.workspace.findUnique({
+        where: { id: workspaceId },
+      }),
+      prisma.deal.findMany({
+        where: { workspaceId },
+        include: {
+          company: { select: { name: true } },
+          contact: { select: { firstName: true, lastName: true } },
+          assignedTo: { select: { fullName: true } },
+        },
+      }),
+      prisma.lead.findMany({
+        where: { workspaceId },
+        include: {
+          assignedTo: { select: { fullName: true } },
+        },
+      }),
+      prisma.activity.findMany({
+        where: { workspaceId },
+        take: 6,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { fullName: true, role: true } },
+          lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
+          deal: { select: { id: true, title: true } },
+        },
+      }),
+      prisma.task.findMany({
+        where: { workspaceId },
+        take: 6,
+        orderBy: { dueDate: 'asc' },
+        include: {
+          assignedTo: { select: { fullName: true } },
+          lead: { select: { id: true, firstName: true, lastName: true } },
+          deal: { select: { id: true, title: true } },
+        },
+      }),
+    ]);
 
     if (!workspace) {
       return NextResponse.json({ success: false, error: 'No workspace found.' }, { status: 404 });
     }
-
-    // Aggregations strictly scoped to authenticated workspace
-    const deals = await prisma.deal.findMany({
-      where: { workspaceId },
-      include: {
-        company: { select: { name: true } },
-        contact: { select: { firstName: true, lastName: true } },
-        assignedTo: { select: { fullName: true } },
-      },
-    });
-
-    const leads = await prisma.lead.findMany({
-      where: { workspaceId },
-      include: {
-        assignedTo: { select: { fullName: true } },
-      },
-    });
 
     const activeDeals = deals.filter((d) => d.stage !== 'CLOSED_WON' && d.stage !== 'CLOSED_LOST');
     const closedWonDeals = deals.filter((d) => d.stage === 'CLOSED_WON');
@@ -66,28 +86,6 @@ export async function GET(request: Request) {
       negotiation: deals.filter((d) => d.stage === 'NEGOTIATION').length,
       closedWon: closedWonDeals.length,
     };
-
-    const recentActivities = await prisma.activity.findMany({
-      where: { workspaceId },
-      take: 6,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { fullName: true, role: true } },
-        lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
-        deal: { select: { id: true, title: true } },
-      },
-    });
-
-    const urgentTasks = await prisma.task.findMany({
-      where: { workspaceId },
-      take: 6,
-      orderBy: { dueDate: 'asc' },
-      include: {
-        assignedTo: { select: { fullName: true } },
-        lead: { select: { id: true, firstName: true, lastName: true } },
-        deal: { select: { id: true, title: true } },
-      },
-    });
 
     return NextResponse.json({
       success: true,

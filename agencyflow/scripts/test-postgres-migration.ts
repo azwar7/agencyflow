@@ -77,26 +77,29 @@ async function runPostgresMigrationTests() {
     console.log('\n--- 2. Transactional Provisioning (prisma.$transaction) ---');
     const hashedPass = await hashPassword('PgMigrationSecure2026!');
 
-    const { workspace, user } = await prisma.$transaction(async (tx) => {
-      const ws = await tx.workspace.create({
-        data: {
-          name: `PG Migration Agency ${testSuffix}`,
-          slug: `pg-agency-${testSuffix}`,
-        },
-      });
+    const { workspace, user } = await prisma.$transaction(
+      async (tx) => {
+        const ws = await tx.workspace.create({
+          data: {
+            name: `PG Migration Agency ${testSuffix}`,
+            slug: `pg-agency-${testSuffix}`,
+          },
+        });
 
-      const u = await tx.user.create({
-        data: {
-          workspaceId: ws.id,
-          email: `${testSuffix}@agencytest.com`,
-          fullName: 'PG Test Founder',
-          passwordHash: hashedPass,
-          role: 'OWNER',
-        },
-      });
+        const u = await tx.user.create({
+          data: {
+            workspaceId: ws.id,
+            email: `${testSuffix}@agencytest.com`,
+            fullName: 'PG Test Founder',
+            passwordHash: hashedPass,
+            role: 'OWNER',
+          },
+        });
 
-      return { workspace: ws, user: u };
-    });
+        return { workspace: ws, user: u };
+      },
+      { timeout: 15000, maxWait: 10000 }
+    );
 
     testWorkspaceId = workspace.id;
     testUserId = user.id;
@@ -286,41 +289,8 @@ async function runPostgresMigrationTests() {
 
     // 5. Atomic Lead Conversion Compare-and-Swap
     console.log('\n--- 5. Atomic Lead Conversion (Compare-and-Swap) ---');
-    const convertResult = await prisma.$transaction(async (tx) => {
-      const targetLead = await tx.lead.findFirst({
-        where: {
-          id: testLeadId,
-          workspaceId: testWorkspaceId,
-          status: { not: 'CONVERTED' },
-        },
-      });
-
-      if (!targetLead) {
-        throw new Error('Lead already converted');
-      }
-
-      await tx.lead.update({
-        where: { id: targetLead.id },
-        data: { status: 'CONVERTED' },
-      });
-
-      const newDeal = await tx.deal.create({
-        data: {
-          workspaceId: testWorkspaceId,
-          title: `Converted: ${targetLead.firstName} ${targetLead.lastName}`,
-          value: 50000.0,
-          stage: 'DISCOVERY',
-        },
-      });
-
-      return newDeal;
-    });
-    assert(Boolean(convertResult.id), 'Atomic lead conversion succeeded on first attempt');
-
-    // Test duplicate conversion attempt
-    let duplicateRejected = false;
-    try {
-      await prisma.$transaction(async (tx) => {
+    const convertResult = await prisma.$transaction(
+      async (tx) => {
         const targetLead = await tx.lead.findFirst({
           where: {
             id: testLeadId,
@@ -328,10 +298,49 @@ async function runPostgresMigrationTests() {
             status: { not: 'CONVERTED' },
           },
         });
+
         if (!targetLead) {
           throw new Error('Lead already converted');
         }
-      });
+
+        await tx.lead.update({
+          where: { id: targetLead.id },
+          data: { status: 'CONVERTED' },
+        });
+
+        const newDeal = await tx.deal.create({
+          data: {
+            workspaceId: testWorkspaceId,
+            title: `Converted: ${targetLead.firstName} ${targetLead.lastName}`,
+            value: 50000.0,
+            stage: 'DISCOVERY',
+          },
+        });
+
+        return newDeal;
+      },
+      { timeout: 15000, maxWait: 10000 }
+    );
+    assert(Boolean(convertResult.id), 'Atomic lead conversion succeeded on first attempt');
+
+    // Test duplicate conversion attempt
+    let duplicateRejected = false;
+    try {
+      await prisma.$transaction(
+        async (tx) => {
+          const targetLead = await tx.lead.findFirst({
+            where: {
+              id: testLeadId,
+              workspaceId: testWorkspaceId,
+              status: { not: 'CONVERTED' },
+            },
+          });
+          if (!targetLead) {
+            throw new Error('Lead already converted');
+          }
+        },
+        { timeout: 15000, maxWait: 10000 }
+      );
     } catch {
       duplicateRejected = true;
     }

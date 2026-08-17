@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const ip = getClientIp(request);
 
     // Rate Limiting: Max 10 signup attempts per hour per IP
-    const rateLimit = checkRateLimit(ip, 'auth-signup', 10, 60 * 60);
+    const rateLimit = await checkRateLimit(ip, 'auth-signup', 10, 60 * 60);
     if (!rateLimit.allowed) {
       return createRateLimitResponse(
         rateLimit.retryAfterSeconds,

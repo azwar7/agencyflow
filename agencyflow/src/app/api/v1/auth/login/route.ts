@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const ip = getClientIp(request);
 
     // Rate Limiting: Max 15 login attempts per 15 minutes per IP
-    const rateLimit = checkRateLimit(ip, 'auth-login', 15, 15 * 60);
+    const rateLimit = await checkRateLimit(ip, 'auth-login', 15, 15 * 60);
     if (!rateLimit.allowed) {
       return createRateLimitResponse(
         rateLimit.retryAfterSeconds,
