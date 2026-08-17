@@ -481,7 +481,7 @@ export default function SettingsPage() {
                 </div>
 
                 <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-                  Reset and re-populate the SQLite database with default sample leads, pipeline deals, tasks, activities, proposals, and team deliverables.
+                  Reset and re-populate the workspace database with default sample leads, pipeline deals, tasks, activities, proposals, and team deliverables.
                 </p>
 
                 {seedSuccess && (
