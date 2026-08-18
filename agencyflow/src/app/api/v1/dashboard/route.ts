@@ -7,14 +7,20 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    // Parallelize independent database queries strictly scoped to authenticated workspace
+    // Parallelize independent database queries strictly scoped to authenticated workspace with minimal field selection
     const [workspace, deals, leads, recentActivities, urgentTasks] = await Promise.all([
       prisma.workspace.findUnique({
         where: { id: workspaceId },
+        select: { name: true },
       }),
       prisma.deal.findMany({
         where: { workspaceId },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          value: true,
+          stage: true,
+          createdAt: true,
           company: { select: { name: true } },
           contact: { select: { firstName: true, lastName: true } },
           assignedTo: { select: { fullName: true } },
@@ -22,7 +28,16 @@ export async function GET(request: Request) {
       }),
       prisma.lead.findMany({
         where: { workspaceId },
-        include: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          companyName: true,
+          status: true,
+          leadScore: true,
+          createdAt: true,
           assignedTo: { select: { fullName: true } },
         },
       }),
@@ -30,7 +45,13 @@ export async function GET(request: Request) {
         where: { workspaceId },
         take: 6,
         orderBy: { createdAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          type: true,
+          content: true,
+          createdAt: true,
+          leadId: true,
+          dealId: true,
           user: { select: { fullName: true, role: true } },
           lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
           deal: { select: { id: true, title: true } },
@@ -40,7 +61,15 @@ export async function GET(request: Request) {
         where: { workspaceId },
         take: 6,
         orderBy: { dueDate: 'asc' },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          dueDate: true,
+          priority: true,
+          status: true,
+          createdAt: true,
+          leadId: true,
+          dealId: true,
           assignedTo: { select: { fullName: true } },
           lead: { select: { id: true, firstName: true, lastName: true } },
           deal: { select: { id: true, title: true } },

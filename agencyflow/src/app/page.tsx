@@ -66,7 +66,7 @@ export default function LandingPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#111318', color: '#e2e2e8', fontFamily: "'Inter', sans-serif" }}>
-      
+
       {/* 1. Header Navigation — TRUE 3-COLUMN LAYOUT */}
       <header
         style={{
@@ -428,44 +428,6 @@ export default function LandingPage() {
             }}
           />
 
-          {/* Badge */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 16px',
-              borderRadius: '9999px',
-              background: '#1e2024',
-              border: '1px solid rgba(73, 68, 84, 0.3)',
-              marginBottom: '32px',
-              backdropFilter: 'blur(12px)',
-            }}
-          >
-            <span
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#d0bcff',
-                boxShadow: '0 0 10px #d0bcff',
-                display: 'inline-block',
-              }}
-            />
-            <span
-              style={{
-                fontSize: '12px',
-                fontFamily: "'Geist', sans-serif",
-                fontWeight: 600,
-                color: '#cbc3d7',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-              }}
-            >
-              AgencyFlow 2.0 is Here
-            </span>
-          </div>
-
           {/* Main Headline */}
           <h1
             style={{
@@ -562,26 +524,7 @@ export default function LandingPage() {
             </a>
           </div>
 
-          {/* Guarantee Tag */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '12px',
-              fontFamily: "'Geist', sans-serif",
-              fontWeight: 600,
-              color: '#cbc3d7',
-              opacity: 0.8,
-              marginBottom: '80px',
-              letterSpacing: '0.05em',
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#d0bcff' }}>
-              verified
-            </span>{' '}
-            No credit card required. 14-day free trial.
-          </div>
+
 
           {/* 3D Dimensional Hero Scene Stage */}
           <div
@@ -913,32 +856,32 @@ export default function LandingPage() {
                 <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '28px' }}>filter_alt</span> Leads
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#4edea3', fontSize: '28px' }}>groups</span> Clients
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#ffb95f', fontSize: '28px' }}>description</span> Proposals
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '28px' }}>work</span> Projects
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#4edea3', fontSize: '28px' }}>check_circle</span> Tasks
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#ffb95f', fontSize: '28px' }}>analytics</span> Analytics
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '28px' }}>smart_toy</span> AI Assistant
               </div>
@@ -950,32 +893,32 @@ export default function LandingPage() {
                 <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '28px' }}>filter_alt</span> Leads
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#4edea3', fontSize: '28px' }}>groups</span> Clients
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#ffb95f', fontSize: '28px' }}>description</span> Proposals
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '28px' }}>work</span> Projects
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#4edea3', fontSize: '28px' }}>check_circle</span> Tasks
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#ffb95f', fontSize: '28px' }}>analytics</span> Analytics
               </div>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(73, 68, 84, 0.5)' }} />
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '30px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, color: '#cbc3d7' }}>
                 <span className="material-symbols-outlined" style={{ color: '#d0bcff', fontSize: '28px' }}>smart_toy</span> AI Assistant
               </div>
@@ -1717,7 +1660,7 @@ export default function LandingPage() {
       >
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', marginBottom: '32px' }}>
-            
+
             <div style={{ gridColumn: 'span 2' }}>
               <div style={{ marginBottom: '16px' }}>
                 <AgencyFlowLogo height={34} href="/" />

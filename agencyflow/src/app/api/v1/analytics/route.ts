@@ -10,13 +10,40 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const range = searchParams.get('range') || 'YTD';
 
-    // Parallelize independent database queries strictly scoped to workspace
+    // Parallelize independent database queries strictly scoped to workspace with minimal required field selection
     const [deals, leads, companies, tasks, projects] = await Promise.all([
-      prisma.deal.findMany({ where: { workspaceId }, include: { company: true } }),
-      prisma.lead.findMany({ where: { workspaceId } }),
-      prisma.company.findMany({ where: { workspaceId } }),
-      prisma.task.findMany({ where: { workspaceId } }),
-      prisma.project.findMany({ where: { workspaceId } }),
+      prisma.deal.findMany({
+        where: { workspaceId },
+        select: {
+          stage: true,
+          value: true,
+        },
+      }),
+      prisma.lead.findMany({
+        where: { workspaceId },
+        select: {
+          status: true,
+        },
+      }),
+      prisma.company.findMany({
+        where: { workspaceId },
+        select: {
+          name: true,
+        },
+      }),
+      prisma.task.findMany({
+        where: { workspaceId },
+        select: {
+          status: true,
+        },
+      }),
+      prisma.project.findMany({
+        where: { workspaceId },
+        select: {
+          status: true,
+          progress: true,
+        },
+      }),
     ]);
 
     const closedWonDeals = deals.filter((d) => d.stage === 'CLOSED_WON');

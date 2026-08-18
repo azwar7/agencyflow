@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   CheckCircle2,
   Circle,
   ChevronDown,
   ChevronUp,
-  Sparkles,
   ArrowRight,
   X,
   Building2,
@@ -19,38 +18,13 @@ import {
 import { useAuth } from '@/context/AuthContext';
 
 export function GettingStartedWidget() {
-  const { checklist: authChecklist, workspaceId, refreshAuth, dismissOnboarding } = useAuth();
+  const { checklist, workspaceId, dismissOnboarding, isAuthenticated } = useAuth();
 
-  const [localChecklist, setLocalChecklist] = useState(authChecklist);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Synchronize local checklist with context updates
-  useEffect(() => {
-    setLocalChecklist(authChecklist);
-  }, [authChecklist]);
-
-  // Fetch real-time checklist status from server
-  const fetchLatestStatus = useCallback(async () => {
-    if (typeof window === 'undefined') return;
-    try {
-      const res = await fetch('/api/v1/auth/me', {
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data?.workspace?.checklist) {
-          setLocalChecklist(json.data.workspace.checklist);
-        }
-      }
-    } catch (err) {
-      console.warn('[GettingStartedWidget] Failed to poll status:', err);
-    }
-  }, [workspaceId]);
-
-  // Initial mount: load persistence & trigger live count query
+  // Initial mount & workspace persistence loading
   useEffect(() => {
     setMounted(true);
     if (typeof window !== 'undefined' && workspaceId) {
@@ -62,55 +36,37 @@ export function GettingStartedWidget() {
       const collapsed = localStorage.getItem(`agencyflow_checklist_collapsed_${workspaceId}`) === 'true';
       setIsCollapsed(collapsed);
     }
+  }, [workspaceId]);
 
-    fetchLatestStatus();
-
-    // Listen to global agencyflow mutation events
-    const handleRefresh = () => {
-      fetchLatestStatus();
-      refreshAuth();
-    };
-
-    window.addEventListener('agencyflow-refresh', handleRefresh);
-    window.addEventListener('agencyflow-auth-change', handleRefresh);
-    window.addEventListener('visibilitychange', handleRefresh);
-
-    return () => {
-      window.removeEventListener('agencyflow-refresh', handleRefresh);
-      window.removeEventListener('agencyflow-auth-change', handleRefresh);
-      window.removeEventListener('visibilitychange', handleRefresh);
-    };
-  }, [workspaceId, fetchLatestStatus, refreshAuth]);
-
-  if (!mounted || isDismissed) return null;
+  if (!mounted || isDismissed || !isAuthenticated || !workspaceId) return null;
 
   const items = [
     {
       id: 'client',
       label: 'Add your first client',
       href: '/clients',
-      completed: Boolean(localChecklist.hasClient),
+      completed: Boolean(checklist?.hasClient),
       icon: Building2,
     },
     {
       id: 'deal',
       label: 'Create a pipeline deal or lead',
       href: '/pipeline',
-      completed: Boolean(localChecklist.hasDealOrLead),
+      completed: Boolean(checklist?.hasDealOrLead),
       icon: Filter,
     },
     {
       id: 'deliverable',
       label: 'Upload a deliverable or project',
       href: '/deliverables',
-      completed: Boolean(localChecklist.hasDeliverableOrProject),
+      completed: Boolean(checklist?.hasDeliverableOrProject),
       icon: FileCheck,
     },
     {
       id: 'task',
       label: 'Create an urgent task or action',
       href: '/tasks',
-      completed: Boolean(localChecklist.hasTask),
+      completed: Boolean(checklist?.hasTask),
       icon: CheckSquare,
     },
   ];
