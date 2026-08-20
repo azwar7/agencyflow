@@ -32,7 +32,7 @@ export class HuggingFaceAiProvider extends BaseAiProvider {
   }
 
   public getDefaultModel(): string {
-    return 'meta-llama/Meta-Llama-3-8B-Instruct';
+    return process.env.HUGGINGFACE_MODEL || 'Qwen/Qwen2.5-72B-Instruct';
   }
 
   public async generateStructured<T>(

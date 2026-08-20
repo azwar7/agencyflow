@@ -25,7 +25,7 @@ export interface AiGenerationOptions<T> {
   systemPrompt?: string;
   userPrompt: string;
   messages?: AiMessage[];
-  schema: z.ZodType<T>;
+  schema: z.ZodType<T, any, any>;
   model?: string;
   temperature?: number;
   maxTokens?: number;

@@ -54,26 +54,32 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(validated.password);
 
     // 4. Atomic database creation
-    const result = await prisma.$transaction(async (tx) => {
-      const workspace = await tx.workspace.create({
-        data: {
-          name: validated.agencyName.trim(),
-          slug,
-        },
-      });
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const workspace = await tx.workspace.create({
+          data: {
+            name: validated.agencyName.trim(),
+            slug,
+          },
+        });
 
-      const user = await tx.user.create({
-        data: {
-          workspaceId: workspace.id,
-          email: emailNormalized,
-          fullName: validated.fullName.trim(),
-          role: 'OWNER',
-          passwordHash,
-        },
-      });
+        const user = await tx.user.create({
+          data: {
+            workspaceId: workspace.id,
+            email: emailNormalized,
+            fullName: validated.fullName.trim(),
+            role: 'OWNER',
+            passwordHash,
+          },
+        });
 
-      return { workspace, user };
-    });
+        return { workspace, user };
+      },
+      {
+        maxWait: 15000,
+        timeout: 30000,
+      }
+    );
 
     // 5. Create database-backed session
     const { rawToken } = await createSession(result.user.id);
