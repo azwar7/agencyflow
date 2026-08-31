@@ -30,6 +30,8 @@ model Workspace {
   invoices     Invoice[]
   proposals    Proposal[]
   files        FileRecord[]
+  leadAiAnalyses LeadAiAnalysis[]
+  outreachEmails OutreachEmail[]
 }
 
 model User {
@@ -139,10 +141,12 @@ model Lead {
   isSample     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  assignedTo User?      @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
-  activities Activity[]
-  tasks      Task[]
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedTo     User?            @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities     Activity[]
+  tasks          Task[]
+  aiAnalyses     LeadAiAnalysis[]
+  outreachEmails OutreachEmail[]
 
   @@index([workspaceId])
   @@index([workspaceId, status])
@@ -338,3 +342,57 @@ model FileRecord {
 
   @@index([workspaceId])
 }
+
+model LeadAiAnalysis {
+  id                  String   @id @default(uuid())
+  workspaceId         String
+  leadId              String
+  score               Int      @default(0)
+  qualification       String   @default("warm") // hot, warm, cold
+  companySummary      String
+  likelyPainPoints    Json?    // string[] of identified operational / digital pain points
+  recommendedServices Json?    // string[] of agency offerings best suited
+  recommendedPitch    String
+  reasoning           String
+  confidence          Int      @default(85)
+  provider            String   @default("system")
+  model               String   @default("default")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([leadId])
+  @@index([workspaceId, createdAt])
+}
+
+model OutreachEmail {
+  id                    String    @id @default(uuid())
+  workspaceId           String
+  leadId                String
+  subject               String
+  body                  String
+  callToAction          String?
+  recommendedService    String?
+  personalizationPoints Json?     // string[]
+  status                String    @default("DRAFT") // DRAFT, APPROVED, SENT, FAILED
+  tone                  String    @default("professional") // professional, conversational, direct
+  generatedAt           DateTime  @default(now())
+  approvedAt            DateTime?
+  sentAt                DateTime?
+  failureReason         String?
+  metadata              Json?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([leadId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, createdAt])
+}
+

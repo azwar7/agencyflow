@@ -45,7 +45,43 @@ export class MockAiProvider extends BaseAiProvider {
     // 2. Generate deterministic sample response based on known schema shapes or generic mocks
     let mockPayload: unknown;
 
-    if (options.userPrompt.includes('lead') || options.systemPrompt?.includes('lead')) {
+    if (
+      options.systemPrompt?.includes('Strategy & Lead Intelligence Analyst') ||
+      options.systemPrompt?.includes('diagnostic')
+    ) {
+      mockPayload = {
+        score: 85,
+        qualification: 'hot',
+        companySummary: 'Established business with active commercial operations and significant digital automation opportunities.',
+        likelyPainPoints: [
+          'Manual lead qualification and intake bottlenecks',
+          'Lack of automated CRM integration and immediate follow-ups',
+          'Outdated landing page conversion pathways',
+        ],
+        recommendedServices: [
+          'Modern High-Converting Web Application',
+          'Automated CRM Ingestion & Multi-Channel Intake',
+          'Workflow Automation Pipelines',
+        ],
+        recommendedPitch: 'Deploy automated 24/7 lead intake and instant CRM integration to eliminate inquiry loss and double sales velocity.',
+        reasoning: 'Established operational footprint with clear, high-ROI leverage for custom digital systems and workflow automation.',
+        confidence: 90,
+      };
+    } else if (
+      options.systemPrompt?.includes('Cold Outreach Copywriter') ||
+      options.systemPrompt?.includes('personalized outreach email')
+    ) {
+      mockPayload = {
+        subject: 'Quick question regarding lead automation for your team',
+        body: 'Hi Sarah,\n\nSaw your team is expanding operations. Many growing agencies lose up to 35% of inbound inquiries due to manual booking and delayed follow-ups.\n\nWe built an automated CRM intake pipeline that captures and qualifies inbound prospects in under 60 seconds.\n\nAre you open to a quick 3-minute video showing how this would look for your workflow?\n\nBest,\nAlex',
+        callToAction: 'Are you open to a quick 3-minute video showing how this would look for your workflow?',
+        recommendedService: 'Automated CRM Ingestion & Intake Flow',
+        personalizationPoints: [
+          'Expanding business operations footprint',
+          'Opportunity to automate 24/7 inbound inquiry capture',
+        ],
+      };
+    } else if (options.userPrompt.includes('lead') || options.systemPrompt?.includes('lead')) {
       mockPayload = {
         score: 88,
         summary: 'High-value enterprise prospect with verified corporate domain and active executive interest.',
@@ -81,7 +117,6 @@ export class MockAiProvider extends BaseAiProvider {
         confidence: 0.98,
       };
     } else {
-      // Generic fallback for custom schema shapes: generate a valid instance via parseAndValidateJson
       mockPayload = {
         message: 'Mock response generated successfully',
         status: 'success',

@@ -4,7 +4,29 @@ import React, { useEffect, useState, useRef } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { UIStateCard } from '@/components/UIStateCard';
 import { EmptyState } from '@/components/EmptyState';
-import { X, Sparkles, Send, ArrowRight, Users, Trash2, MoreVertical, ExternalLink } from 'lucide-react';
+import {
+  X,
+  Sparkles,
+  Send,
+  ArrowRight,
+  Users,
+  Trash2,
+  MoreVertical,
+  ExternalLink,
+  Mail,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Copy,
+  Check,
+  Flame,
+  Zap,
+  Snowflake,
+  RefreshCw,
+  FileText,
+  Target,
+  Lightbulb,
+} from 'lucide-react';
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -17,10 +39,26 @@ export default function LeadsPage() {
   // Selected Lead Drawer State
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
+  const [drawerTab, setDrawerTab] = useState<'intelligence' | 'outreach' | 'history'>('intelligence');
   const [noteContent, setNoteContent] = useState('');
-  const [scoringLoading, setScoringLoading] = useState(false);
   const [converting, setConverting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // AI Intelligence & Pitch State
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisData, setAnalysisData] = useState<any | null>(null);
+
+  // Outreach & Email Composer State
+  const [generatingEmail, setGeneratingEmail] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [selectedTone, setSelectedTone] = useState<'professional' | 'conversational' | 'direct'>('professional');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [currentOutreach, setCurrentOutreach] = useState<any | null>(null);
+  const [outreachHistory, setOutreachHistory] = useState<any[]>([]);
+  const [copied, setCopied] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Active Dropdown Menu State
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -36,51 +74,6 @@ export default function LeadsPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const handleDeleteLead = async (leadId: string, leadName?: string) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${leadName || 'this lead'}"? This action cannot be undone.`);
-    if (!confirmDelete) return;
-
-    setActiveMenuId(null);
-    setDeletingId(leadId);
-
-    // Optimistic UI update
-    const previousLeads = [...leads];
-    setLeads((prev) => prev.filter((l) => l.id !== leadId));
-    if (selectedLead?.id === leadId) setSelectedLead(null);
-
-    try {
-      const res = await fetch(`/api/v1/leads/${leadId}`, {
-        method: 'DELETE',
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error?.message || json.error || 'Failed to delete lead');
-      }
-    } catch (err: any) {
-      alert(`Failed to delete lead: ${err.message}`);
-      setLeads(previousLeads); // Revert on failure
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleUpdateStatus = async (leadId: string, newStatus: string) => {
-    setActiveMenuId(null);
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
-    );
-    try {
-      await fetch(`/api/v1/leads/${leadId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-    } catch (err) {
-      console.error(err);
-      fetchLeads();
-    }
-  };
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -131,55 +124,177 @@ export default function LeadsPage() {
 
   const openLeadDrawer = async (leadId: string) => {
     setDrawerLoading(true);
+    setFeedbackMsg(null);
     try {
-      const res = await fetch(`/api/v1/leads/${leadId}`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        setSelectedLead(json.data);
+      const [leadRes, outreachRes] = await Promise.all([
+        fetch(`/api/v1/leads/${leadId}`),
+        fetch(`/api/v1/leads/${leadId}/outreach`),
+      ]);
+
+      const leadJson = await leadRes.json();
+      const outreachJson = await outreachRes.json();
+
+      if (leadJson.success && leadJson.data) {
+        setSelectedLead(leadJson.data);
       } else {
-        const match = leads.find(
-          (l) =>
-            l.id === leadId ||
-            l.companyName?.toLowerCase().includes(leadId.toLowerCase()) ||
-            l.firstName?.toLowerCase().includes(leadId.toLowerCase())
-        );
+        const match = leads.find((l) => l.id === leadId);
         if (match) setSelectedLead(match);
       }
+
+      if (outreachJson.success && outreachJson.data) {
+        setOutreachHistory(outreachJson.data.outreach || []);
+        if (outreachJson.data.analyses?.length > 0) {
+          setAnalysisData(outreachJson.data.analyses[0]);
+        } else {
+          setAnalysisData(null);
+        }
+
+        // Pre-fill active draft email if exists
+        const draftOrLatest = outreachJson.data.outreach?.[0];
+        if (draftOrLatest) {
+          setCurrentOutreach(draftOrLatest);
+          setEmailSubject(draftOrLatest.subject);
+          setEmailBody(draftOrLatest.body);
+          if (draftOrLatest.tone) setSelectedTone(draftOrLatest.tone);
+        } else {
+          setCurrentOutreach(null);
+          setEmailSubject('');
+          setEmailBody('');
+        }
+      }
     } catch (err) {
-      const match = leads.find(
-        (l) =>
-          l.id === leadId ||
-          l.companyName?.toLowerCase().includes(leadId.toLowerCase()) ||
-          l.firstName?.toLowerCase().includes(leadId.toLowerCase())
-      );
-      if (match) setSelectedLead(match);
+      console.error(err);
     } finally {
       setDrawerLoading(false);
     }
   };
 
-  const handleRunAIScoring = async () => {
+  // 1. Run AI Intelligence & Pitch Diagnostic
+  const handleRunAIAnalysis = async () => {
     if (!selectedLead) return;
-    setScoringLoading(true);
+    setAnalyzing(true);
+    setFeedbackMsg(null);
     try {
-      const res = await fetch('/api/v1/ai/score-lead', {
+      const res = await fetch(`/api/v1/leads/${selectedLead.id}/ai/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId: selectedLead.id }),
       });
       const json = await res.json();
-      if (json.success) {
-        setSelectedLead({
-          ...selectedLead,
-          leadScore: json.data.score,
-          aiSummary: json.data.summary,
-        });
-        fetchLeads();
-      }
-    } catch (err) {
-      console.error(err);
+      if (!res.ok || !json.success) throw new Error(json.error?.message || 'Analysis failed');
+
+      setAnalysisData(json.data);
+      setSelectedLead((prev: any) => ({
+        ...prev,
+        leadScore: json.data.score,
+        status: json.data.status,
+        aiSummary: json.data.companySummary,
+      }));
+      setFeedbackMsg({ type: 'success', text: `Lead qualified as ${json.data.qualification.toUpperCase()} (Score: ${json.data.score}/100)` });
+      fetchLeads();
+    } catch (err: any) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to analyze lead' });
     } finally {
-      setScoringLoading(false);
+      setAnalyzing(false);
+    }
+  };
+
+  // 2. Generate Personalized Outreach Email
+  const handleGenerateEmail = async () => {
+    if (!selectedLead) return;
+    setGeneratingEmail(true);
+    setFeedbackMsg(null);
+    try {
+      const res = await fetch(`/api/v1/leads/${selectedLead.id}/ai/generate-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tone: selectedTone }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error?.message || 'Email generation failed');
+
+      setCurrentOutreach(json.data);
+      setEmailSubject(json.data.subject);
+      setEmailBody(json.data.body);
+      setOutreachHistory((prev) => [json.data, ...prev]);
+      setDrawerTab('outreach');
+      setFeedbackMsg({ type: 'success', text: 'Personalized email draft generated! Review and approve below.' });
+    } catch (err: any) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to generate email' });
+    } finally {
+      setGeneratingEmail(false);
+    }
+  };
+
+  // 3. Approve & Send Outreach via n8n
+  const handleApproveAndSend = async () => {
+    if (!selectedLead || !currentOutreach) return;
+    setSendingEmail(true);
+    setFeedbackMsg(null);
+    try {
+      // Step A: Approve draft with any manual edits
+      const approveRes = await fetch(`/api/v1/leads/${selectedLead.id}/outreach/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          outreachId: currentOutreach.id,
+          subject: emailSubject,
+          body: emailBody,
+          tone: selectedTone,
+        }),
+      });
+      const approveJson = await approveRes.json();
+      if (!approveRes.ok || !approveJson.success) throw new Error(approveJson.error?.message || 'Failed to approve email');
+
+      // Step B: Dispatch email via n8n workflow and progress stage to OUTREACH_SENT
+      const sendRes = await fetch(`/api/v1/leads/${selectedLead.id}/outreach/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          outreachId: currentOutreach.id,
+        }),
+      });
+      const sendJson = await sendRes.json();
+      if (!sendRes.ok || !sendJson.success) throw new Error(sendJson.error?.message || 'Failed to dispatch email');
+
+      setCurrentOutreach(sendJson.data.outreach);
+      setSelectedLead((prev: any) => ({ ...prev, status: 'OUTREACH_SENT' }));
+      setFeedbackMsg({ type: 'success', text: '🚀 Email approved & sent via n8n! Lead moved to Outreach Sent stage.' });
+      fetchLeads();
+      openLeadDrawer(selectedLead.id);
+    } catch (err: any) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Failed to send outreach email' });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleCopyEmail = () => {
+    const textToCopy = `Subject: ${emailSubject}\n\n${emailBody}`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDeleteLead = async (leadId: string, leadName?: string) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${leadName || 'this lead'}"? This action cannot be undone.`);
+    if (!confirmDelete) return;
+
+    setActiveMenuId(null);
+    setDeletingId(leadId);
+
+    const previousLeads = [...leads];
+    setLeads((prev) => prev.filter((l) => l.id !== leadId));
+    if (selectedLead?.id === leadId) setSelectedLead(null);
+
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error?.message || json.error || 'Failed to delete lead');
+    } catch (err: any) {
+      alert(`Failed to delete lead: ${err.message}`);
+      setLeads(previousLeads);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -228,13 +343,14 @@ export default function LeadsPage() {
     }
   };
 
-  // Group leads into pipeline stages
+  // Pipeline Stages (Preserves backward compatibility & implements modern sales flow)
   const stages = [
     { id: 'NEW', label: 'New Leads', dotColor: '#c0c1ff' },
     { id: 'QUALIFIED', label: 'Qualified', dotColor: '#4edea3' },
-    { id: 'PROPOSAL', label: 'Proposal Sent', dotColor: '#ffb95f' },
-    { id: 'NEGOTIATION', label: 'Negotiation', dotColor: '#ffb4ab' },
+    { id: 'OUTREACH_SENT', label: 'Outreach Sent', dotColor: '#38bdf8' },
+    { id: 'NEGOTIATION', label: 'Negotiation', dotColor: '#ffb95f' },
     { id: 'CONVERTED', label: 'Closed Won', dotColor: '#6ffbbe' },
+    { id: 'CLOSED_LOST', label: 'Closed Lost', dotColor: '#ffb4ab' },
   ];
 
   return (
@@ -244,7 +360,7 @@ export default function LeadsPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)' }}>
-              Leads Pipeline
+              Leads Pipeline & AI Outreach
             </h1>
             <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.1)' }} />
             <div style={{ display: 'flex', background: 'var(--surface-container-low)', padding: '3px', borderRadius: 'var(--radius-DEFAULT)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
@@ -281,7 +397,6 @@ export default function LeadsPage() {
 
           {/* Action Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Filter by Source */}
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
@@ -318,9 +433,7 @@ export default function LeadsPage() {
                   color: viewMode === 'kanban' ? 'var(--on-surface)' : 'var(--on-surface-variant)',
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  view_kanban
-                </span>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>view_kanban</span>
               </button>
               <button
                 onClick={() => setViewMode('table')}
@@ -335,9 +448,7 @@ export default function LeadsPage() {
                   color: viewMode === 'table' ? 'var(--on-surface)' : 'var(--on-surface-variant)',
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  table_rows
-                </span>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
               </button>
             </div>
 
@@ -346,9 +457,7 @@ export default function LeadsPage() {
               onClick={() => window.dispatchEvent(new Event('agencyflow-open-new-lead'))}
               className="btn btn-primary"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                add
-              </span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
               New Lead
             </button>
           </div>
@@ -357,7 +466,7 @@ export default function LeadsPage() {
         {/* Content Body */}
         {loading ? (
           <div className="kanban-row">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="kanban-col skeleton-pulse" style={{ height: '450px' }} />
             ))}
           </div>
@@ -367,21 +476,20 @@ export default function LeadsPage() {
           <EmptyState
             icon={Users}
             title="No leads yet"
-            description="Capture inbound inquiries, qualify prospective accounts, and score opportunities with AI."
+            description="Capture inbound inquiries, qualify prospective accounts with AI, and dispatch personalized outreach."
             actionLabel="+ Add First Lead"
             onAction={() => window.dispatchEvent(new Event('agencyflow-open-new-lead'))}
           />
         ) : viewMode === 'kanban' ? (
-          <div className="kanban-row">
+          <div className="kanban-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', overflowX: 'auto', paddingBottom: '1rem' }}>
             {stages.map((stg) => {
-              const stageLeads = leads.filter((l) => l.status === stg.id);
+              const stageLeads = leads.filter((l) => l.status === stg.id || (stg.id === 'CONVERTED' && l.status === 'CLOSED_WON') || (stg.id === 'CLOSED_LOST' && l.status === 'UNQUALIFIED'));
               const totalVal = stageLeads.reduce((acc, l) => acc + (l.leadScore > 80 ? 28000 : 18500), 0);
 
               return (
-                <div key={stg.id} className="kanban-col">
-                  {/* Clean Non-Colliding Stage Header Structure */}
+                <div key={stg.id} className="kanban-col" style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-lg)', padding: '1rem', border: '1px solid rgba(255, 255, 255, 0.05)', minWidth: '280px' }}>
+                  {/* Stage Header */}
                   <div style={{ paddingBottom: '0.6rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    {/* Row 1: [Dot] [Stage Title] ... [Count Badge] */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: stg.dotColor, flexShrink: 0 }} />
@@ -394,224 +502,191 @@ export default function LeadsPage() {
                       </span>
                     </div>
 
-                    {/* Row 2: Dedicated Pipeline Monetary Value */}
                     <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, paddingLeft: '1rem' }}>
                       ${totalVal > 0 ? totalVal.toLocaleString() : '0'}
                     </div>
                   </div>
 
                   {/* Lead Cards */}
-                  {stageLeads.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '2rem 0.5rem', color: 'var(--outline)', fontSize: '0.75rem' }}>
-                      No leads in stage
-                    </div>
-                  ) : (
-                    stageLeads.map((l) => (
-                      <div
-                        key={l.id}
-                        className="kanban-card"
-                        onClick={() => openLeadDrawer(l.id)}
-                        style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.6rem', position: 'relative' }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.25rem' }}>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--on-surface)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {l.companyName || `${l.firstName} ${l.lastName}`}
-                            </h3>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {l.firstName} {l.lastName}
-                            </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
+                    {stageLeads.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '2rem 0.5rem', color: 'var(--outline)', fontSize: '0.75rem' }}>
+                        No leads in stage
+                      </div>
+                    ) : (
+                      stageLeads.map((l) => (
+                        <div
+                          key={l.id}
+                          className="kanban-card"
+                          onClick={() => openLeadDrawer(l.id)}
+                          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.6rem', position: 'relative', background: 'var(--surface-container)', padding: '0.9rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.25rem' }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--on-surface)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {l.companyName || `${l.firstName} ${l.lastName}`}
+                              </h3>
+                              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {l.firstName} {l.lastName}
+                              </p>
+                            </div>
+                            
+                            {/* 3-Dot Options Menu */}
+                            <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuId(activeMenuId === l.id ? null : l.id);
+                                }}
+                                style={{
+                                  background: activeMenuId === l.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  color: activeMenuId === l.id ? 'var(--primary)' : 'var(--outline)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  borderRadius: '4px',
+                                }}
+                                title="Lead options"
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+
+                              {activeMenuId === l.id && (
+                                <div
+                                  ref={dropdownRef}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: 0,
+                                    zIndex: 50,
+                                    minWidth: '160px',
+                                    background: '#1e2026',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '2px',
+                                  }}
+                                >
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenuId(null);
+                                      openLeadDrawer(l.id);
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                      padding: '8px 10px',
+                                      borderRadius: '6px',
+                                      color: '#e2e2e8',
+                                      fontSize: '12px',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                      width: '100%',
+                                    }}
+                                  >
+                                    <ExternalLink size={14} color="#c0c1ff" /> View Details
+                                  </button>
+
+                                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '2px 0' }} />
+
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteLead(l.id, l.companyName || `${l.firstName} ${l.lastName}`);
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                      padding: '8px 10px',
+                                      borderRadius: '6px',
+                                      color: '#ffb4ab',
+                                      fontSize: '12px',
+                                      background: 'rgba(255, 180, 171, 0.08)',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                      width: '100%',
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    <Trash2 size={14} color="#ffb4ab" /> Remove Lead
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          
-                          {/* 3-Dot Options Menu */}
-                          <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(activeMenuId === l.id ? null : l.id);
-                              }}
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            {/* AI Score Badge */}
+                            <span
                               style={{
-                                background: activeMenuId === l.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                color: activeMenuId === l.id ? 'var(--primary)' : 'var(--outline)',
+                                padding: '0.15rem 0.4rem',
+                                borderRadius: 'var(--radius-sm)',
+                                background: l.leadScore >= 75 ? 'rgba(78, 222, 163, 0.18)' : 'rgba(208, 188, 255, 0.15)',
+                                border: l.leadScore >= 75 ? '1px solid rgba(78, 222, 163, 0.3)' : '1px solid rgba(208, 188, 255, 0.25)',
+                                color: l.leadScore >= 75 ? '#4edea3' : '#d0bcff',
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.2rem',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              <Sparkles size={11} /> AI {l.leadScore}
+                            </span>
+
+                            {/* Source Badge */}
+                            <span
+                              style={{
+                                padding: '0.15rem 0.4rem',
+                                borderRadius: 'var(--radius-sm)',
+                                background: 'var(--surface-container-high)',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                color: 'var(--on-surface-variant)',
+                                fontSize: '10px',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {l.source || 'Inbound'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+                              ${l.leadScore > 80 ? '28,000' : '18,500'}
+                            </span>
+                            <div
+                              style={{
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '50%',
+                                background: 'var(--primary)',
+                                color: 'var(--on-primary)',
                                 display: 'flex',
                                 alignItems: 'center',
-                                borderRadius: '4px',
-                                transition: 'all 0.15s ease',
+                                justifyContent: 'center',
+                                fontSize: '9px',
+                                fontWeight: 700,
                               }}
-                              title="Lead options"
                             >
-                              <MoreVertical size={16} />
-                            </button>
-
-                            {activeMenuId === l.id && (
-                              <div
-                                ref={dropdownRef}
-                                style={{
-                                  position: 'absolute',
-                                  top: '100%',
-                                  right: 0,
-                                  zIndex: 50,
-                                  minWidth: '160px',
-                                  background: '#1e2026',
-                                  borderRadius: '8px',
-                                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                                  boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
-                                  padding: '4px',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '2px',
-                                }}
-                              >
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveMenuId(null);
-                                    openLeadDrawer(l.id);
-                                  }}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '8px 10px',
-                                    borderRadius: '6px',
-                                    color: '#e2e2e8',
-                                    fontSize: '12px',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    textAlign: 'left',
-                                    width: '100%',
-                                  }}
-                                >
-                                  <ExternalLink size={14} color="#c0c1ff" /> View Details
-                                </button>
-
-                                <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '2px 0' }} />
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteLead(l.id, l.companyName || `${l.firstName} ${l.lastName}`);
-                                  }}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '8px 10px',
-                                    borderRadius: '6px',
-                                    color: '#ffb4ab',
-                                    fontSize: '12px',
-                                    background: 'rgba(255, 180, 171, 0.08)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    textAlign: 'left',
-                                    width: '100%',
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  <Trash2 size={14} color="#ffb4ab" /> Remove Lead
-                                </button>
-                              </div>
-                            )}
+                              {l.assignedTo?.fullName?.split(' ').map((n: string) => n[0]).join('') || 'AR'}
+                            </div>
                           </div>
                         </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                          {/* AI Score Badge */}
-                          <span
-                            style={{
-                              padding: '0.15rem 0.4rem',
-                              borderRadius: 'var(--radius-sm)',
-                              background: 'rgba(0, 165, 114, 0.2)',
-                              border: '1px solid rgba(78, 222, 163, 0.2)',
-                              color: 'var(--secondary)',
-                              fontSize: '10px',
-                              fontWeight: 700,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.2rem',
-                              textTransform: 'uppercase',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>
-                              auto_awesome
-                            </span>
-                            AI {l.leadScore}
-                          </span>
-
-                          {/* Source Badge */}
-                          <span
-                            style={{
-                              padding: '0.15rem 0.4rem',
-                              borderRadius: 'var(--radius-sm)',
-                              background: 'var(--surface-container-high)',
-                              border: '1px solid rgba(255, 255, 255, 0.05)',
-                              color: 'var(--on-surface-variant)',
-                              fontSize: '10px',
-                              fontWeight: 500,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              maxWidth: '100px',
-                            }}
-                          >
-                            {l.source || 'Inbound'}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
-                            ${l.leadScore > 80 ? '28,000' : '18,500'}
-                          </span>
-                          <div
-                            style={{
-                              width: '22px',
-                              height: '22px',
-                              borderRadius: '50%',
-                              background: 'var(--primary)',
-                              color: 'var(--on-primary)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '9px',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {l.assignedTo?.fullName?.split(' ').map((n: string) => n[0]).join('') || 'AR'}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-
-                  {/* Add Lead Action Button */}
-                  <button
-                    onClick={() => window.dispatchEvent(new Event('agencyflow-open-new-lead'))}
-                    style={{
-                      width: '100%',
-                      padding: '0.6rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px dashed rgba(255, 255, 255, 0.1)',
-                      color: 'var(--on-surface-variant)',
-                      fontSize: '0.8rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      marginTop: 'auto',
-                    }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                      add
-                    </span>
-                    Add Lead
-                  </button>
+                      ))
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -640,7 +715,7 @@ export default function LeadsPage() {
                     </td>
                     <td>{l.companyName || '—'}</td>
                     <td>
-                      <span style={{ color: 'var(--secondary)', fontWeight: 700 }}>{l.leadScore}/100</span>
+                      <span style={{ color: l.leadScore >= 75 ? '#4edea3' : '#d0bcff', fontWeight: 700 }}>{l.leadScore}/100</span>
                     </td>
                     <td>
                       <span className={`badge badge-${l.status.toLowerCase()}`}>{l.status}</span>
@@ -684,56 +759,491 @@ export default function LeadsPage() {
         )}
       </div>
 
-      {/* Selected Lead Slide-Over Drawer */}
+      {/* Selected Lead Slide-Over Drawer with AI Hub */}
       {selectedLead && (
         <div className="drawer-backdrop" onClick={() => setSelectedLead(null)}>
-          <div className="drawer-content" onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: '1.25rem', borderBottom: '1px solid rgba(144, 143, 160, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="drawer-content" onClick={(e) => e.stopPropagation()} style={{ width: '560px', maxWidth: '95vw', display: 'flex', flexDirection: 'column' }}>
+            {/* Header */}
+            <div style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface-container-low)' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
-                  {selectedLead.firstName} {selectedLead.lastName}
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {selectedLead.companyName || `${selectedLead.firstName} ${selectedLead.lastName}`}
+                  <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700 }}>
+                    {selectedLead.status}
+                  </span>
                 </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>{selectedLead.email} • {selectedLead.companyName}</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem' }}>
+                  {selectedLead.firstName} {selectedLead.lastName} • {selectedLead.email} • {selectedLead.phone || 'No phone'}
+                </p>
               </div>
-              <button onClick={() => setSelectedLead(null)} style={{ color: 'var(--on-surface-variant)' }}>
+              <button onClick={() => setSelectedLead(null)} style={{ color: 'var(--on-surface-variant)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
                 <X size={20} />
               </button>
             </div>
 
-            <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', flex: 1 }}>
-              {/* AI Lead Qualification Card */}
-              <div
+            {/* Tab Controller */}
+            <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', background: 'var(--surface-container-lowest)', padding: '0 1.25rem' }}>
+              <button
+                onClick={() => setDrawerTab('intelligence')}
                 style={{
-                  background: 'linear-gradient(135deg, rgba(192, 193, 255, 0.15), rgba(78, 222, 163, 0.1))',
-                  border: '1px solid rgba(192, 193, 255, 0.3)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '1rem',
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: drawerTab === 'intelligence' ? '#d0bcff' : 'var(--on-surface-variant)',
+                  borderBottom: drawerTab === 'intelligence' ? '2px solid #d0bcff' : '2px solid transparent',
+                  background: 'transparent',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem' }}>
-                    <Sparkles size={16} /> AI Qualification Inspector
-                  </div>
-                  <button
-                    onClick={handleRunAIScoring}
-                    disabled={scoringLoading}
-                    className="btn btn-primary"
-                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-                  >
-                    {scoringLoading ? 'Evaluating...' : 'Re-Score AI'}
-                  </button>
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.4rem' }}>
-                  Score: {selectedLead.leadScore}/100
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--on-surface)', lineHeight: 1.4 }}>
-                  {selectedLead.aiSummary || 'AI score evaluation complete.'}
-                </p>
+                <Sparkles size={15} /> AI Intelligence
+              </button>
+              <button
+                onClick={() => setDrawerTab('outreach')}
+                style={{
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: drawerTab === 'outreach' ? '#38bdf8' : 'var(--on-surface-variant)',
+                  borderBottom: drawerTab === 'outreach' ? '2px solid #38bdf8' : '2px solid transparent',
+                  background: 'transparent',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <Mail size={15} /> Outreach Email {currentOutreach && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8' }} />}
+              </button>
+              <button
+                onClick={() => setDrawerTab('history')}
+                style={{
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: drawerTab === 'history' ? '#4edea3' : 'var(--on-surface-variant)',
+                  borderBottom: drawerTab === 'history' ? '2px solid #4edea3' : '2px solid transparent',
+                  background: 'transparent',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <Clock size={15} /> History ({outreachHistory.length})
+              </button>
+            </div>
+
+            {/* Notification Banner */}
+            {feedbackMsg && (
+              <div
+                style={{
+                  margin: '0.75rem 1.25rem 0',
+                  padding: '0.6rem 0.8rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: feedbackMsg.type === 'success' ? 'rgba(78, 222, 163, 0.12)' : 'rgba(255, 180, 171, 0.12)',
+                  border: feedbackMsg.type === 'success' ? '1px solid rgba(78, 222, 163, 0.3)' : '1px solid rgba(255, 180, 171, 0.3)',
+                  color: feedbackMsg.type === 'success' ? '#4edea3' : '#ffb4ab',
+                }}
+              >
+                {feedbackMsg.type === 'success' ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+                {feedbackMsg.text}
               </div>
+            )}
+
+            {/* Drawer Body Tabs */}
+            <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', flex: 1 }}>
+              {drawerTab === 'intelligence' && (
+                <>
+                  {/* AI Qualification Hero Card */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(208, 188, 255, 0.12), rgba(56, 189, 248, 0.08))',
+                      border: '1px solid rgba(208, 188, 255, 0.25)',
+                      borderRadius: 'var(--radius-lg)',
+                      padding: '1.1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.8rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Sparkles size={18} color="#d0bcff" />
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>Lead Intelligence & Fit</span>
+                      </div>
+                      <button
+                        onClick={handleRunAIAnalysis}
+                        disabled={analyzing}
+                        className="btn btn-primary"
+                        style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        {analyzing ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                        {analyzing ? 'Analyzing Lead...' : analysisData ? 'Re-Analyze Lead' : 'Run AI Diagnostic'}
+                      </button>
+                    </div>
+
+                    {/* Score & Tier Indicators */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: (analysisData?.score || selectedLead.leadScore) >= 75 ? '#4edea3' : '#d0bcff' }}>
+                        {analysisData?.score || selectedLead.leadScore}/100
+                      </div>
+
+                      {analysisData?.qualification && (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            background:
+                              analysisData.qualification === 'hot'
+                                ? 'rgba(255, 107, 107, 0.2)'
+                                : analysisData.qualification === 'warm'
+                                ? 'rgba(255, 185, 95, 0.2)'
+                                : 'rgba(148, 163, 184, 0.2)',
+                            color:
+                              analysisData.qualification === 'hot'
+                                ? '#ff6b6b'
+                                : analysisData.qualification === 'warm'
+                                ? '#ffb95f'
+                                : '#94a3b8',
+                            border: '1px solid currentColor',
+                          }}
+                        >
+                          {analysisData.qualification === 'hot' && <Flame size={12} />}
+                          {analysisData.qualification === 'warm' && <Zap size={12} />}
+                          {analysisData.qualification === 'cold' && <Snowflake size={12} />}
+                          {analysisData.qualification} PROSPECT
+                        </div>
+                      )}
+
+                      {analysisData?.confidence && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+                          Confidence: {analysisData.confidence}%
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Company Summary */}
+                    <p style={{ fontSize: '0.85rem', color: '#e2e2e8', lineHeight: 1.5, margin: 0 }}>
+                      {analysisData?.companySummary || selectedLead.aiSummary || 'Run AI diagnostic to extract business bottlenecks and tailored pitches.'}
+                    </p>
+                  </div>
+
+                  {/* Diagnosed Pain Points */}
+                  {analysisData?.likelyPainPoints && analysisData.likelyPainPoints.length > 0 && (
+                    <div style={{ background: 'var(--surface-container)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#ffb95f', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Target size={14} /> Identified Bottlenecks & Gaps
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                        {analysisData.likelyPainPoints.map((pain: string, idx: number) => (
+                          <span
+                            key={idx}
+                            style={{
+                              padding: '0.25rem 0.6rem',
+                              borderRadius: '6px',
+                              background: 'rgba(255, 185, 95, 0.1)',
+                              border: '1px solid rgba(255, 185, 95, 0.25)',
+                              color: '#ffb95f',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                            }}
+                          >
+                            • {pain}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommended Service & Tailored Pitch */}
+                  {analysisData?.recommendedPitch && (
+                    <div style={{ background: 'var(--surface-container-high)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(208, 188, 255, 0.2)' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Lightbulb size={14} /> Recommended Agency Pitch
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 500, lineHeight: 1.5, margin: 0 }}>
+                        "{analysisData.recommendedPitch}"
+                      </p>
+                      {analysisData.recommendedServices && (
+                        <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          {analysisData.recommendedServices.map((svc: string, i: number) => (
+                            <span key={i} style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: 'rgba(208, 188, 255, 0.15)', color: '#d0bcff', fontWeight: 600 }}>
+                              {svc}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Explainable Reasoning */}
+                  {analysisData?.reasoning && (
+                    <div style={{ padding: '0.8rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                        Score Evaluation Factors
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', lineHeight: 1.4, margin: 0 }}>
+                        {analysisData.reasoning}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Call to Action to Outreach Tab */}
+                  <button
+                    onClick={() => {
+                      setDrawerTab('outreach');
+                      if (!emailBody) handleGenerateEmail();
+                    }}
+                    className="btn btn-primary"
+                    style={{ padding: '0.75rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
+                  >
+                    <Mail size={16} /> Compose Personalized Outreach Email <ArrowRight size={16} />
+                  </button>
+                </>
+              )}
+
+              {drawerTab === 'outreach' && (
+                <>
+                  {/* Email Settings Controls */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>Tone:</span>
+                      {(['professional', 'conversational', 'direct'] as const).map((tone) => (
+                        <button
+                          key={tone}
+                          onClick={() => setSelectedTone(tone)}
+                          style={{
+                            padding: '0.25rem 0.6rem',
+                            fontSize: '0.75rem',
+                            borderRadius: '4px',
+                            background: selectedTone === tone ? 'rgba(56, 189, 248, 0.2)' : 'var(--surface-container-high)',
+                            border: selectedTone === tone ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                            color: selectedTone === tone ? '#38bdf8' : 'var(--on-surface-variant)',
+                            cursor: 'pointer',
+                            textTransform: 'capitalize',
+                            fontWeight: selectedTone === tone ? 700 : 500,
+                          }}
+                        >
+                          {tone}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleGenerateEmail}
+                      disabled={generatingEmail}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      <RefreshCw size={12} className={generatingEmail ? 'animate-spin' : ''} />
+                      {generatingEmail ? 'Drafting AI Copy...' : emailBody ? 'Regenerate Copy' : 'Generate Email'}
+                    </button>
+                  </div>
+
+                  {/* Email Composer & Live Editor */}
+                  {generatingEmail ? (
+                    <div className="skeleton-pulse" style={{ height: '220px', borderRadius: 'var(--radius-md)' }} />
+                  ) : emailBody || emailSubject ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--surface-container-high)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      {/* Subject Line */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.3rem' }}>
+                          Subject Line:
+                        </label>
+                        <input
+                          type="text"
+                          value={emailSubject}
+                          onChange={(e) => setEmailSubject(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem 0.75rem',
+                            background: 'var(--surface-container-lowest)',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            borderRadius: '6px',
+                            color: '#fff',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            outline: 'none',
+                          }}
+                        />
+                      </div>
+
+                      {/* Email Body Textarea */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.3rem' }}>
+                          Personalized Email Body:
+                        </label>
+                        <textarea
+                          rows={8}
+                          value={emailBody}
+                          onChange={(e) => setEmailBody(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            background: 'var(--surface-container-lowest)',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            borderRadius: '6px',
+                            color: '#e2e2e8',
+                            fontSize: '0.85rem',
+                            lineHeight: 1.6,
+                            outline: 'none',
+                            fontFamily: 'inherit',
+                            resize: 'vertical',
+                          }}
+                        />
+                      </div>
+
+                      {/* Actions Toolbar */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                        <button
+                          onClick={handleCopyEmail}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            background: 'transparent',
+                            border: 'none',
+                            color: copied ? '#4edea3' : 'var(--on-surface-variant)',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {copied ? <Check size={14} /> : <Copy size={14} />}
+                          {copied ? 'Copied to Clipboard!' : 'Copy Email'}
+                        </button>
+
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            onClick={handleApproveAndSend}
+                            disabled={sendingEmail}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              borderRadius: '6px',
+                              background: '#38bdf8',
+                              color: '#082f49',
+                              border: 'none',
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)',
+                            }}
+                          >
+                            {sendingEmail ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                            {sendingEmail ? 'Dispatching via n8n...' : 'Approve & Send via n8n 🚀'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                      <Mail size={32} color="var(--outline)" style={{ margin: '0 auto 0.75rem' }} />
+                      <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginBottom: '1rem' }}>
+                        No email drafted yet. Click below to generate a tailored 1-to-1 outreach email based on AI pitch diagnostics.
+                      </p>
+                      <button onClick={handleGenerateEmail} className="btn btn-primary" style={{ padding: '0.5rem 1.25rem' }}>
+                        <Sparkles size={15} /> Generate AI Outreach Copy
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {drawerTab === 'history' && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {outreachHistory.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--outline)', fontSize: '0.85rem' }}>
+                        No outreach history recorded for this prospect.
+                      </div>
+                    ) : (
+                      outreachHistory.map((item) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            background: 'var(--surface-container)',
+                            padding: '0.9rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.4rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '4px',
+                                textTransform: 'uppercase',
+                                background:
+                                  item.status === 'SENT'
+                                    ? 'rgba(78, 222, 163, 0.15)'
+                                    : item.status === 'APPROVED'
+                                    ? 'rgba(56, 189, 248, 0.15)'
+                                    : item.status === 'FAILED'
+                                    ? 'rgba(255, 180, 171, 0.15)'
+                                    : 'rgba(208, 188, 255, 0.15)',
+                                color:
+                                  item.status === 'SENT'
+                                    ? '#4edea3'
+                                    : item.status === 'APPROVED'
+                                    ? '#38bdf8'
+                                    : item.status === 'FAILED'
+                                    ? '#ffb4ab'
+                                    : '#d0bcff',
+                              }}
+                            >
+                              {item.status}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+                              {new Date(item.createdAt).toLocaleDateString()} at {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>
+                            Subject: {item.subject}
+                          </div>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', lineHeight: 1.4, margin: 0 }}>
+                            {item.body.length > 150 ? `${item.body.substring(0, 150)}...` : item.body}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Convert Lead to Deal Button */}
-              {selectedLead.status !== 'CONVERTED' && (
-                <button onClick={handleConvertLead} disabled={converting} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
+              {selectedLead.status !== 'CONVERTED' && selectedLead.status !== 'CLOSED_WON' && (
+                <button onClick={handleConvertLead} disabled={converting} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem' }}>
                   {converting ? 'Converting...' : 'Convert to Active Deal'} <ArrowRight size={16} />
                 </button>
               )}
@@ -762,10 +1272,10 @@ export default function LeadsPage() {
               </button>
 
               {/* Fast Activity Note Logger */}
-              <form onSubmit={handleAddNote} style={{ marginTop: 'auto', display: 'flex', gap: '0.5rem' }}>
+              <form onSubmit={handleAddNote} style={{ marginTop: 'auto', display: 'flex', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <input
                   type="text"
-                  placeholder="Log quick call note..."
+                  placeholder="Log quick call or timeline note..."
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
                   style={{ flex: 1, padding: '0.5rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 'var(--radius-md)', color: '#fff', fontSize: '0.8rem' }}
@@ -781,4 +1291,3 @@ export default function LeadsPage() {
     </AppShell>
   );
 }
-
