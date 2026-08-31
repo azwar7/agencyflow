@@ -23,7 +23,6 @@ import {
   Zap,
   Snowflake,
   RefreshCw,
-  FileText,
   Target,
   Lightbulb,
 } from 'lucide-react';
@@ -50,7 +49,6 @@ export default function LeadsPage() {
 
   // Outreach & Email Composer State
   const [generatingEmail, setGeneratingEmail] = useState(false);
-  const [approving, setApproving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [selectedTone, setSelectedTone] = useState<'professional' | 'conversational' | 'direct'>('professional');
   const [emailSubject, setEmailSubject] = useState('');
