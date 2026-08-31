@@ -20,11 +20,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
+    const source = searchParams.get('source') || '';
 
     const leads = await prisma.lead.findMany({
       where: {
         workspaceId,
         ...(status ? { status } : {}),
+        ...(source ? { source } : {}),
         ...(search
           ? {
               OR: [

@@ -236,6 +236,7 @@ export default function LeadsPage() {
               }}
             >
               <option value="">Filter by Source</option>
+              <option value="n8n">n8n Lead Gen</option>
               <option value="Website Inbound">Website Inbound</option>
               <option value="LinkedIn Outbound">LinkedIn Outbound</option>
               <option value="Executive Referral">Executive Referral</option>

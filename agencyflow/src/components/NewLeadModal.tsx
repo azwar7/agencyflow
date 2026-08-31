@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, UserPlus, Sparkles, CheckCircle2, Bot, Search, MapPin, Globe, Loader2, ArrowRight } from 'lucide-react';
 
 interface NewLeadModalProps {
   isOpen: boolean;
@@ -10,6 +10,9 @@ interface NewLeadModalProps {
 }
 
 export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) {
+  const [activeTab, setActiveTab] = useState<'manual' | 'n8n'>('manual');
+
+  // Manual Form State
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -18,6 +21,14 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
     companyName: '',
     source: 'Website Inbound',
   });
+
+  // n8n Finder Form State
+  const [finderData, setFinderData] = useState({
+    query: 'Gyms & Fitness Centers',
+    location: 'Peshawar, Pakistan',
+    webhookUrl: '',
+  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successToast, setSuccessToast] = useState('');
@@ -35,10 +46,9 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Client-side validation
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       setError('First name and Last name are required.');
       return;
@@ -63,10 +73,8 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
         throw new Error(json.error?.message || 'Failed to create lead.');
       }
 
-      // Success feedback
       setSuccessToast(`Lead for ${formData.firstName} ${formData.lastName} created successfully!`);
       
-      // Reset form
       setFormData({
         firstName: '',
         lastName: '',
@@ -76,10 +84,8 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
         source: 'Website Inbound',
       });
 
-      // Dispatch global refresh event so Dashboard and Leads update immediately
       onSuccess();
 
-      // Delay close to show success checkmark
       setTimeout(() => {
         setSuccessToast('');
         onClose();
@@ -87,6 +93,56 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
     } catch (err: any) {
       console.error('New Lead Creation Error:', err);
       setError(err.message || 'Unable to create lead. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleN8nTriggerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!finderData.query.trim()) {
+      setError('Please specify a business category or industry query.');
+      return;
+    }
+    if (!finderData.location.trim()) {
+      setError('Please specify a target city or geographic location.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/v1/integrations/n8n/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: finderData.query,
+          location: finderData.location,
+          webhookUrl: finderData.webhookUrl || undefined,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || 'Failed to trigger n8n workflow.');
+      }
+
+      setSuccessToast(`🚀 n8n Lead Finder started! Discovered leads will auto-populate in CRM.`);
+
+      // Trigger automatic refresh of leads list
+      setTimeout(() => {
+        onSuccess();
+      }, 3000);
+
+      setTimeout(() => {
+        setSuccessToast('');
+        onClose();
+      }, 2000);
+    } catch (err: any) {
+      console.error('n8n Trigger Error:', err);
+      setError(err.message || 'Unable to trigger n8n workflow. Ensure webhook is configured.');
     } finally {
       setLoading(false);
     }
@@ -113,7 +169,7 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '540px',
+          maxWidth: '560px',
           maxHeight: '90vh',
           background: '#1c1f2a',
           borderRadius: '1rem',
@@ -138,23 +194,30 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div
               style={{
-                width: '32px',
-                height: '32px',
+                width: '36px',
+                height: '36px',
                 borderRadius: '50%',
-                background: 'rgba(192, 193, 255, 0.15)',
+                background: activeTab === 'n8n' ? 'rgba(111, 251, 190, 0.15)' : 'rgba(192, 193, 255, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                transition: 'all 0.2s ease',
               }}
             >
-              <UserPlus size={18} color="var(--primary)" />
+              {activeTab === 'n8n' ? (
+                <Bot size={20} color="#6ffbbe" />
+              ) : (
+                <UserPlus size={18} color="var(--primary)" />
+              )}
             </div>
             <div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
-                Create New Inbound Lead
+                {activeTab === 'n8n' ? 'Find Leads with AI (n8n)' : 'Create New Inbound Lead'}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0 }}>
-                Add lead details to trigger AI scoring & pipeline tracking
+                {activeTab === 'n8n'
+                  ? 'Automated multi-source lead search, enrichment & AI qualification'
+                  : 'Add lead manually to trigger AI scoring & pipeline tracking'}
               </p>
             </div>
           </div>
@@ -167,234 +230,465 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
           </button>
         </div>
 
-        {/* Form Body */}
-        <form
-          onSubmit={handleSubmit}
+        {/* 2-Option Mode Switcher */}
+        <div
           style={{
-            padding: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.1rem',
-            overflowY: 'auto',
-            flex: 1,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            background: 'var(--surface-container-low)',
+            padding: '0.4rem',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            gap: '0.5rem',
           }}
         >
-          {error && (
-            <div
-              style={{
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-md)',
-                background: 'rgba(255, 180, 171, 0.15)',
-                border: '1px solid rgba(255, 180, 171, 0.3)',
-                color: 'var(--error)',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          {successToast && (
-            <div
-              style={{
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-md)',
-                background: 'rgba(78, 222, 163, 0.15)',
-                border: '1px solid rgba(78, 222, 163, 0.3)',
-                color: 'var(--secondary)',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-            >
-              <CheckCircle2 size={18} color="var(--secondary)" /> {successToast}
-            </div>
-          )}
-
-          {/* Name Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
-                First Name <span style={{ color: 'var(--error)' }}>*</span>
-              </label>
-              <input
-                required
-                type="text"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                placeholder="e.g. Sarah"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem 0.8rem',
-                  background: 'var(--surface-container-high)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--on-surface)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
-                Last Name <span style={{ color: 'var(--error)' }}>*</span>
-              </label>
-              <input
-                required
-                type="text"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="e.g. Jenkins"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem 0.8rem',
-                  background: 'var(--surface-container-high)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--on-surface)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
-              Work Email Address <span style={{ color: 'var(--error)' }}>*</span>
-            </label>
-            <input
-              required
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="sarah@company.com"
-              style={{
-                width: '100%',
-                padding: '0.6rem 0.8rem',
-                background: 'var(--surface-container-high)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--on-surface)',
-                fontSize: '0.875rem',
-                outline: 'none',
-              }}
-            />
-          </div>
-
-          {/* Company & Phone Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
-                Company Name
-              </label>
-              <input
-                type="text"
-                value={formData.companyName}
-                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                placeholder="e.g. Apex Digital"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem 0.8rem',
-                  background: 'var(--surface-container-high)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--on-surface)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
-                Phone Number
-              </label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+1 (555) 000-0000"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem 0.8rem',
-                  background: 'var(--surface-container-high)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--on-surface)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Lead Source */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
-              Acquisition Source
-            </label>
-            <select
-              value={formData.source}
-              onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '0.6rem 0.8rem',
-                background: 'var(--surface-container-high)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--on-surface)',
-                fontSize: '0.875rem',
-                outline: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="Website Inbound">Website Contact Form</option>
-              <option value="LinkedIn Outbound">LinkedIn Outbound</option>
-              <option value="Executive Referral">Executive Referral</option>
-              <option value="Upwork Job Inbound">Upwork Client Inbound</option>
-              <option value="Direct Contact">Direct Contact / Email</option>
-            </select>
-          </div>
-
-          {/* Action Buttons */}
-          <div
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('manual');
+              setError('');
+            }}
             style={{
-              marginTop: '0.5rem',
-              paddingTop: '1.25rem',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              padding: '0.6rem',
+              borderRadius: 'var(--radius-sm)',
+              border: 'none',
+              background: activeTab === 'manual' ? 'var(--surface-container-high)' : 'transparent',
+              color: activeTab === 'manual' ? 'var(--on-surface)' : 'var(--on-surface-variant)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
               display: 'flex',
-              gap: '0.75rem',
-              justifyContent: 'flex-end',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'manual' ? '0 2px 8px rgba(0,0,0,0.3)' : 'none',
+              transition: 'all 0.15s ease',
             }}
           >
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-secondary"
-              disabled={loading}
+            <UserPlus size={16} /> Add Manually
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('n8n');
+              setError('');
+            }}
+            style={{
+              padding: '0.6rem',
+              borderRadius: 'var(--radius-sm)',
+              border: activeTab === 'n8n' ? '1px solid rgba(111, 251, 190, 0.3)' : 'none',
+              background: activeTab === 'n8n' ? 'rgba(111, 251, 190, 0.12)' : 'transparent',
+              color: activeTab === 'n8n' ? '#6ffbbe' : 'var(--on-surface-variant)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'n8n' ? '0 2px 8px rgba(111, 251, 190, 0.15)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Sparkles size={16} /> ⚡ Find Leads (n8n AI)
+          </button>
+        </div>
+
+        {/* Form Body */}
+        {activeTab === 'manual' ? (
+          /* MANUAL FORM */
+          <form
+            onSubmit={handleManualSubmit}
+            style={{
+              padding: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.1rem',
+              overflowY: 'auto',
+              flex: 1,
+            }}
+          >
+            {error && (
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(255, 180, 171, 0.15)',
+                  border: '1px solid rgba(255, 180, 171, 0.3)',
+                  color: 'var(--error)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {successToast && (
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(78, 222, 163, 0.15)',
+                  border: '1px solid rgba(78, 222, 163, 0.3)',
+                  color: 'var(--secondary)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <CheckCircle2 size={18} color="var(--secondary)" /> {successToast}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                  First Name <span style={{ color: 'var(--error)' }}>*</span>
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  placeholder="e.g. Sarah"
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.8rem',
+                    background: 'var(--surface-container-high)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--on-surface)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                  Last Name <span style={{ color: 'var(--error)' }}>*</span>
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  placeholder="e.g. Jenkins"
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.8rem',
+                    background: 'var(--surface-container-high)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--on-surface)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                Work Email Address <span style={{ color: 'var(--error)' }}>*</span>
+              </label>
+              <input
+                required
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="sarah@company.com"
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 0.8rem',
+                  background: 'var(--surface-container-high)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--on-surface)',
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.companyName}
+                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                  placeholder="e.g. Apex Digital"
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.8rem',
+                    background: 'var(--surface-container-high)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--on-surface)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+1 (555) 000-0000"
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.8rem',
+                    background: 'var(--surface-container-high)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--on-surface)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                Acquisition Source
+              </label>
+              <select
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 0.8rem',
+                  background: 'var(--surface-container-high)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--on-surface)',
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="Website Inbound">Website Contact Form</option>
+                <option value="LinkedIn Outbound">LinkedIn Outbound</option>
+                <option value="Executive Referral">Executive Referral</option>
+                <option value="Upwork Job Inbound">Upwork Client Inbound</option>
+                <option value="Direct Contact">Direct Contact / Email</option>
+              </select>
+            </div>
+
+            <div
+              style={{
+                marginTop: '0.5rem',
+                paddingTop: '1.25rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                gap: '0.75rem',
+                justifyContent: 'flex-end',
+              }}
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              <button type="button" onClick={onClose} className="btn btn-secondary" disabled={loading}>
+                Cancel
+              </button>
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {loading ? 'Creating Lead...' : <><Sparkles size={16} /> Save Lead & Auto-Score</>}
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* n8n WORKFLOW FINDER FORM */
+          <form
+            onSubmit={handleN8nTriggerSubmit}
+            style={{
+              padding: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+              overflowY: 'auto',
+              flex: 1,
+            }}
+          >
+            {/* Value Proposition Box */}
+            <div
+              style={{
+                padding: '1rem',
+                borderRadius: 'var(--radius-md)',
+                background: 'linear-gradient(135deg, rgba(111, 251, 190, 0.1) 0%, rgba(192, 193, 255, 0.05) 100%)',
+                border: '1px solid rgba(111, 251, 190, 0.25)',
+              }}
             >
-              {loading ? (
-                <>Creating Lead...</>
-              ) : (
-                <>
-                  <Sparkles size={16} /> Save Lead & Auto-Score
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <Bot size={18} color="#6ffbbe" />
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#6ffbbe' }}>
+                  Autonomous n8n Lead Discovery & AI Qualification
+                </span>
+              </div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--on-surface-variant)', margin: 0, lineHeight: 1.4 }}>
+                Pings your n8n workflow to search Google Places, Geoapify & Foursquare, scrape websites, score leads with Gemini AI, and ingest them directly into AgencyFlow.
+              </p>
+            </div>
+
+            {error && (
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(255, 180, 171, 0.15)',
+                  border: '1px solid rgba(255, 180, 171, 0.3)',
+                  color: 'var(--error)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {successToast && (
+              <div
+                style={{
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(78, 222, 163, 0.15)',
+                  border: '1px solid rgba(78, 222, 163, 0.3)',
+                  color: 'var(--secondary)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <CheckCircle2 size={18} color="var(--secondary)" /> {successToast}
+              </div>
+            )}
+
+            {/* Target Category / Query */}
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                <Search size={14} color="#6ffbbe" /> Business Category / Keyword <span style={{ color: 'var(--error)' }}>*</span>
+              </label>
+              <input
+                required
+                type="text"
+                value={finderData.query}
+                onChange={(e) => setFinderData({ ...finderData, query: e.target.value })}
+                placeholder="e.g. Gyms & Fitness Centers, Pizza Places, Dental Clinics"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  background: 'var(--surface-container-high)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--on-surface)',
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                }}
+              />
+              <span style={{ fontSize: '0.72rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem', display: 'block' }}>
+                Used in Places API and Google search filters.
+              </span>
+            </div>
+
+            {/* Target Location */}
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                <MapPin size={14} color="#6ffbbe" /> Target City / Location <span style={{ color: 'var(--error)' }}>*</span>
+              </label>
+              <input
+                required
+                type="text"
+                value={finderData.location}
+                onChange={(e) => setFinderData({ ...finderData, location: e.target.value })}
+                placeholder="e.g. Peshawar, Pakistan or London, UK"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  background: 'var(--surface-container-high)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--on-surface)',
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            {/* Optional Custom Webhook URL */}
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--on-surface-variant)' }}>
+                <Globe size={14} /> n8n Webhook URL (Optional override)
+              </label>
+              <input
+                type="url"
+                value={finderData.webhookUrl}
+                onChange={(e) => setFinderData({ ...finderData, webhookUrl: e.target.value })}
+                placeholder="https://your-n8n.app.n8n.cloud/webhook/find-leads"
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 0.8rem',
+                  background: 'var(--surface-container-high)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--on-surface)',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                }}
+              />
+              <span style={{ fontSize: '0.72rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem', display: 'block' }}>
+                Defaults to <code style={{ color: 'var(--primary)' }}>N8N_WEBHOOK_URL</code> in your CRM settings.
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div
+              style={{
+                marginTop: '0.5rem',
+                paddingTop: '1.25rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                gap: '0.75rem',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button type="button" onClick={onClose} className="btn btn-secondary" disabled={loading}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary"
+                style={{
+                  background: 'linear-gradient(135deg, #4edea3 0%, #6ffbbe 100%)',
+                  color: '#0a2318',
+                  fontWeight: 700,
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="spin" /> Triggering Workflow...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} /> 🚀 Run AI Lead Finder
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
