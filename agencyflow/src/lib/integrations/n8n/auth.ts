@@ -24,9 +24,16 @@ export async function authenticateN8nRequest(
   request: Request,
   payload?: Partial<N8nLeadPayload>
 ): Promise<N8nAuthContext> {
-  const configuredSecret =
-    process.env.N8N_INTEGRATION_SECRET || process.env['Agencyflow-Auth'];
-  if (!configuredSecret || configuredSecret.trim().length === 0) {
+  const rawConfigured =
+    process.env.N8N_INTEGRATION_SECRET ||
+    process.env['Agencyflow-Auth'] ||
+    process.env.AGENCYFLOW_AUTH ||
+    '';
+  
+  // Clean surrounding quotes and whitespace
+  const configuredSecret = rawConfigured.trim().replace(/^["']|["']$/g, '');
+
+  if (!configuredSecret) {
     throw new N8nAuthenticationError(
       'N8N_INTEGRATION_SECRET is not configured on the server.',
       500
@@ -45,9 +52,14 @@ export async function authenticateN8nRequest(
     receivedSecret = xSecretHeader.trim();
   } else if (agencyflowAuthHeader) {
     receivedSecret = agencyflowAuthHeader.trim();
+  } else if (authHeader) {
+    receivedSecret = authHeader.trim();
   }
 
-  if (!receivedSecret || receivedSecret !== configuredSecret.trim()) {
+  // Clean surrounding quotes
+  receivedSecret = receivedSecret.replace(/^["']|["']$/g, '');
+
+  if (!receivedSecret || receivedSecret !== configuredSecret) {
     throw new N8nAuthenticationError(
       'Unauthorized: Invalid or missing integration secret.',
       401
