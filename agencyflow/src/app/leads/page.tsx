@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { UIStateCard } from '@/components/UIStateCard';
 import { EmptyState } from '@/components/EmptyState';
-import { X, Sparkles, Send, ArrowRight, Users } from 'lucide-react';
+import { X, Sparkles, Send, ArrowRight, Users, Trash2, MoreVertical, ExternalLink } from 'lucide-react';
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -20,6 +20,67 @@ export default function LeadsPage() {
   const [noteContent, setNoteContent] = useState('');
   const [scoringLoading, setScoringLoading] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Active Dropdown Menu State
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleDeleteLead = async (leadId: string, leadName?: string) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${leadName || 'this lead'}"? This action cannot be undone.`);
+    if (!confirmDelete) return;
+
+    setActiveMenuId(null);
+    setDeletingId(leadId);
+
+    // Optimistic UI update
+    const previousLeads = [...leads];
+    setLeads((prev) => prev.filter((l) => l.id !== leadId));
+    if (selectedLead?.id === leadId) setSelectedLead(null);
+
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || json.error || 'Failed to delete lead');
+      }
+    } catch (err: any) {
+      alert(`Failed to delete lead: ${err.message}`);
+      setLeads(previousLeads); // Revert on failure
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleUpdateStatus = async (leadId: string, newStatus: string) => {
+    setActiveMenuId(null);
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
+    );
+    try {
+      await fetch(`/api/v1/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (err) {
+      console.error(err);
+      fetchLeads();
+    }
+  };
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -350,7 +411,7 @@ export default function LeadsPage() {
                         key={l.id}
                         className="kanban-card"
                         onClick={() => openLeadDrawer(l.id)}
-                        style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}
+                        style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.6rem', position: 'relative' }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.25rem' }}>
                           <div style={{ minWidth: 0, flex: 1 }}>
@@ -361,9 +422,101 @@ export default function LeadsPage() {
                               {l.firstName} {l.lastName}
                             </p>
                           </div>
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--outline)', flexShrink: 0 }}>
-                            more_vert
-                          </span>
+                          
+                          {/* 3-Dot Options Menu */}
+                          <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(activeMenuId === l.id ? null : l.id);
+                              }}
+                              style={{
+                                background: activeMenuId === l.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                color: activeMenuId === l.id ? 'var(--primary)' : 'var(--outline)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                borderRadius: '4px',
+                                transition: 'all 0.15s ease',
+                              }}
+                              title="Lead options"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+
+                            {activeMenuId === l.id && (
+                              <div
+                                ref={dropdownRef}
+                                style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  right: 0,
+                                  zIndex: 50,
+                                  minWidth: '160px',
+                                  background: '#1e2026',
+                                  borderRadius: '8px',
+                                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                                  boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+                                  padding: '4px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '2px',
+                                }}
+                              >
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(null);
+                                    openLeadDrawer(l.id);
+                                  }}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '8px 10px',
+                                    borderRadius: '6px',
+                                    color: '#e2e2e8',
+                                    fontSize: '12px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    width: '100%',
+                                  }}
+                                >
+                                  <ExternalLink size={14} color="#c0c1ff" /> View Details
+                                </button>
+
+                                <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '2px 0' }} />
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteLead(l.id, l.companyName || `${l.firstName} ${l.lastName}`);
+                                  }}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '8px 10px',
+                                    borderRadius: '6px',
+                                    color: '#ffb4ab',
+                                    fontSize: '12px',
+                                    background: 'rgba(255, 180, 171, 0.08)',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    width: '100%',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  <Trash2 size={14} color="#ffb4ab" /> Remove Lead
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -494,10 +647,34 @@ export default function LeadsPage() {
                     </td>
                     <td>{l.source}</td>
                     <td>{l.assignedTo?.fullName || 'Alex Rivera'}</td>
-                    <td>
-                      <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '12px' }}>
-                        View Details
-                      </button>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => openLeadDrawer(l.id)}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '12px' }}
+                        >
+                          View Details
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLead(l.id, l.companyName || `${l.firstName} ${l.lastName}`)}
+                          title="Remove Lead"
+                          style={{
+                            padding: '0.25rem 0.45rem',
+                            fontSize: '12px',
+                            background: 'rgba(255, 180, 171, 0.1)',
+                            border: '1px solid rgba(255, 180, 171, 0.25)',
+                            color: '#ffb4ab',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -561,6 +738,29 @@ export default function LeadsPage() {
                 </button>
               )}
 
+              {/* Danger Zone: Remove Lead Button */}
+              <button
+                onClick={() => handleDeleteLead(selectedLead.id, selectedLead.companyName || `${selectedLead.firstName} ${selectedLead.lastName}`)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(255, 180, 171, 0.08)',
+                  border: '1px solid rgba(255, 180, 171, 0.25)',
+                  color: '#ffb4ab',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Trash2 size={16} /> Remove Lead Permanently
+              </button>
+
               {/* Fast Activity Note Logger */}
               <form onSubmit={handleAddNote} style={{ marginTop: 'auto', display: 'flex', gap: '0.5rem' }}>
                 <input
@@ -581,3 +781,4 @@ export default function LeadsPage() {
     </AppShell>
   );
 }
+

@@ -99,3 +99,41 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     );
   }
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getAuthSession(request);
+    const { id } = await params;
+
+    // Verify lead exists and belongs strictly to the authenticated workspace
+    const existingLead = await prisma.lead.findFirst({
+      where: {
+        id,
+        workspaceId: session.workspaceId,
+      },
+    });
+
+    if (!existingLead) {
+      return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
+    }
+
+    // Cascade delete activities and tasks associated with this lead
+    await prisma.$transaction([
+      prisma.activity.deleteMany({ where: { leadId: id } }),
+      prisma.task.deleteMany({ where: { leadId: id } }),
+      prisma.lead.delete({ where: { id } }),
+    ]);
+
+    return NextResponse.json({ success: true, message: 'Lead deleted successfully' });
+  } catch (error: any) {
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+
+    return NextResponse.json(
+      { success: false, error: { message: error.message || 'Failed to delete lead' } },
+      { status }
+    );
+  }
+}
+
