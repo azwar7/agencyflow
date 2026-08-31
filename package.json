@@ -1,0 +1,11 @@
+{
+  "name": "agencyflow-root",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run --prefix agencyflow dev",
+    "build": "npm run --prefix agencyflow build",
+    "start": "npm run --prefix agencyflow start",
+    "postinstall": "npm run --prefix agencyflow postinstall"
+  }
+}
