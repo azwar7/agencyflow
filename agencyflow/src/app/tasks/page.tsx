@@ -504,12 +504,14 @@ export default function TasksPage() {
                         // Priority styling
                         const priorityBg =
                           t.priority === 'HIGH'
-                            ? 'rgba(59, 130, 246, 0.15)'
+                            ? 'rgba(59, 130, 246, 0.18)'
                             : t.priority === 'LOW'
-                            ? 'rgba(245, 158, 11, 0.15)'
-                            : 'rgba(16, 185, 129, 0.15)';
+                            ? 'rgba(245, 158, 11, 0.18)'
+                            : 'rgba(168, 85, 247, 0.18)';
                         const priorityColor =
-                          t.priority === 'HIGH' ? '#3b82f6' : t.priority === 'LOW' ? '#f59e0b' : '#10b981';
+                          t.priority === 'HIGH' ? '#60a5fa' : t.priority === 'LOW' ? '#fbbf24' : '#c084fc';
+                        const priorityBorder =
+                          t.priority === 'HIGH' ? '1px solid rgba(59, 130, 246, 0.3)' : t.priority === 'LOW' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(168, 85, 247, 0.3)';
 
                         return (
                           <div
@@ -518,11 +520,12 @@ export default function TasksPage() {
                             onDragStart={(e) => handleDragStart(e, t.id)}
                             onDragEnd={handleDragEnd}
                             style={{
-                              background: isDragging ? 'rgba(56, 189, 248, 0.1)' : '#ffffff',
-                              color: '#1e293b',
+                              background: isDragging ? 'rgba(56, 189, 248, 0.12)' : 'var(--surface-container)',
+                              color: 'var(--on-surface)',
                               borderRadius: '10px',
                               padding: '1rem',
-                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
+                              border: isDragging ? '1px dashed #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.25)',
                               display: 'flex',
                               flexDirection: 'column',
                               gap: '0.65rem',
@@ -535,7 +538,7 @@ export default function TasksPage() {
                           >
                             {/* Card Top Row: Title & 3-Dot Options */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1.35 }}>
+                              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff', margin: 0, lineHeight: 1.35 }}>
                                 {t.title}
                               </h3>
 
@@ -545,7 +548,7 @@ export default function TasksPage() {
                                     e.stopPropagation();
                                     setActiveMenuTaskId(activeMenuTaskId === t.id ? null : t.id);
                                   }}
-                                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '2px' }}
+                                  style={{ background: 'transparent', border: 'none', color: 'var(--on-surface-variant)', cursor: 'pointer', padding: '2px' }}
                                 >
                                   <MoreVertical size={16} />
                                 </button>
@@ -598,6 +601,7 @@ export default function TasksPage() {
                                   borderRadius: '4px',
                                   background: priorityBg,
                                   color: priorityColor,
+                                  border: priorityBorder,
                                   fontSize: '0.7rem',
                                   fontWeight: 700,
                                   textTransform: 'capitalize',
@@ -606,7 +610,7 @@ export default function TasksPage() {
                                 {t.priority.toLowerCase()}
                               </span>
 
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 500 }}>
                                 <Clock size={12} />
                                 {new Date(t.dueDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                               </div>
@@ -614,7 +618,7 @@ export default function TasksPage() {
 
                             {/* Progress Bar & Percentage */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                              <div style={{ height: '6px', width: '100%', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
+                              <div style={{ height: '6px', width: '100%', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
                                 <div
                                   style={{
                                     height: '100%',
@@ -631,13 +635,13 @@ export default function TasksPage() {
                                   }}
                                 />
                               </div>
-                              <div style={{ textAlign: 'right', fontSize: '0.7rem', fontWeight: 700, color: '#64748b' }}>
+                              <div style={{ textAlign: 'right', fontSize: '0.7rem', fontWeight: 700, color: 'var(--on-surface-variant)' }}>
                                 {prog}%
                               </div>
                             </div>
 
                             {/* Card Footer: Assignee Stack, Attachments & Comments */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.4rem', borderTop: '1px solid #f1f5f9' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
                               {/* Team Avatar Stack */}
                               <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <div
@@ -652,18 +656,18 @@ export default function TasksPage() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    border: '1.5px solid #ffffff',
+                                    border: '1.5px solid var(--surface-container)',
                                   }}
                                 >
                                   {t.assignedTo?.fullName ? t.assignedTo.fullName.split(' ').map((n) => n[0]).join('') : 'AR'}
                                 </div>
-                                <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, marginLeft: '4px' }}>
+                                <span style={{ fontSize: '10px', color: 'var(--on-surface-variant)', fontWeight: 600, marginLeft: '4px' }}>
                                   +1
                                 </span>
                               </div>
 
                               {/* Attachments & Subtasks */}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.75rem', color: '#64748b' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                                   <Paperclip size={12} />
                                   <span>{t.filesCount || 3}</span>
