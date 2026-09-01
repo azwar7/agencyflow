@@ -25,6 +25,7 @@ import {
   RefreshCw,
   Target,
   Lightbulb,
+  GripVertical,
 } from 'lucide-react';
 
 export default function LeadsPage() {
@@ -34,6 +35,10 @@ export default function LeadsPage() {
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [filterTab, setFilterTab] = useState<'all' | 'my'>('all');
   const [sourceFilter, setSourceFilter] = useState('');
+
+  // Drag-and-Drop Kanban State
+  const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
+  const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
 
   // Selected Lead Drawer State
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
@@ -119,6 +124,82 @@ export default function LeadsPage() {
       }
     }
   }, [leads]);
+
+  // ----------------------------------------------------
+  // Drag & Drop Event Handlers
+  // ----------------------------------------------------
+  const handleDragStart = (e: React.DragEvent, leadId: string) => {
+    e.dataTransfer.setData('text/plain', leadId);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingLeadId(leadId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingLeadId(null);
+    setDragOverStageId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, stageId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverStageId !== stageId) {
+      setDragOverStageId(stageId);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, stageId: string) => {
+    // Only reset if actually leaving the column container
+    if (dragOverStageId === stageId) {
+      setDragOverStageId(null);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetStageId: string) => {
+    e.preventDefault();
+    const leadId = e.dataTransfer.getData('text/plain') || draggingLeadId;
+    setDraggingLeadId(null);
+    setDragOverStageId(null);
+
+    if (!leadId) return;
+
+    const draggedLead = leads.find((l) => l.id === leadId);
+    if (!draggedLead || draggedLead.status === targetStageId) return;
+
+    // Optimistically update status
+    handleUpdateStatus(leadId, targetStageId);
+  };
+
+  // ----------------------------------------------------
+  // Status Update & Drawer Handlers
+  // ----------------------------------------------------
+  const handleUpdateStatus = async (leadId: string, newStatus: string) => {
+    setActiveMenuId(null);
+
+    // Optimistic UI state update
+    const previousLeads = [...leads];
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
+    );
+
+    if (selectedLead?.id === leadId) {
+      setSelectedLead((prev: any) => ({ ...prev, status: newStatus }));
+    }
+
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || 'Failed to update stage');
+      }
+    } catch (err: any) {
+      console.error('Failed to update stage:', err);
+      setLeads(previousLeads);
+    }
+  };
 
   const openLeadDrawer = async (leadId: string) => {
     setDrawerLoading(true);
@@ -483,9 +564,25 @@ export default function LeadsPage() {
             {stages.map((stg) => {
               const stageLeads = leads.filter((l) => l.status === stg.id || (stg.id === 'CONVERTED' && l.status === 'CLOSED_WON') || (stg.id === 'CLOSED_LOST' && l.status === 'UNQUALIFIED'));
               const totalVal = stageLeads.reduce((acc, l) => acc + (l.leadScore > 80 ? 28000 : 18500), 0);
+              const isOverThisStage = dragOverStageId === stg.id;
 
               return (
-                <div key={stg.id} className="kanban-col" style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-lg)', padding: '1rem', border: '1px solid rgba(255, 255, 255, 0.05)', minWidth: '280px' }}>
+                <div
+                  key={stg.id}
+                  className="kanban-col"
+                  onDragOver={(e) => handleDragOver(e, stg.id)}
+                  onDragLeave={(e) => handleDragLeave(e, stg.id)}
+                  onDrop={(e) => handleDrop(e, stg.id)}
+                  style={{
+                    background: isOverThisStage ? 'rgba(56, 189, 248, 0.08)' : 'var(--surface-container-lowest)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '1rem',
+                    border: isOverThisStage ? '2px dashed #38bdf8' : '1px solid rgba(255, 255, 255, 0.05)',
+                    boxShadow: isOverThisStage ? '0 0 25px rgba(56, 189, 248, 0.15)' : 'none',
+                    minWidth: '280px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
                   {/* Stage Header */}
                   <div style={{ paddingBottom: '0.6rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
@@ -505,184 +602,206 @@ export default function LeadsPage() {
                     </div>
                   </div>
 
-                  {/* Lead Cards */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
+                  {/* Lead Cards List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem', minHeight: '120px' }}>
                     {stageLeads.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '2rem 0.5rem', color: 'var(--outline)', fontSize: '0.75rem' }}>
-                        No leads in stage
+                      <div style={{ textAlign: 'center', padding: '2rem 0.5rem', color: isOverThisStage ? '#38bdf8' : 'var(--outline)', fontSize: '0.75rem', border: isOverThisStage ? '1px dashed #38bdf8' : 'none', borderRadius: '6px' }}>
+                        {isOverThisStage ? 'Drop lead here to move' : 'No leads in stage'}
                       </div>
                     ) : (
-                      stageLeads.map((l) => (
-                        <div
-                          key={l.id}
-                          className="kanban-card"
-                          onClick={() => openLeadDrawer(l.id)}
-                          style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.6rem', position: 'relative', background: 'var(--surface-container)', padding: '0.9rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.25rem' }}>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--on-surface)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {l.companyName || `${l.firstName} ${l.lastName}`}
-                              </h3>
-                              <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {l.firstName} {l.lastName}
-                              </p>
+                      stageLeads.map((l) => {
+                        const isDraggingThis = draggingLeadId === l.id;
+                        return (
+                          <div
+                            key={l.id}
+                            className="kanban-card"
+                            draggable={true}
+                            onDragStart={(e) => handleDragStart(e, l.id)}
+                            onDragEnd={handleDragEnd}
+                            onClick={() => openLeadDrawer(l.id)}
+                            style={{
+                              cursor: 'grab',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.6rem',
+                              position: 'relative',
+                              background: isDraggingThis ? 'rgba(56, 189, 248, 0.1)' : 'var(--surface-container)',
+                              padding: '0.9rem',
+                              borderRadius: 'var(--radius-md)',
+                              border: isDraggingThis ? '1px dashed #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                              opacity: isDraggingThis ? 0.4 : 1,
+                              transform: isDraggingThis ? 'scale(0.98)' : 'none',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.25rem' }}>
+                              <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
+                                <GripVertical size={14} color="var(--outline)" style={{ marginTop: '3px', flexShrink: 0, opacity: 0.6 }} />
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--on-surface)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {l.companyName || `${l.firstName} ${l.lastName}`}
+                                  </h3>
+                                  <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {l.firstName} {l.lastName}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* 3-Dot Options Menu */}
+                              <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(activeMenuId === l.id ? null : l.id);
+                                  }}
+                                  style={{
+                                    background: activeMenuId === l.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '4px',
+                                    color: activeMenuId === l.id ? 'var(--primary)' : 'var(--outline)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    borderRadius: '4px',
+                                  }}
+                                  title="Lead options"
+                                >
+                                  <MoreVertical size={16} />
+                                </button>
+
+                                {activeMenuId === l.id && (
+                                  <div
+                                    ref={dropdownRef}
+                                    style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      right: 0,
+                                      zIndex: 50,
+                                      minWidth: '160px',
+                                      background: '#1e2026',
+                                      borderRadius: '8px',
+                                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                                      boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+                                      padding: '4px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '2px',
+                                    }}
+                                  >
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(null);
+                                        openLeadDrawer(l.id);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '8px 10px',
+                                        borderRadius: '6px',
+                                        color: '#e2e2e8',
+                                        fontSize: '12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        width: '100%',
+                                      }}
+                                    >
+                                      <ExternalLink size={14} color="#c0c1ff" /> View Details
+                                    </button>
+
+                                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '2px 0' }} />
+
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteLead(l.id, l.companyName || `${l.firstName} ${l.lastName}`);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '8px 10px',
+                                        borderRadius: '6px',
+                                        color: '#ffb4ab',
+                                        fontSize: '12px',
+                                        background: 'rgba(255, 180, 171, 0.08)',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        width: '100%',
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      <Trash2 size={14} color="#ffb4ab" /> Remove Lead
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            
-                            {/* 3-Dot Options Menu */}
-                            <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(activeMenuId === l.id ? null : l.id);
-                                }}
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              {/* AI Score Badge */}
+                              <span
                                 style={{
-                                  background: activeMenuId === l.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                  color: activeMenuId === l.id ? 'var(--primary)' : 'var(--outline)',
+                                  padding: '0.15rem 0.4rem',
+                                  borderRadius: 'var(--radius-sm)',
+                                  background: l.leadScore >= 75 ? 'rgba(78, 222, 163, 0.18)' : 'rgba(208, 188, 255, 0.15)',
+                                  border: l.leadScore >= 75 ? '1px solid rgba(78, 222, 163, 0.3)' : '1px solid rgba(208, 188, 255, 0.25)',
+                                  color: l.leadScore >= 75 ? '#4edea3' : '#d0bcff',
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.2rem',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                <Sparkles size={11} /> AI {l.leadScore}
+                              </span>
+
+                              {/* Source Badge */}
+                              <span
+                                style={{
+                                  padding: '0.15rem 0.4rem',
+                                  borderRadius: 'var(--radius-sm)',
+                                  background: 'var(--surface-container-high)',
+                                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                                  color: 'var(--on-surface-variant)',
+                                  fontSize: '10px',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {l.source || 'Inbound'}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+                                ${l.leadScore > 80 ? '28,000' : '18,500'}
+                              </span>
+                              <div
+                                style={{
+                                  width: '22px',
+                                  height: '22px',
+                                  borderRadius: '50%',
+                                  background: 'var(--primary)',
+                                  color: 'var(--on-primary)',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  borderRadius: '4px',
+                                  justifyContent: 'center',
+                                  fontSize: '9px',
+                                  fontWeight: 700,
                                 }}
-                                title="Lead options"
                               >
-                                <MoreVertical size={16} />
-                              </button>
-
-                              {activeMenuId === l.id && (
-                                <div
-                                  ref={dropdownRef}
-                                  style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    right: 0,
-                                    zIndex: 50,
-                                    minWidth: '160px',
-                                    background: '#1e2026',
-                                    borderRadius: '8px',
-                                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                                    boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
-                                    padding: '4px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '2px',
-                                  }}
-                                >
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveMenuId(null);
-                                      openLeadDrawer(l.id);
-                                    }}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '8px',
-                                      padding: '8px 10px',
-                                      borderRadius: '6px',
-                                      color: '#e2e2e8',
-                                      fontSize: '12px',
-                                      background: 'transparent',
-                                      border: 'none',
-                                      cursor: 'pointer',
-                                      textAlign: 'left',
-                                      width: '100%',
-                                    }}
-                                  >
-                                    <ExternalLink size={14} color="#c0c1ff" /> View Details
-                                  </button>
-
-                                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '2px 0' }} />
-
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteLead(l.id, l.companyName || `${l.firstName} ${l.lastName}`);
-                                    }}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '8px',
-                                      padding: '8px 10px',
-                                      borderRadius: '6px',
-                                      color: '#ffb4ab',
-                                      fontSize: '12px',
-                                      background: 'rgba(255, 180, 171, 0.08)',
-                                      border: 'none',
-                                      cursor: 'pointer',
-                                      textAlign: 'left',
-                                      width: '100%',
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    <Trash2 size={14} color="#ffb4ab" /> Remove Lead
-                                  </button>
-                                </div>
-                              )}
+                                {l.assignedTo?.fullName?.split(' ').map((n: string) => n[0]).join('') || 'AR'}
+                              </div>
                             </div>
                           </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                            {/* AI Score Badge */}
-                            <span
-                              style={{
-                                padding: '0.15rem 0.4rem',
-                                borderRadius: 'var(--radius-sm)',
-                                background: l.leadScore >= 75 ? 'rgba(78, 222, 163, 0.18)' : 'rgba(208, 188, 255, 0.15)',
-                                border: l.leadScore >= 75 ? '1px solid rgba(78, 222, 163, 0.3)' : '1px solid rgba(208, 188, 255, 0.25)',
-                                color: l.leadScore >= 75 ? '#4edea3' : '#d0bcff',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.2rem',
-                                textTransform: 'uppercase',
-                              }}
-                            >
-                              <Sparkles size={11} /> AI {l.leadScore}
-                            </span>
-
-                            {/* Source Badge */}
-                            <span
-                              style={{
-                                padding: '0.15rem 0.4rem',
-                                borderRadius: 'var(--radius-sm)',
-                                background: 'var(--surface-container-high)',
-                                border: '1px solid rgba(255, 255, 255, 0.05)',
-                                color: 'var(--on-surface-variant)',
-                                fontSize: '10px',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {l.source || 'Inbound'}
-                            </span>
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
-                              ${l.leadScore > 80 ? '28,000' : '18,500'}
-                            </span>
-                            <div
-                              style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '50%',
-                                background: 'var(--primary)',
-                                color: 'var(--on-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '9px',
-                                fontWeight: 700,
-                              }}
-                            >
-                              {l.assignedTo?.fullName?.split(' ').map((n: string) => n[0]).join('') || 'AR'}
-                            </div>
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
