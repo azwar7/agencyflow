@@ -111,7 +111,6 @@ export default function ProposalsPage() {
       if (propJson.success && Array.isArray(propJson.data)) {
         setProposals(propJson.data);
         if (propJson.data.length > 0) {
-          // Keep current selection if valid, or select the first
           setSelectedProposal((prev) =>
             prev ? propJson.data.find((p: ProposalItem) => p.id === prev.id) || propJson.data[0] : propJson.data[0]
           );
@@ -160,7 +159,8 @@ export default function ProposalsPage() {
       setAiClientName('');
       setAiCustomScope('');
       setSuccessBanner(`✨ AI Proposal "${json.data.title}" generated successfully!`);
-      fetchProposals();
+      await fetchProposals();
+      if (json.data) setSelectedProposal(json.data);
     } catch (err: any) {
       alert(`AI Proposal Generation Error: ${err.message}`);
     } finally {
@@ -221,7 +221,7 @@ export default function ProposalsPage() {
       setIsSignModalOpen(false);
       setSignerName('');
       setSignerTitle('');
-      setSuccessBanner(`🎉 Proposal Signed! Active Project spawned and 50% deposit invoice created.`);
+      setSuccessBanner(`🎉 Proposal Signed! Active Project spawned in Projects board and 50% deposit invoice created.`);
       fetchProposals();
     } catch (err: any) {
       alert(`Signing Error: ${err.message}`);
@@ -265,14 +265,14 @@ export default function ProposalsPage() {
 
   return (
     <AppShell>
-      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', padding: '1.25rem 2rem 0' }}>
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 'calc(100vh - 100px)' }}>
         {/* Top Header Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', paddingTop: '0.25rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
               <FileText size={24} color="#d0bcff" /> Client Proposals & SOW Hub
             </h1>
-            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', margin: '0.2rem 0 0 0' }}>
               AI-generated scopes of work, itemized investment roadmaps, and digital e-signatures.
             </p>
           </div>
@@ -309,7 +309,6 @@ export default function ProposalsPage() {
         {successBanner && (
           <div
             style={{
-              marginBottom: '1rem',
               padding: '0.75rem 1rem',
               borderRadius: '8px',
               background: 'rgba(78, 222, 163, 0.12)',
@@ -333,7 +332,7 @@ export default function ProposalsPage() {
 
         {/* Main Master-Detail Split Grid */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.25rem', flex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.25rem', height: '600px' }}>
             <div className="skeleton-pulse" style={{ borderRadius: 'var(--radius-lg)' }} />
             <div className="skeleton-pulse" style={{ borderRadius: 'var(--radius-lg)' }} />
           </div>
@@ -348,7 +347,7 @@ export default function ProposalsPage() {
             onAction={() => setIsAiModalOpen(true)}
           />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '1.25rem', flex: 1, minHeight: 0, paddingBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '1.25rem', height: 'calc(100vh - 200px)', minHeight: '620px' }}>
             {/* Left Sidebar: Proposals Directory */}
             <div
               style={{
