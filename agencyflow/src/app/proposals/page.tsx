@@ -29,6 +29,8 @@ import {
   ArrowRight,
   Target,
   Edit3,
+  Save,
+  PlusCircle,
   ExternalLink,
 } from 'lucide-react';
 
@@ -72,6 +74,16 @@ export default function ProposalsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [leads, setLeads] = useState<any[]>([]);
+
+  // Live Inline Edit Mode State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editClient, setEditClient] = useState('');
+  const [editSummary, setEditSummary] = useState('');
+  const [editScopeOfWork, setEditScopeOfWork] = useState<ScopePhase[]>([]);
+  const [editPricingItems, setEditPricingItems] = useState<PricingItem[]>([]);
+  const [editPaymentTerms, setEditPaymentTerms] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // AI Proposal Generator Modal State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -132,6 +144,73 @@ export default function ProposalsPage() {
   useEffect(() => {
     fetchProposals();
   }, []);
+
+  // Sync editing fields whenever a proposal is selected or edit mode toggled
+  useEffect(() => {
+    if (selectedProposal) {
+      setEditTitle(selectedProposal.title);
+      setEditClient(selectedProposal.client);
+      setEditSummary(selectedProposal.summary || '');
+      setEditScopeOfWork(selectedProposal.scopeOfWork || []);
+      setEditPricingItems(selectedProposal.pricingItems || []);
+      setEditPaymentTerms(selectedProposal.paymentTerms || '');
+    }
+  }, [selectedProposal, isEditing]);
+
+  // Calculate live total value from pricing items
+  const editTotalValue = editPricingItems.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
+
+  // Save Proposal Edits
+  const handleSaveProposalEdits = async () => {
+    if (!selectedProposal) return;
+    setSavingEdit(true);
+
+    try {
+      const res = await fetch('/api/v1/proposals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedProposal.id,
+          title: editTitle,
+          client: editClient,
+          value: editTotalValue,
+          summary: editSummary,
+          scopeOfWork: editScopeOfWork,
+          pricingItems: editPricingItems,
+          paymentTerms: editPaymentTerms,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to save edits');
+
+      setSuccessBanner('💾 Proposal changes saved successfully!');
+      setIsEditing(false);
+
+      // Optimistically update local selected proposal
+      setSelectedProposal((prev) =>
+        prev
+          ? {
+              ...prev,
+              title: editTitle,
+              client: editClient,
+              value: editTotalValue,
+              valueFormatted: `$${editTotalValue.toLocaleString()}`,
+              summary: editSummary,
+              scopeOfWork: editScopeOfWork,
+              pricingItems: editPricingItems,
+              paymentTerms: editPaymentTerms,
+            }
+          : null
+      );
+
+      fetchProposals();
+    } catch (err: any) {
+      alert(`Save Error: ${err.message}`);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   // 1. Generate Proposal with AI
   const handleGenerateAiProposal = async (e: React.FormEvent) => {
@@ -389,7 +468,10 @@ export default function ProposalsPage() {
                   return (
                     <div
                       key={p.id}
-                      onClick={() => setSelectedProposal(p)}
+                      onClick={() => {
+                        setIsEditing(false);
+                        setSelectedProposal(p);
+                      }}
                       style={{
                         padding: '0.85rem',
                         borderRadius: 'var(--radius-md)',
@@ -449,7 +531,7 @@ export default function ProposalsPage() {
               </div>
             </div>
 
-            {/* Right Pane: Live Interactive Proposal Document Viewer */}
+            {/* Right Pane: Live Interactive Proposal Document Viewer & Editor */}
             {selectedProposal ? (
               <div
                 style={{
@@ -503,17 +585,62 @@ export default function ProposalsPage() {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {/* Print / Export Button */}
+                    {/* Toggle Live Edit Mode Button */}
                     <button
-                      onClick={() => window.print()}
-                      className="btn btn-secondary"
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      onClick={() => {
+                        if (isEditing) {
+                          handleSaveProposalEdits();
+                        } else {
+                          setIsEditing(true);
+                        }
+                      }}
+                      disabled={savingEdit}
+                      className={isEditing ? 'btn btn-primary' : 'btn btn-secondary'}
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        background: isEditing ? '#4edea3' : undefined,
+                        color: isEditing ? '#003822' : undefined,
+                        fontWeight: isEditing ? 700 : 500,
+                      }}
                     >
-                      <Printer size={14} /> Print / PDF
+                      {savingEdit ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : isEditing ? (
+                        <Save size={14} />
+                      ) : (
+                        <Edit3 size={14} />
+                      )}
+                      {savingEdit ? 'Saving...' : isEditing ? 'Save Changes' : 'Edit Proposal'}
                     </button>
 
+                    {/* Cancel Edit Button */}
+                    {isEditing && (
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.35rem 0.6rem', fontSize: '0.75rem' }}
+                      >
+                        Cancel
+                      </button>
+                    )}
+
+                    {/* Print / Export Button */}
+                    {!isEditing && (
+                      <button
+                        onClick={() => window.print()}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        <Printer size={14} /> Print / PDF
+                      </button>
+                    )}
+
                     {/* Send to Client Button */}
-                    {selectedProposal.status === 'DRAFT' && (
+                    {!isEditing && selectedProposal.status === 'DRAFT' && (
                       <button
                         onClick={handleSendProposal}
                         className="btn btn-secondary"
@@ -524,7 +651,7 @@ export default function ProposalsPage() {
                     )}
 
                     {/* Accept & Sign Button */}
-                    {selectedProposal.status !== 'ACCEPTED' && (
+                    {!isEditing && selectedProposal.status !== 'ACCEPTED' && (
                       <button
                         onClick={() => {
                           setSignerName(selectedProposal.client);
@@ -559,20 +686,61 @@ export default function ProposalsPage() {
                   </div>
                 </div>
 
-                {/* Printable Document Body */}
+                {/* Document Body */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
                   {/* Document Title & Client Badge */}
                   <div style={{ borderBottom: '2px solid rgba(255, 255, 255, 0.1)', paddingBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
+                    <div style={{ flex: 1, minWidth: '280px' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#d0bcff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                         Agency Master Services Agreement & Scope of Work
                       </span>
-                      <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', marginTop: '0.2rem', lineHeight: 1.3 }}>
-                        {selectedProposal.title}
-                      </h2>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', marginTop: '0.3rem' }}>
-                        Prepared for: <strong style={{ color: '#fff' }}>{selectedProposal.client}</strong>
-                      </p>
+
+                      {isEditing ? (
+                        <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          <input
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder="Proposal Title"
+                            style={{
+                              width: '100%',
+                              padding: '0.5rem 0.75rem',
+                              background: 'var(--surface-container-high)',
+                              border: '1px solid #d0bcff',
+                              borderRadius: '6px',
+                              color: '#fff',
+                              fontSize: '1.2rem',
+                              fontWeight: 700,
+                              outline: 'none',
+                            }}
+                          />
+                          <input
+                            type="text"
+                            value={editClient}
+                            onChange={(e) => setEditClient(e.target.value)}
+                            placeholder="Client Organization Name"
+                            style={{
+                              width: '100%',
+                              padding: '0.4rem 0.75rem',
+                              background: 'var(--surface-container-high)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              borderRadius: '6px',
+                              color: '#fff',
+                              fontSize: '0.85rem',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', marginTop: '0.2rem', lineHeight: 1.3 }}>
+                            {selectedProposal.title}
+                          </h2>
+                          <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', marginTop: '0.3rem' }}>
+                            Prepared for: <strong style={{ color: '#fff' }}>{selectedProposal.client}</strong>
+                          </p>
+                        </>
+                      )}
                     </div>
 
                     <div style={{ textAlign: 'right', background: 'var(--surface-container-high)', padding: '0.75rem 1.25rem', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
@@ -580,7 +748,7 @@ export default function ProposalsPage() {
                         Total Project Investment
                       </div>
                       <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#4edea3' }}>
-                        {selectedProposal.valueFormatted || `$${selectedProposal.value.toLocaleString()}`}
+                        ${isEditing ? editTotalValue.toLocaleString() : (selectedProposal.value || 0).toLocaleString()}
                       </div>
                     </div>
                   </div>
@@ -590,18 +758,125 @@ export default function ProposalsPage() {
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d0bcff', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Target size={18} /> 1. Executive Summary & Strategic Objectives
                     </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#e2e2e8', lineHeight: 1.7, margin: 0, background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                      {selectedProposal.summary || 'This comprehensive Statement of Work defines the technical architecture, custom application engineering, and automated CRM ingestion pipelines to accelerate business growth and streamline digital customer acquisition.'}
-                    </p>
+
+                    {isEditing ? (
+                      <textarea
+                        rows={4}
+                        value={editSummary}
+                        onChange={(e) => setEditSummary(e.target.value)}
+                        placeholder="Executive summary detailing business objectives, challenge, and solution..."
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          background: 'var(--surface-container-high)',
+                          border: '1px solid #d0bcff',
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.6,
+                          outline: 'none',
+                          fontFamily: 'inherit',
+                        }}
+                      />
+                    ) : (
+                      <p style={{ fontSize: '0.875rem', color: '#e2e2e8', lineHeight: 1.7, margin: 0, background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                        {selectedProposal.summary || 'This comprehensive Statement of Work defines the technical architecture, custom application engineering, and automated CRM ingestion pipelines to accelerate business growth and streamline digital customer acquisition.'}
+                      </p>
+                    )}
                   </div>
 
                   {/* 2. Scope of Work (Phased Implementation) */}
                   <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d0bcff', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Layers size={18} /> 2. Phased Scope of Work (SOW)
-                    </h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d0bcff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Layers size={18} /> 2. Phased Scope of Work (SOW)
+                      </h3>
+
+                      {isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditScopeOfWork([
+                              ...editScopeOfWork,
+                              {
+                                phase: `Phase ${editScopeOfWork.length + 1}: New Milestone`,
+                                duration: '2 Weeks',
+                                description: 'Description of scope tackled in this milestone.',
+                                deliverables: ['Deliverable A', 'Deliverable B'],
+                              },
+                            ]);
+                          }}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                          <PlusCircle size={13} /> Add Phase
+                        </button>
+                      )}
+                    </div>
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                      {selectedProposal.scopeOfWork && selectedProposal.scopeOfWork.length > 0 ? (
+                      {isEditing ? (
+                        editScopeOfWork.map((ph, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              background: 'var(--surface-container-high)',
+                              borderRadius: '8px',
+                              padding: '1rem',
+                              border: '1px solid rgba(208, 188, 255, 0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.5rem',
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <input
+                                type="text"
+                                value={ph.phase}
+                                onChange={(e) => {
+                                  const updated = [...editScopeOfWork];
+                                  updated[idx].phase = e.target.value;
+                                  setEditScopeOfWork(updated);
+                                }}
+                                placeholder="Phase Title"
+                                style={{ flex: 1, padding: '0.4rem 0.6rem', background: 'var(--surface-container-lowest)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}
+                              />
+                              <input
+                                type="text"
+                                value={ph.duration}
+                                onChange={(e) => {
+                                  const updated = [...editScopeOfWork];
+                                  updated[idx].duration = e.target.value;
+                                  setEditScopeOfWork(updated);
+                                }}
+                                placeholder="Duration (e.g. Weeks 1-2)"
+                                style={{ width: '130px', padding: '0.4rem 0.6rem', background: 'var(--surface-container-lowest)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#38bdf8', fontSize: '0.85rem', fontWeight: 600 }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditScopeOfWork(editScopeOfWork.filter((_, i) => i !== idx));
+                                }}
+                                style={{ background: 'transparent', border: 'none', color: '#ffb4ab', cursor: 'pointer', padding: '4px' }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+
+                            <textarea
+                              rows={2}
+                              value={ph.description}
+                              onChange={(e) => {
+                                const updated = [...editScopeOfWork];
+                                updated[idx].description = e.target.value;
+                                setEditScopeOfWork(updated);
+                              }}
+                              placeholder="Phase Description..."
+                              style={{ width: '100%', padding: '0.5rem', background: 'var(--surface-container-lowest)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e2e2e8', fontSize: '0.8rem', resize: 'none' }}
+                            />
+                          </div>
+                        ))
+                      ) : selectedProposal.scopeOfWork && selectedProposal.scopeOfWork.length > 0 ? (
                         selectedProposal.scopeOfWork.map((ph, idx) => (
                           <div
                             key={idx}
@@ -644,20 +919,96 @@ export default function ProposalsPage() {
 
                   {/* 3. Itemized Investment & Pricing Table */}
                   <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d0bcff', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <DollarSign size={18} /> 3. Itemized Investment & Pricing Breakdown
-                    </h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d0bcff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <DollarSign size={18} /> 3. Itemized Investment & Pricing Breakdown
+                      </h3>
+
+                      {isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditPricingItems([
+                              ...editPricingItems,
+                              {
+                                item: 'Additional Service Module',
+                                description: 'Module breakdown description',
+                                price: 2500,
+                              },
+                            ]);
+                          }}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                          <PlusCircle size={13} /> Add Line Item
+                        </button>
+                      )}
+                    </div>
+
                     <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                         <thead>
                           <tr style={{ background: 'var(--surface-container-high)', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--on-surface)', fontWeight: 700 }}>Service / Module</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--on-surface)', fontWeight: 700 }}>Scope Details</th>
-                            <th style={{ padding: '0.75rem 1rem', color: 'var(--on-surface)', fontWeight: 700, textAlign: 'right' }}>Investment</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--on-surface)', fontWeight: 700, textAlign: 'right' }}>Investment ($)</th>
+                            {isEditing && <th style={{ width: '40px' }} />}
                           </tr>
                         </thead>
                         <tbody>
-                          {selectedProposal.pricingItems && selectedProposal.pricingItems.length > 0 ? (
+                          {isEditing ? (
+                            editPricingItems.map((item, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', background: 'var(--surface-container-lowest)' }}>
+                                <td style={{ padding: '0.5rem 1rem' }}>
+                                  <input
+                                    type="text"
+                                    value={item.item}
+                                    onChange={(e) => {
+                                      const updated = [...editPricingItems];
+                                      updated[idx].item = e.target.value;
+                                      setEditPricingItems(updated);
+                                    }}
+                                    style={{ width: '100%', padding: '0.35rem 0.5rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.5rem 1rem' }}>
+                                  <input
+                                    type="text"
+                                    value={item.description}
+                                    onChange={(e) => {
+                                      const updated = [...editPricingItems];
+                                      updated[idx].description = e.target.value;
+                                      setEditPricingItems(updated);
+                                    }}
+                                    style={{ width: '100%', padding: '0.35rem 0.5rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'var(--on-surface-variant)', fontSize: '0.8rem' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.5rem 1rem', textAlign: 'right' }}>
+                                  <input
+                                    type="number"
+                                    value={item.price}
+                                    onChange={(e) => {
+                                      const updated = [...editPricingItems];
+                                      updated[idx].price = Number(e.target.value) || 0;
+                                      setEditPricingItems(updated);
+                                    }}
+                                    style={{ width: '100px', padding: '0.35rem 0.5rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#4edea3', fontSize: '0.85rem', fontWeight: 700, textAlign: 'right' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.5rem' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditPricingItems(editPricingItems.filter((_, i) => i !== idx));
+                                    }}
+                                    style={{ background: 'transparent', border: 'none', color: '#ffb4ab', cursor: 'pointer' }}
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : selectedProposal.pricingItems && selectedProposal.pricingItems.length > 0 ? (
                             selectedProposal.pricingItems.map((item, idx) => (
                               <tr key={idx} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', background: 'var(--surface-container-lowest)' }}>
                                 <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#fff' }}>{item.item}</td>
@@ -679,8 +1030,9 @@ export default function ProposalsPage() {
                           <tr style={{ background: 'var(--surface-container-high)', fontWeight: 800 }}>
                             <td colSpan={2} style={{ padding: '0.85rem 1rem', color: '#fff', fontSize: '0.95rem' }}>Total Contract Value</td>
                             <td style={{ padding: '0.85rem 1rem', textAlign: 'right', color: '#4edea3', fontSize: '1.1rem' }}>
-                              {selectedProposal.valueFormatted || `$${selectedProposal.value.toLocaleString()}`}
+                              ${isEditing ? editTotalValue.toLocaleString() : (selectedProposal.value || 0).toLocaleString()}
                             </td>
+                            {isEditing && <td />}
                           </tr>
                         </tbody>
                       </table>
@@ -692,9 +1044,20 @@ export default function ProposalsPage() {
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d0bcff', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Calendar size={18} /> 4. Milestone Payment Terms
                     </h3>
-                    <p style={{ fontSize: '0.85rem', color: '#e2e2e8', lineHeight: 1.6, margin: 0, background: 'rgba(255, 255, 255, 0.02)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                      {selectedProposal.paymentTerms || '50% deposit upon contract signing, 25% upon mid-project milestone review, and 25% upon final production deployment and handover.'}
-                    </p>
+
+                    {isEditing ? (
+                      <textarea
+                        rows={2}
+                        value={editPaymentTerms}
+                        onChange={(e) => setEditPaymentTerms(e.target.value)}
+                        placeholder="Milestone payment schedule..."
+                        style={{ width: '100%', padding: '0.6rem', background: 'var(--surface-container-high)', border: '1px solid #d0bcff', borderRadius: '6px', color: '#fff', fontSize: '0.85rem', outline: 'none', resize: 'none' }}
+                      />
+                    ) : (
+                      <p style={{ fontSize: '0.85rem', color: '#e2e2e8', lineHeight: 1.6, margin: 0, background: 'rgba(255, 255, 255, 0.02)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                        {selectedProposal.paymentTerms || '50% deposit upon contract signing, 25% upon mid-project milestone review, and 25% upon final production deployment and handover.'}
+                      </p>
+                    )}
                   </div>
 
                   {/* 5. Formal E-Signature Block */}
