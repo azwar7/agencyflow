@@ -7,10 +7,10 @@ interface SendOtpEmailOptions {
 
 export async function sendOtpEmail({ to, otpCode }: SendOtpEmailOptions): Promise<{ success: boolean; error?: string }> {
   try {
-    const gmailUser = process.env.GMAIL_USER || 'azwarsalar1122@gmail.com';
-    const gmailPass = process.env.GMAIL_APP_PASSWORD; // 16-character Google App Password
+    const gmailUser = (process.env.GMAIL_USER || 'azwarsalar1122@gmail.com').trim();
+    const gmailPass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '').trim();
 
-    // 1. If Gmail App Password is configured, use direct secure Gmail SMTP
+    // 1. If Gmail App Password is configured, send live via Gmail SMTP
     if (gmailPass) {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -51,7 +51,7 @@ export async function sendOtpEmail({ to, otpCode }: SendOtpEmailOptions): Promis
             
             <div class="footer">
               If you did not request this email, you can safely ignore it.<br>
-              © ${new Date().getFullYear()} AgencyFlow Inc. All rights reserved.
+              © ${new Date().getFullYear()} AgencyFlow Security. All rights reserved.
             </div>
           </div>
         </body>
@@ -59,7 +59,7 @@ export async function sendOtpEmail({ to, otpCode }: SendOtpEmailOptions): Promis
       `;
 
       await transporter.sendMail({
-        from: `"AgencyFlow Security" <no-reply@agencyflow.io>`,
+        from: `"AgencyFlow Security" <${gmailUser}>`,
         replyTo: `no-reply@agencyflow.io`,
         to,
         subject: `${otpCode} is your AgencyFlow verification code`,
@@ -67,7 +67,7 @@ export async function sendOtpEmail({ to, otpCode }: SendOtpEmailOptions): Promis
         html: htmlContent,
       });
 
-      console.log(`[Email Service] ✉️ Real Gmail sent to ${to} via SMTP`);
+      console.log(`[Email Service] ✉️ Real Gmail sent to ${to} via SMTP!`);
       return { success: true };
     }
 
@@ -80,7 +80,7 @@ export async function sendOtpEmail({ to, otpCode }: SendOtpEmailOptions): Promis
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             event: 'EMAIL_VERIFICATION_OTP',
-            fromName: 'AgencyFlow Security (no-reply)',
+            fromName: 'AgencyFlow Security',
             fromEmail: 'no-reply@agencyflow.io',
             toEmail: to,
             otpCode,
@@ -93,8 +93,6 @@ export async function sendOtpEmail({ to, otpCode }: SendOtpEmailOptions): Promis
       }
     }
 
-    // 3. Fallback: Log for local testing
-    console.log(`[Email Service] 📬 Simulated No-Reply Email to "${to}": Code = ${otpCode}`);
     return { success: true };
   } catch (error: any) {
     console.error('[Email Service] Send failed:', error);
