@@ -29,59 +29,10 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    let invoices = await prisma.invoice.findMany({
+    const invoices = await prisma.invoice.findMany({
       where: { workspaceId },
       orderBy: { issuedDate: 'desc' },
     });
-
-    // Auto-seed realistic agency invoices if workspace is empty
-    if (invoices.length === 0) {
-      await prisma.invoice.createMany({
-        data: [
-          {
-            workspaceId,
-            number: 'INV-2026-104',
-            client: 'Mohmand Property Dealers',
-            amount: 9250,
-            status: 'PAID',
-            issuedDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-          },
-          {
-            workspaceId,
-            number: 'INV-2026-108',
-            client: 'Apex Heating & Air',
-            amount: 12250,
-            status: 'PENDING',
-            issuedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000),
-          },
-          {
-            workspaceId,
-            number: 'INV-2026-092',
-            client: 'Elevate Creative Co.',
-            amount: 7000,
-            status: 'OVERDUE',
-            issuedDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-          },
-          {
-            workspaceId,
-            number: 'INV-2026-115',
-            client: 'Vanguard Logistics',
-            amount: 16000,
-            status: 'PAID',
-            issuedDate: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          },
-        ],
-      });
-
-      invoices = await prisma.invoice.findMany({
-        where: { workspaceId },
-        orderBy: { issuedDate: 'desc' },
-      });
-    }
 
     const formatted = invoices.map((inv) => ({
       id: inv.number || inv.id,
@@ -117,7 +68,7 @@ export async function POST(req: Request) {
       data: {
         workspaceId,
         companyId: validated.companyId || null,
-        number: `INV-2026-${randomNum}`,
+        number: `INV-${new Date().getFullYear()}-${randomNum}`,
         client: validated.client.trim(),
         amount: validated.amount,
         status: validated.status,

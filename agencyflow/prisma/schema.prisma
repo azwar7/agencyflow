@@ -11,11 +11,14 @@ datasource db {
 }
 
 model Workspace {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  persona       String   @default("AGENCY") // AGENCY, FREELANCER
+  niche         String?
+  targetRevenue String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   users        User[]
   invitations  Invitation[]
@@ -404,4 +407,15 @@ model OutreachEmail {
   @@index([workspaceId, status])
   @@index([workspaceId, createdAt])
 }
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String
+  otpCode   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 

@@ -7,8 +7,8 @@ const createProjectSchema = z.object({
   companyId: z.string().optional().nullable(),
   clientName: z.string().min(1).max(255).default('Client Organization'),
   title: z.string().min(1, 'Project title is required').max(255),
-  progress: z.coerce.number().min(0).max(100).default(15),
-  budget: z.coerce.number().min(0).max(100_000_000).default(24000),
+  progress: z.coerce.number().min(0).max(100).default(0),
+  budget: z.coerce.number().min(0).max(100_000_000).default(10000),
   status: z.enum(['ON TRACK', 'AT RISK', 'COMPLETED', 'ON HOLD']).default('ON TRACK'),
   nextMilestone: z.string().max(255).default('Phase 1: Architecture & UI/UX Design Kickoff'),
   dueDate: z.string().optional().nullable(),
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    let projects = await prisma.project.findMany({
+    const projects = await prisma.project.findMany({
       where: { workspaceId },
       include: {
         company: { select: { name: true } },
@@ -39,77 +39,10 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Auto-seed realistic projects if empty
-    if (projects.length === 0) {
-      await prisma.project.createMany({
-        data: [
-          {
-            workspaceId,
-            clientName: 'Mohmand Property Dealers',
-            title: 'Luxury Property Portal & n8n Ingestion Engine',
-            status: 'ON TRACK',
-            statusType: 'success',
-            progress: 65,
-            budget: 18500,
-            nextMilestone: 'Phase 3: Automated CRM Ingestion & WhatsApp Webhook',
-            dueDate: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000),
-            isSample: true,
-          },
-          {
-            workspaceId,
-            clientName: 'Apex Heating & Air',
-            title: 'Automated CRM Intake & Field Dispatch System',
-            status: 'ON TRACK',
-            statusType: 'success',
-            progress: 35,
-            budget: 24500,
-            nextMilestone: 'Phase 2: Customer Booking Flow & Scheduling API',
-            dueDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
-            isSample: true,
-          },
-          {
-            workspaceId,
-            clientName: 'Elevate Creative Co.',
-            title: 'Enterprise Brand Identity & Design System',
-            status: 'AT RISK',
-            statusType: 'warning',
-            progress: 45,
-            budget: 14000,
-            nextMilestone: 'Phase 2: Vector Asset Library & Typography Review',
-            dueDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
-            isSample: true,
-          },
-          {
-            workspaceId,
-            clientName: 'Vanguard Logistics',
-            title: 'Fleet Tracking & Route Optimization Dashboard',
-            status: 'COMPLETED',
-            statusType: 'success',
-            progress: 100,
-            budget: 32000,
-            nextMilestone: 'Phase 4: Production Deployment & Handover Completed',
-            dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-            isSample: true,
-          },
-        ],
-      });
-
-      projects = await prisma.project.findMany({
-        where: { workspaceId },
-        include: {
-          company: { select: { name: true } },
-          deliverables: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-    }
-
     const formatted = projects.map((p) => {
-      const budgetNum = p.budget || 20000;
-      const invoicedPaid = Math.round(budgetNum * (p.progress >= 50 ? 0.75 : 0.5));
+      const budgetNum = p.budget || 0;
+      const invoicedPaid = Math.round(budgetNum * (p.progress >= 50 ? 0.75 : p.progress > 0 ? 0.5 : 0));
       const remainingBalance = budgetNum - invoicedPaid;
-
-      // Phased milestone active step calculation
       const currentPhase = p.progress < 25 ? 1 : p.progress < 55 ? 2 : p.progress < 85 ? 3 : 4;
 
       return {
@@ -132,8 +65,7 @@ export async function GET(request: Request) {
           status: d.status,
         })),
         team: [
-          { name: session.fullName || 'Alex Rivera', avatar: 'AR', color: '#3b82f6' },
-          { name: 'Sarah Jenkins', avatar: 'SJ', color: '#a855f7' },
+          { name: session.fullName || 'User', avatar: (session.fullName || 'U').substring(0, 2).toUpperCase(), color: '#3b82f6' },
         ],
       };
     });

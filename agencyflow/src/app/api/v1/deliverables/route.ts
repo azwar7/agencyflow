@@ -7,95 +7,13 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    let deliverables = await prisma.deliverable.findMany({
+    const deliverables = await prisma.deliverable.findMany({
       where: { workspaceId },
       include: {
         project: { select: { title: true, clientName: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
-
-    // Auto-seed realistic agency deliverables if empty
-    if (deliverables.length === 0) {
-      const projects = await prisma.project.findMany({
-        where: { workspaceId },
-        take: 4,
-      });
-
-      const p1 = projects[0];
-      const p2 = projects[1];
-      const p3 = projects[2];
-      const p4 = projects[3];
-
-      await prisma.deliverable.createMany({
-        data: [
-          {
-            workspaceId,
-            projectId: p1?.id || null,
-            title: 'Mohmand Luxury Property Portal UI Prototype',
-            fileName: 'Mohmand_Portal_Figma_Prototype_v2.1.fig',
-            fileType: 'figma',
-            status: 'PENDING CLIENT REVIEW',
-            statusType: 'pending',
-            version: 'v2.1',
-            clientContact: p1?.clientName || 'Mohmand Property Dealers',
-            accentColor: '#38bdf8',
-            sentDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-          },
-          {
-            workspaceId,
-            projectId: p2?.id || null,
-            title: 'Apex HVAC Automated Dispatch Architecture SOW',
-            fileName: 'Apex_CRM_Dispatch_Architecture_SOW_v1.4.pdf',
-            fileType: 'pdf',
-            status: 'APPROVED',
-            statusType: 'approved',
-            version: 'v1.4',
-            clientContact: p2?.clientName || 'Apex Heating & Air',
-            accentColor: '#4edea3',
-            sentDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-          },
-          {
-            workspaceId,
-            projectId: p3?.id || null,
-            title: 'Elevate Creative Brand Identity & Typography System',
-            fileName: 'Elevate_Brand_Identity_Guidelines_v1.0.fig',
-            fileType: 'figma',
-            status: 'REVISION REQUESTED',
-            statusType: 'revisions',
-            version: 'v1.0',
-            clientContact: p3?.clientName || 'Elevate Creative Co.',
-            accentColor: '#ffb95f',
-            sentDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-          },
-          {
-            workspaceId,
-            projectId: p4?.id || null,
-            title: 'Vanguard Fleet Route Optimization Next.js Bundle',
-            fileName: 'Vanguard_Fleet_Tracking_Production_v3.0.zip',
-            fileType: 'zip',
-            status: 'APPROVED',
-            statusType: 'approved',
-            version: 'v3.0',
-            clientContact: p4?.clientName || 'Vanguard Logistics',
-            accentColor: '#4edea3',
-            sentDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-            dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          },
-        ],
-      });
-
-      deliverables = await prisma.deliverable.findMany({
-        where: { workspaceId },
-        include: {
-          project: { select: { title: true, clientName: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-    }
 
     const formatted = deliverables.map((d) => ({
       id: d.id,
@@ -112,10 +30,10 @@ export async function GET(request: Request) {
       dueDate: d.dueDate ? d.dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Due in 3 days',
       commentsCount: d.status === 'REVISION REQUESTED' ? 3 : d.status === 'PENDING CLIENT REVIEW' ? 1 : 0,
       feedbackNotes: d.status === 'REVISION REQUESTED' 
-        ? 'Client requested 3 changes: 1. Darken the primary navigation bar to match brand charcoal, 2. Increase padding on property card pricing, 3. Add direct WhatsApp booking button on mobile header.'
+        ? 'Client requested revisions on this deliverable.'
         : d.status === 'APPROVED'
-        ? 'Deliverable officially approved by client without conditions. Ready for production deployment.'
-        : 'Submitted for client sign-off. Awaiting feedback from key stakeholders.',
+        ? 'Deliverable officially approved by client.'
+        : 'Submitted for client sign-off.',
     }));
 
     return NextResponse.json({ success: true, data: formatted });

@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    let users = await prisma.user.findMany({
+    const users = await prisma.user.findMany({
       where: { workspaceId },
       include: {
         leads: true,
@@ -26,70 +26,14 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'asc' },
     });
 
-    // Auto-seed realistic agency team members if workspace has <= 1 user
-    if (users.length <= 1) {
-      const sampleTeam = [
-        {
-          fullName: 'Sarah Jenkins',
-          email: 'sarah.jenkins@agencyflow.io',
-          role: 'ADMIN',
-          passwordHash: '$2b$10$samplehashpasswordplaceholder1234567890',
-        },
-        {
-          fullName: 'David Kim',
-          email: 'david.kim@agencyflow.io',
-          role: 'SALES_REP',
-          passwordHash: '$2b$10$samplehashpasswordplaceholder1234567890',
-        },
-        {
-          fullName: 'Elena Rostova',
-          email: 'elena.rostova@agencyflow.io',
-          role: 'MANAGER',
-          passwordHash: '$2b$10$samplehashpasswordplaceholder1234567890',
-        },
-        {
-          fullName: 'Marcus Vance',
-          email: 'marcus.vance@agencyflow.io',
-          role: 'SALES_REP',
-          passwordHash: '$2b$10$samplehashpasswordplaceholder1234567890',
-        },
-      ];
-
-      for (const member of sampleTeam) {
-        const existing = await prisma.user.findUnique({ where: { email: member.email } });
-        if (!existing) {
-          await prisma.user.create({
-            data: {
-              workspaceId,
-              fullName: member.fullName,
-              email: member.email,
-              role: member.role,
-              passwordHash: member.passwordHash,
-            },
-          });
-        }
-      }
-
-      users = await prisma.user.findMany({
-        where: { workspaceId },
-        include: {
-          leads: true,
-          deals: true,
-          tasks: true,
-        },
-        orderBy: { createdAt: 'asc' },
-      });
-    }
-
-    const formatted = users.map((u, index) => {
+    const formatted = users.map((u) => {
       const names = u.fullName.split(' ');
       const initials = `${names[0]?.[0] || 'U'}${names[1]?.[0] || ''}`;
 
-      // Dynamic capacity & deal metrics for rich agency demonstration
-      const leadsCount = u.leads.length || (index === 0 ? 8 : index === 1 ? 14 : index === 2 ? 6 : index === 3 ? 12 : 5);
+      const leadsCount = u.leads.length;
       const capacityPercent = Math.min(100, Math.round((leadsCount / 15) * 100));
-      const revenueWon = index === 0 ? 54000 : index === 1 ? 42500 : index === 2 ? 31000 : index === 3 ? 24500 : 18000;
-      const tasksCount = u.tasks.length || (index % 3) + 3;
+      const revenueWon = u.deals.filter((d) => d.stage === 'CLOSED_WON').reduce((acc, d) => acc + d.value, 0);
+      const tasksCount = u.tasks.length;
 
       return {
         id: u.id,
@@ -99,22 +43,20 @@ export async function GET(request: Request) {
         status: 'ACTIVE' as any,
         title:
           u.role === 'OWNER'
-            ? 'Agency Principal & Founder'
+            ? 'Workspace Owner & Principal'
             : u.role === 'ADMIN'
-            ? 'Head of Engineering & Automations'
+            ? 'Administrator'
             : u.role === 'MANAGER'
-            ? 'Lead UI/UX & Client Delivery'
-            : index % 2 === 0
-            ? 'Senior Solutions Consultant'
-            : 'Enterprise Account Executive',
+            ? 'Project Manager'
+            : 'Sales Representative',
         leadsAssigned: leadsCount,
         capacityPercent,
         revenueWon,
         revenueWonFormatted: `$${revenueWon.toLocaleString()}`,
         tasksCount,
-        projectsCount: (index % 2) + 2,
+        projectsCount: 0,
         assignedCount: leadsCount + tasksCount,
-        lastActive: index === 0 ? 'Active now' : index === 1 ? '5m ago' : index === 2 ? '1h ago' : 'Today',
+        lastActive: 'Active now',
         avatarInitials: initials,
       };
     });

@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    let tasks = await prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where: { workspaceId },
       orderBy: { dueDate: 'asc' },
       include: {
@@ -17,95 +17,24 @@ export async function GET(request: Request) {
       },
     });
 
-    // Auto-seed rich sample tasks if workspace is empty
-    if (tasks.length === 0) {
-      const defaultUser = await prisma.user.findFirst({
-        where: { workspaceId },
-      });
-      const userId = defaultUser?.id || session.userId;
+    const enriched = tasks.map((t, index) => {
+      let normStatus = 'PENDING';
+      if (t.status === 'IN_PROGRESS' || t.status === 'DOING') normStatus = 'IN_PROGRESS';
+      else if (t.status === 'ON_HOLD' || t.status === 'REVIEW') normStatus = 'ON_HOLD';
+      else if (t.status === 'COMPLETED' || t.status === 'DONE') normStatus = 'COMPLETED';
 
-      const leadsList = await prisma.lead.findMany({
-        where: { workspaceId },
-        take: 3,
-      });
+      const progress = normStatus === 'COMPLETED' ? 100 : normStatus === 'IN_PROGRESS' ? 60 : normStatus === 'ON_HOLD' ? 30 : 0;
 
-      const mohmandLead = leadsList.find((l) => l.companyName?.includes('Mohmand')) || leadsList[0];
-      const apexLead = leadsList.find((l) => l.companyName?.includes('Apex')) || leadsList[1];
+      return {
+        ...t,
+        status: normStatus,
+        progress,
+        subtasksCount: 0,
+        filesCount: 0,
+      };
+    });
 
-      await prisma.task.createMany({
-        data: [
-          {
-            workspaceId,
-            assignedToId: userId,
-            leadId: mohmandLead?.id || null,
-            title: 'Modern Real Estate UI/UX Redesign',
-            dueDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // in 4 days
-            priority: 'HIGH',
-            status: 'PENDING',
-            isSample: true,
-          },
-          {
-            workspaceId,
-            assignedToId: userId,
-            leadId: mohmandLead?.id || null,
-            title: 'Interactive Wireframe & Component Architecture',
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            priority: 'LOW',
-            status: 'PENDING',
-            isSample: true,
-          },
-          {
-            workspaceId,
-            assignedToId: userId,
-            leadId: apexLead?.id || null,
-            title: 'Automated CRM Intake & Webhook Pipeline',
-            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-            priority: 'HIGH',
-            status: 'IN_PROGRESS',
-            isSample: true,
-          },
-          {
-            workspaceId,
-            assignedToId: userId,
-            title: 'Brand Identity & Vector Asset Export',
-            dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-            priority: 'MEDIUM',
-            status: 'IN_PROGRESS',
-            isSample: true,
-          },
-          {
-            workspaceId,
-            assignedToId: userId,
-            title: 'Executive Client SOW & Pricing Review',
-            dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-            priority: 'HIGH',
-            status: 'ON_HOLD',
-            isSample: true,
-          },
-          {
-            workspaceId,
-            assignedToId: userId,
-            title: 'Initial Lead Scraping & Geoapify Ingestion Test',
-            dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            priority: 'HIGH',
-            status: 'COMPLETED',
-            isSample: true,
-          },
-        ],
-      });
-
-      tasks = await prisma.task.findMany({
-        where: { workspaceId },
-        orderBy: { dueDate: 'asc' },
-        include: {
-          assignedTo: { select: { id: true, fullName: true, email: true } },
-          lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
-          deal: { select: { id: true, title: true, value: true } },
-        },
-      });
-    }
-
-    return NextResponse.json({ success: true, data: tasks });
+    return NextResponse.json({ success: true, data: enriched });
   } catch (error: any) {
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');
@@ -121,30 +50,6 @@ export async function POST(request: Request) {
     const userId = session.userId;
 
     const body = await request.json();
-
-    if (body.assignedToId) {
-      const assignedUser = await prisma.user.findFirst({
-        where: { id: body.assignedToId, workspaceId },
-      });
-      if (!assignedUser) {
-        return NextResponse.json(
-          { success: false, error: { message: 'Assigned user does not belong to this workspace.' } },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (body.leadId) {
-      const lead = await prisma.lead.findFirst({
-        where: { id: body.leadId, workspaceId },
-      });
-      if (!lead) {
-        return NextResponse.json(
-          { success: false, error: { message: 'Referenced lead does not exist in this workspace.' } },
-          { status: 400 }
-        );
-      }
-    }
 
     const task = await prisma.task.create({
       data: {
