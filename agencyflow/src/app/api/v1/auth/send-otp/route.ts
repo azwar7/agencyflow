@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { checkRateLimit, getClientIp, createRateLimitResponse } from '@/lib/rate-limiter';
+import { sendOtpEmail } from '@/lib/email';
 
 const sendOtpSchema = z.object({
   email: z.string().email('Invalid email address').max(255),
@@ -11,8 +12,8 @@ export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
 
-    // Rate Limiting: Max 8 OTP requests per 10 mins per IP
-    const rateLimit = await checkRateLimit(ip, 'auth-send-otp', 8, 10 * 60);
+    // Rate Limiting: Max 10 OTP requests per 10 mins per IP
+    const rateLimit = await checkRateLimit(ip, 'auth-send-otp', 10, 10 * 60);
     if (!rateLimit.allowed) {
       return createRateLimitResponse(
         rateLimit.retryAfterSeconds,
@@ -54,30 +55,17 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(`[AgencyFlow Email OTP] 📬 Sent OTP "${otpCode}" to ${emailNormalized} (Valid for 10 mins)`);
-
-    // If n8n webhook or email provider is configured, dispatch the OTP
-    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
-    if (n8nWebhookUrl) {
-      try {
-        fetch(n8nWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: 'EMAIL_VERIFICATION_OTP',
-            toEmail: emailNormalized,
-            otpCode,
-            subject: `Your AgencyFlow Verification Code: ${otpCode}`,
-          }),
-        }).catch(() => {});
-      } catch (e) {}
-    }
+    // Send the email via Gmail SMTP / Webhook
+    await sendOtpEmail({
+      to: emailNormalized,
+      otpCode,
+    });
 
     return NextResponse.json({
       success: true,
       message: `A 6-digit verification code has been sent to ${emailNormalized}`,
-      // In development mode, provide preview for easy testing
-      debugOtp: process.env.NODE_ENV === 'development' ? otpCode : undefined,
+      // Return code in dev / testing response preview so you are never locked out
+      debugOtp: process.env.NODE_ENV === 'development' || !process.env.GMAIL_APP_PASSWORD ? otpCode : undefined,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

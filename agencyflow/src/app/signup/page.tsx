@@ -424,38 +424,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Industry & Target Revenue */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div>
-                <label style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Primary Niche</label>
-                <select
-                  value={niche}
-                  onChange={(e) => setNiche(e.target.value)}
-                  style={{ width: '100%', marginTop: '0.35rem', padding: '0.7rem 0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem', color: '#fff', fontSize: '0.8rem', outline: 'none' }}
-                >
-                  <option value="Web & AI Development">Web & AI Development</option>
-                  <option value="Real Estate Marketing">Real Estate & Construction</option>
-                  <option value="B2B SaaS & Growth">B2B SaaS & Tech</option>
-                  <option value="UI/UX & Branding">UI/UX & Branding</option>
-                  <option value="Digital Marketing & Ads">Digital Marketing & Ads</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Monthly Target</label>
-                <select
-                  value={targetRevenue}
-                  onChange={(e) => setTargetRevenue(e.target.value)}
-                  style={{ width: '100%', marginTop: '0.35rem', padding: '0.7rem 0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.5rem', color: '#fff', fontSize: '0.8rem', outline: 'none' }}
-                >
-                  <option value="< $5k/mo">&lt; $5,000 / mo</option>
-                  <option value="$5k - $20k/mo">$5,000 – $20,000 / mo</option>
-                  <option value="$20k - $50k/mo">$20,000 – $50,000 / mo</option>
-                  <option value="$50k+/mo">$50,000+ / mo</option>
-                </select>
-              </div>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
