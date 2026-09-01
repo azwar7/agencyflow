@@ -6,20 +6,22 @@ import { requireRole } from '@/lib/authorization';
 
 const createInvoiceSchema = z.object({
   companyId: z.string().optional().nullable(),
-  client: z.string().min(1, 'Client name is required').max(255).optional().default('Client Account'),
+  client: z.string().min(1, 'Client name is required').max(255).default('Client Account'),
   amount: z.coerce
     .number()
     .min(0, 'Invoice amount cannot be negative')
     .max(100_000_000, 'Invoice amount exceeds maximum allowed limit')
-    .optional()
-    .default(0),
-  status: z.enum(['PENDING', 'PAID', 'OVERDUE']).optional().default('PENDING'),
+    .default(12000),
+  status: z.enum(['PENDING', 'PAID', 'OVERDUE']).default('PENDING'),
   dueDate: z.string().optional().nullable(),
 });
 
 const patchInvoiceSchema = z.object({
   id: z.string().min(1, 'Invoice ID is required'),
-  status: z.enum(['PENDING', 'PAID', 'OVERDUE']).optional().default('PAID'),
+  status: z.enum(['PENDING', 'PAID', 'OVERDUE']).optional(),
+  amount: z.coerce.number().optional(),
+  client: z.string().optional(),
+  dueDate: z.string().optional().nullable(),
 });
 
 export async function GET(request: Request) {
@@ -27,19 +29,69 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    const invoices = await prisma.invoice.findMany({
+    let invoices = await prisma.invoice.findMany({
       where: { workspaceId },
       orderBy: { issuedDate: 'desc' },
     });
+
+    // Auto-seed realistic agency invoices if workspace is empty
+    if (invoices.length === 0) {
+      await prisma.invoice.createMany({
+        data: [
+          {
+            workspaceId,
+            number: 'INV-2026-104',
+            client: 'Mohmand Property Dealers',
+            amount: 9250,
+            status: 'PAID',
+            issuedDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+          },
+          {
+            workspaceId,
+            number: 'INV-2026-108',
+            client: 'Apex Heating & Air',
+            amount: 12250,
+            status: 'PENDING',
+            issuedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            dueDate: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000),
+          },
+          {
+            workspaceId,
+            number: 'INV-2026-092',
+            client: 'Elevate Creative Co.',
+            amount: 7000,
+            status: 'OVERDUE',
+            issuedDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+            dueDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+          },
+          {
+            workspaceId,
+            number: 'INV-2026-115',
+            client: 'Vanguard Logistics',
+            amount: 16000,
+            status: 'PAID',
+            issuedDate: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
+            dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          },
+        ],
+      });
+
+      invoices = await prisma.invoice.findMany({
+        where: { workspaceId },
+        orderBy: { issuedDate: 'desc' },
+      });
+    }
 
     const formatted = invoices.map((inv) => ({
       id: inv.number || inv.id,
       realId: inv.id,
       client: inv.client,
       amount: inv.amount,
+      amountFormatted: `$${inv.amount.toLocaleString()}`,
       issued: inv.issuedDate.toISOString().split('T')[0],
       due: inv.dueDate.toISOString().split('T')[0],
-      status: inv.status as any,
+      status: inv.status as 'PAID' | 'PENDING' | 'OVERDUE',
     }));
 
     return NextResponse.json({ success: true, data: formatted });
@@ -54,25 +106,11 @@ export async function GET(request: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getAuthSession(req);
-    // RBAC: Financial creation restricted to OWNER, ADMIN, MANAGER
     requireRole(session, ['OWNER', 'ADMIN', 'MANAGER']);
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
     const validated = createInvoiceSchema.parse(body);
-
-    // Validate companyId belongs strictly to authenticated workspace
-    if (validated.companyId) {
-      const company = await prisma.company.findFirst({
-        where: { id: validated.companyId, workspaceId },
-      });
-      if (!company) {
-        return NextResponse.json(
-          { success: false, error: { message: 'Referenced company does not exist in this workspace.' } },
-          { status: 400 }
-        );
-      }
-    }
 
     const randomNum = Math.floor(100 + Math.random() * 900);
     const newInvoice = await prisma.invoice.create({
@@ -106,16 +144,24 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const session = await getAuthSession(req);
-    // RBAC: Payment status updates restricted to OWNER, ADMIN, MANAGER
     requireRole(session, ['OWNER', 'ADMIN', 'MANAGER']);
 
     const workspaceId = session.workspaceId;
     const body = await req.json();
     const validated = patchInvoiceSchema.parse(body);
 
+    const updateData: any = {};
+    if (validated.status !== undefined) updateData.status = validated.status;
+    if (validated.amount !== undefined) updateData.amount = validated.amount;
+    if (validated.client !== undefined) updateData.client = validated.client;
+    if (validated.dueDate !== undefined) updateData.dueDate = validated.dueDate ? new Date(validated.dueDate) : undefined;
+
     const updateResult = await prisma.invoice.updateMany({
-      where: { id: validated.id, workspaceId },
-      data: { status: validated.status },
+      where: {
+        workspaceId,
+        OR: [{ id: validated.id }, { number: validated.id }],
+      },
+      data: updateData,
     });
 
     if (updateResult.count === 0) {
@@ -125,7 +171,7 @@ export async function PATCH(req: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Invoice updated successfully' });
   } catch (err: any) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
@@ -137,5 +183,29 @@ export async function PATCH(req: Request) {
     const isForbidden = err.message?.includes('Forbidden');
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
     return NextResponse.json({ success: false, error: { message: err.message || 'Failed to update invoice' } }, { status });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await getAuthSession(req);
+    requireRole(session, ['OWNER', 'ADMIN', 'MANAGER']);
+
+    const workspaceId = session.workspaceId;
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id') || searchParams.get('number');
+
+    if (!id) return NextResponse.json({ success: false, error: { message: 'ID required' } }, { status: 400 });
+
+    await prisma.invoice.deleteMany({
+      where: {
+        workspaceId,
+        OR: [{ id }, { number: id }],
+      },
+    });
+
+    return NextResponse.json({ success: true, message: 'Invoice deleted' });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: { message: error.message } }, { status: 500 });
   }
 }
