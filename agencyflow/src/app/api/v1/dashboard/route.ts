@@ -7,11 +7,10 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    // Parallelize independent database queries strictly scoped to authenticated workspace with minimal field selection
-    const [workspace, deals, leads, recentActivities, urgentTasks] = await Promise.all([
+    const [workspace, deals, leads, projects, invoices, urgentTasks, recentActivities] = await Promise.all([
       prisma.workspace.findUnique({
         where: { id: workspaceId },
-        select: { name: true },
+        select: { name: true, persona: true },
       }),
       prisma.deal.findMany({
         where: { workspaceId },
@@ -41,6 +40,43 @@ export async function GET(request: Request) {
           assignedTo: { select: { fullName: true } },
         },
       }),
+      prisma.project.findMany({
+        where: { workspaceId },
+        select: {
+          id: true,
+          title: true,
+          clientName: true,
+          progress: true,
+          status: true,
+          dueDate: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      prisma.invoice.findMany({
+        where: { workspaceId },
+        select: {
+          id: true,
+          number: true,
+          client: true,
+          amount: true,
+          status: true,
+          dueDate: true,
+        },
+      }),
+      prisma.task.findMany({
+        where: { workspaceId, status: { not: 'COMPLETED' } },
+        take: 6,
+        orderBy: { dueDate: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          dueDate: true,
+          priority: true,
+          status: true,
+          assignedTo: { select: { fullName: true } },
+        },
+      }),
       prisma.activity.findMany({
         where: { workspaceId },
         take: 6,
@@ -50,29 +86,7 @@ export async function GET(request: Request) {
           type: true,
           content: true,
           createdAt: true,
-          leadId: true,
-          dealId: true,
-          user: { select: { fullName: true, role: true } },
-          lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
-          deal: { select: { id: true, title: true } },
-        },
-      }),
-      prisma.task.findMany({
-        where: { workspaceId },
-        take: 6,
-        orderBy: { dueDate: 'asc' },
-        select: {
-          id: true,
-          title: true,
-          dueDate: true,
-          priority: true,
-          status: true,
-          createdAt: true,
-          leadId: true,
-          dealId: true,
-          assignedTo: { select: { fullName: true } },
-          lead: { select: { id: true, firstName: true, lastName: true } },
-          deal: { select: { id: true, title: true } },
+          user: { select: { fullName: true } },
         },
       }),
     ]);
@@ -81,64 +95,61 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: 'No workspace found.' }, { status: 404 });
     }
 
+    // Calculations based strictly on real database values
     const activeDeals = deals.filter((d) => d.stage !== 'CLOSED_WON' && d.stage !== 'CLOSED_LOST');
     const closedWonDeals = deals.filter((d) => d.stage === 'CLOSED_WON');
     const closedLostDeals = deals.filter((d) => d.stage === 'CLOSED_LOST');
 
     const totalPipelineValue = activeDeals.reduce((sum, d) => sum + d.value, 0);
-    const wonRevenue = closedWonDeals.reduce((sum, d) => sum + d.value, 0);
     const totalClosed = closedWonDeals.length + closedLostDeals.length;
     const winRate = totalClosed > 0 ? Math.round((closedWonDeals.length / totalClosed) * 100) : 0;
-    const avgDealValue = deals.length > 0 ? Math.round(deals.reduce((sum, d) => sum + d.value, 0) / deals.length) : 0;
 
-    // Top Clients calculation
-    const topClientsMap: Record<string, { name: string; totalValue: number; projectsCount: number }> = {};
+    // Real invoice metrics
+    const unpaidInvoices = invoices.filter((inv) => inv.status === 'PENDING' || inv.status === 'OVERDUE');
+    const outstandingInvoicesAmount = unpaidInvoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+    const awaitingInvoicesCount = unpaidInvoices.length;
 
-    deals.forEach((deal) => {
-      const companyName = deal.company?.name || 'Account';
-      if (!topClientsMap[companyName]) {
-        topClientsMap[companyName] = { name: companyName, totalValue: 0, projectsCount: 0 };
-      }
-      topClientsMap[companyName].totalValue += deal.value;
-      topClientsMap[companyName].projectsCount += 1;
-    });
+    const paidInvoices = invoices.filter((inv) => inv.status === 'PAID');
+    const monthlyRevenue = paidInvoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
 
-    const topClients = Object.values(topClientsMap)
-      .sort((a, b) => b.totalValue - a.totalValue)
-      .slice(0, 4);
+    // Real active projects metrics
+    const activeProjects = projects.filter((p) => p.status !== 'COMPLETED');
+    const oneWeekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const projectsDueThisWeek = projects.filter((p) => p.dueDate && new Date(p.dueDate) <= oneWeekFromNow && p.status !== 'COMPLETED').length;
 
-    // Pipeline funnel breakdown
-    const stageCounts = {
-      newLeads: leads.filter((l) => l.status === 'NEW' || l.status === 'UNQUALIFIED').length,
-      qualified: leads.filter((l) => l.status === 'QUALIFIED' || l.status === 'CONTACTED').length,
-      proposal: deals.filter((d) => d.stage === 'PROPOSAL' || d.stage === 'DISCOVERY').length,
-      negotiation: deals.filter((d) => d.stage === 'NEGOTIATION').length,
-      closedWon: closedWonDeals.length,
-    };
+    // Real leads categorized by status
+    const newLeads = leads.filter((l) => l.status === 'NEW' || l.status === 'UNQUALIFIED');
+    const qualifiedLeads = leads.filter((l) => l.status === 'QUALIFIED' || l.status === 'CONTACTED');
+    const proposalDeals = deals.filter((d) => d.stage === 'PROPOSAL' || d.stage === 'DISCOVERY');
+    const negotiationDeals = deals.filter((d) => d.stage === 'NEGOTIATION');
 
     return NextResponse.json({
       success: true,
       data: {
         workspaceName: workspace.name,
+        persona: workspace.persona,
         metrics: {
           totalPipelineValue,
           activeDealsCount: activeDeals.length,
-          wonRevenue,
+          activeProjectsCount: activeProjects.length,
+          projectsDueThisWeek,
+          outstandingInvoicesAmount,
+          awaitingInvoicesCount,
+          monthlyRevenue,
           winRate,
-          avgDealValue,
           totalLeads: leads.length,
-          qualifiedLeadsCount: leads.filter((l) => l.status === 'QUALIFIED').length,
           closedWonCount: closedWonDeals.length,
-          mrr: wonRevenue,
-          projectProfitability: wonRevenue > 0 ? 64.2 : 0,
-          clientRetention: deals.length > 0 ? 92.5 : 0,
         },
-        stageCounts,
-        topClients,
-        leads,
-        deals,
-        recentActivities,
+        pipeline: {
+          newLeads,
+          qualifiedLeads,
+          proposalDeals,
+          negotiationDeals,
+          closedWonCount: closedWonDeals.length,
+        },
+        projects,
         urgentTasks,
+        recentActivities,
       },
     });
   } catch (error: any) {
