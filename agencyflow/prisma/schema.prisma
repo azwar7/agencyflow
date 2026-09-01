@@ -306,16 +306,24 @@ model Proposal {
   id            String   @id @default(uuid())
   workspaceId   String
   companyId     String?
+  leadId        String?
   title         String
   client        String
   value         Float    @default(0.0)
   status        String   @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
+  summary       String?
+  scopeOfWork   Json?    // Array of { phase: string, duration: string, description: string, deliverables: string[] }
+  deliverables  Json?    // Array of strings
+  pricingItems  Json?    // Array of { item: string, description: string, price: number }
+  paymentTerms  String?
   preparedBy    String?
   acceptedBy    String?
   acceptedTitle String?
   date          DateTime @default(now())
   isSample      Boolean  @default(false)
+  metadata      Json?
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   company   Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -323,6 +331,7 @@ model Proposal {
   @@index([workspaceId])
   @@index([workspaceId, status])
   @@index([companyId])
+  @@index([leadId])
 }
 
 model FileRecord {

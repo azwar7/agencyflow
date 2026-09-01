@@ -68,18 +68,70 @@ export class MockAiProvider extends BaseAiProvider {
         confidence: 90,
       };
     } else if (
-      options.systemPrompt?.includes('Cold Outreach Copywriter') ||
-      options.systemPrompt?.includes('personalized outreach email')
+      options.systemPrompt?.includes('Proposal Writer') ||
+      options.systemPrompt?.includes('Proposal')
     ) {
       mockPayload = {
-        subject: 'Quick question regarding lead automation for your team',
-        body: 'Hi Sarah,\n\nSaw your team is expanding operations. Many growing agencies lose up to 35% of inbound inquiries due to manual booking and delayed follow-ups.\n\nWe built an automated CRM intake pipeline that captures and qualifies inbound prospects in under 60 seconds.\n\nAre you open to a quick 3-minute video showing how this would look for your workflow?\n\nBest,\nAlex',
-        callToAction: 'Are you open to a quick 3-minute video showing how this would look for your workflow?',
-        recommendedService: 'Automated CRM Ingestion & Intake Flow',
-        personalizationPoints: [
-          'Expanding business operations footprint',
-          'Opportunity to automate 24/7 inbound inquiry capture',
+        title: 'Digital Transformation & Automated CRM Integration Proposal',
+        clientName: 'Valued Client Organization',
+        summary: 'Strategic proposal to architect and deploy a modern web application and automated lead ingestion pipeline to double inquiry conversion and eliminate manual CRM entry.',
+        scopeOfWork: [
+          {
+            phase: 'Phase 1: Architecture, Wireframing & UI/UX Design',
+            duration: 'Weeks 1–2',
+            description: 'Comprehensive workflow mapping, interactive Figma prototypes, component library design, and system architecture blueprint.',
+            deliverables: ['Interactive Figma Design System', 'Information Architecture Specification'],
+          },
+          {
+            phase: 'Phase 2: Core Full-Stack Application Engineering',
+            duration: 'Weeks 3–4',
+            description: 'Next.js responsive web frontend, secure REST API architecture, database schema, and interactive client portal modules.',
+            deliverables: ['Production Next.js Web App', 'PostgreSQL Database Integration'],
+          },
+          {
+            phase: 'Phase 3: Automated CRM Ingestion & n8n Pipelines',
+            duration: 'Week 5',
+            description: 'Multi-channel webhook ingestion, automated lead qualification triggers, and instant CRM synchronization.',
+            deliverables: ['n8n Webhook Ingestion Pipeline', 'AI Qualification Trigger System'],
+          },
+          {
+            phase: 'Phase 4: QA Testing, Production Deployment & Staff Training',
+            duration: 'Week 6',
+            description: 'Comprehensive end-to-end testing, SSL/cloud deployment, security audit, and 2-hour staff onboarding session.',
+            deliverables: ['Production Live Deployment', 'Admin Onboarding Video & 30-Day Support'],
+          },
         ],
+        keyDeliverables: [
+          'Full-Stack Next.js Web Application',
+          'Automated n8n Ingestion Workflows',
+          'PostgreSQL CRM Database Integration',
+          '30-Day Post-Launch Technical Support',
+        ],
+        pricingItems: [
+          {
+            item: 'UI/UX Design & Architecture Blueprint',
+            description: 'Complete user flow mapping, wireframes, and interactive design system',
+            price: 6500,
+          },
+          {
+            item: 'Full-Stack Application Development',
+            description: 'Next.js frontend, database models, and secure API backend',
+            price: 8500,
+          },
+          {
+            item: 'Automated CRM & n8n Workflow Pipelines',
+            description: 'Automated lead ingestion, webhook triggers, and multi-channel routing',
+            price: 5000,
+          },
+          {
+            item: 'Deployment, Security Audit & Team Training',
+            description: 'Production cloud setup, domain DNS, and 2-hour admin walkthrough',
+            price: 2500,
+          },
+        ],
+        totalValue: 22500,
+        paymentTerms: '50% upfront deposit on contract signing ($11,250), 25% upon Phase 2 milestone review ($5,625), and 25% upon final live deployment ($5,625).',
+        estimatedWeeks: 6,
       };
     } else if (options.userPrompt.includes('lead') || options.systemPrompt?.includes('lead')) {
       mockPayload = {
