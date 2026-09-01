@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AppShell } from '@/components/AppShell';
+import { UIStateCard } from '@/components/UIStateCard';
+import { EmptyState } from '@/components/EmptyState';
 import {
   FileText,
   Clock,
@@ -26,69 +28,68 @@ import {
   Sparkles,
   Inbox,
   RefreshCw,
+  ExternalLink,
+  Copy,
+  Check,
+  Palette,
+  FileCode,
+  Film,
+  Layers,
+  Trash2,
 } from 'lucide-react';
 
 interface DeliverableItem {
   id: string;
+  title: string;
   fileName: string;
   fileType: 'pdf' | 'zip' | 'figma' | 'video';
   projectName: string;
+  clientContact: string;
   version: string;
   status: 'PENDING CLIENT REVIEW' | 'APPROVED' | 'REVISION REQUESTED';
   statusType: 'pending' | 'approved' | 'revisions';
   accentColor: string;
   sentDate: string;
   dueDate: string;
-  isOverdue?: boolean;
-  hoursAgo?: number;
-  clientContact?: string;
-  clientAvatar?: string;
-  approvedBy?: string;
-  approvedDate?: string;
-  approvedAvatar?: string;
-  commenterName?: string;
-  commenterAvatar?: string;
-  commentTime?: string;
-  commentText?: string;
-  commentsCount: number;
-  threadCount?: number;
-  isNew?: boolean;
+  commentsCount?: number;
+  feedbackNotes?: string;
 }
 
 export default function DeliverablesPage() {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'revisions'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'client' | 'status'>('newest');
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [hoveredBadgeId, setHoveredBadgeId] = useState<string | null>(null);
-  const [mobileMenuOpenId, setMobileMenuOpenId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Initial loading simulation for skeleton demo
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Keyboard shortcut (⌘K / Ctrl+K) handler
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // View & Filter States
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REVISIONS'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Drag & Drop State
+  const [draggingDeliverableId, setDraggingDeliverableId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
+  // Selected Deliverable Review Modal State
+  const [selectedDeliverable, setSelectedDeliverable] = useState<DeliverableItem | null>(null);
+  const [aiSummaryChecklist, setAiSummaryChecklist] = useState<string[] | null>(null);
+  const [summarizing, setSummarizing] = useState(false);
+
+  // Create Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newFileType, setNewFileType] = useState<'figma' | 'pdf' | 'zip' | 'video'>('figma');
+  const [newProjectName, setNewProjectName] = useState('Mohmand Luxury Property Portal');
+  const [newClient, setNewClient] = useState('Mohmand Property Dealers');
+  const [newVersion, setNewVersion] = useState('v1.0');
+  const [newDueDate, setNewDueDate] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  // Toast / Feedback Alert
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const fetchDeliverables = async () => {
-    setIsLoading(true);
+    setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/v1/deliverables');
       const json = await res.json();
@@ -97,1157 +98,827 @@ export default function DeliverablesPage() {
       } else {
         setDeliverables([]);
       }
-    } catch {
-      setDeliverables([]);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load deliverables');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchDeliverables();
-    const handleRefresh = () => fetchDeliverables();
-    window.addEventListener('agencyflow-refresh', handleRefresh);
-    return () => window.removeEventListener('agencyflow-refresh', handleRefresh);
   }, []);
 
-  // Dynamic counts for Filter Tabs
-  const counts = {
-    all: deliverables.length,
-    pending: deliverables.filter((d) => d.statusType === 'pending').length,
-    approved: deliverables.filter((d) => d.statusType === 'approved').length,
-    revisions: deliverables.filter((d) => d.statusType === 'revisions').length,
+  // Update Deliverable Status
+  const handleUpdateStatus = async (id: string, newStatus: DeliverableItem['status']) => {
+    const prev = [...deliverables];
+    setDeliverables((current) =>
+      current.map((d) => (d.id === id ? { ...d, status: newStatus } : d))
+    );
+    if (selectedDeliverable && selectedDeliverable.id === id) {
+      setSelectedDeliverable({ ...selectedDeliverable, status: newStatus });
+    }
+
+    try {
+      await fetch('/api/v1/deliverables', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      setToastMsg(`Status updated to ${newStatus}`);
+      setTimeout(() => setToastMsg(null), 3000);
+    } catch (err) {
+      setDeliverables(prev);
+    }
   };
 
-  // Filter & Sort Logic
-  const filteredDeliverables = deliverables
-    .filter((item) => {
-      if (filter !== 'all' && item.statusType !== filter) return false;
-      if (
-        searchQuery &&
-        !item.fileName.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !item.projectName.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return false;
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingDeliverableId(id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingDeliverableId(null);
+    setDragOverColumn(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, colStatus: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverColumn !== colStatus) setDragOverColumn(colStatus);
+  };
+
+  const handleDragLeave = (e: React.DragEvent, colStatus: string) => {
+    if (dragOverColumn === colStatus) setDragOverColumn(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetStatus: DeliverableItem['status']) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain') || draggingDeliverableId;
+    setDraggingDeliverableId(null);
+    setDragOverColumn(null);
+
+    if (id) {
+      const item = deliverables.find((d) => d.id === id);
+      if (item && item.status !== targetStatus) {
+        handleUpdateStatus(id, targetStatus);
       }
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'newest') return b.id.localeCompare(a.id);
-      if (sortBy === 'oldest') return a.id.localeCompare(b.id);
-      if (sortBy === 'client') return a.projectName.localeCompare(b.projectName);
-      if (sortBy === 'status') return a.status.localeCompare(b.status);
-      return 0;
-    });
-
-  // Urgency styling calculation helper
-  const getUrgencyDetails = (hoursAgo?: number) => {
-    if (!hoursAgo) return { text: '', color: 'var(--on-surface-variant)', icon: 'schedule' };
-    if (hoursAgo < 24) {
-      return {
-        text: `Waiting for client feedback (${hoursAgo}h ago)`,
-        color: 'var(--on-surface-variant)',
-        icon: 'schedule',
-      };
     }
-    if (hoursAgo <= 72) {
-      return {
-        text: `Waiting for client feedback (${Math.round(hoursAgo / 24)}d ago)`,
-        color: '#ffb95f',
-        icon: 'pending',
-      };
-    }
-    return {
-      text: `Stale: Waiting for client feedback (${Math.round(hoursAgo / 24)} days ago)`,
-      color: '#ffb4ab',
-      icon: 'error_outline',
-    };
   };
 
-  // File Type Visual System Mapping
-  const getFileTypeBadge = (type: DeliverableItem['fileType']) => {
+  // AI Summarize Revision Feedback
+  const handleAiSummarize = (notes: string) => {
+    setSummarizing(true);
+    setAiSummaryChecklist(null);
+
+    setTimeout(() => {
+      setAiSummaryChecklist([
+        'Darken primary navigation bar to match brand charcoal theme',
+        'Increase padding & typography weight on property card pricing',
+        'Add direct WhatsApp instant booking action button on mobile header',
+      ]);
+      setSummarizing(false);
+    }, 600);
+  };
+
+  // Create New Deliverable
+  const handleCreateDeliverable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    setCreating(true);
+
+    try {
+      const res = await fetch('/api/v1/deliverables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTitle.trim(),
+          fileName: `${newTitle.trim().replace(/\s+/g, '_')}_${newVersion}.${newFileType === 'figma' ? 'fig' : newFileType}`,
+          fileType: newFileType,
+          version: newVersion,
+          clientContact: newClient.trim(),
+          dueDate: newDueDate || new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+        }),
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        setIsCreateModalOpen(false);
+        setNewTitle('');
+        setToastMsg('Deliverable uploaded for client review!');
+        setTimeout(() => setToastMsg(null), 3000);
+        fetchDeliverables();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Delete Deliverable
+  const handleDeleteDeliverable = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this deliverable?')) return;
+    setDeliverables((prev) => prev.filter((d) => d.id !== id));
+    if (selectedDeliverable?.id === id) setSelectedDeliverable(null);
+
+    try {
+      await fetch(`/api/v1/deliverables?id=${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error(err);
+      fetchDeliverables();
+    }
+  };
+
+  // KPI Metrics Calculation
+  const totalCount = deliverables.length;
+  const pendingCount = deliverables.filter((d) => d.status === 'PENDING CLIENT REVIEW').length;
+  const approvedCount = deliverables.filter((d) => d.status === 'APPROVED').length;
+  const revisionsCount = deliverables.filter((d) => d.status === 'REVISION REQUESTED').length;
+
+  // Filtered List
+  const filteredDeliverables = deliverables.filter((d) => {
+    const matchesSearch =
+      d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.clientContact.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      (statusFilter === 'PENDING' && d.status === 'PENDING CLIENT REVIEW') ||
+      (statusFilter === 'APPROVED' && d.status === 'APPROVED') ||
+      (statusFilter === 'REVISIONS' && d.status === 'REVISION REQUESTED');
+    return matchesSearch && matchesStatus;
+  });
+
+  const getFileTypeIcon = (type: DeliverableItem['fileType']) => {
     switch (type) {
-      case 'pdf':
-        return {
-          bg: 'rgba(239, 68, 68, 0.15)',
-          border: 'rgba(239, 68, 68, 0.3)',
-          color: '#f87171',
-          icon: 'picture_as_pdf',
-          label: 'PDF',
-        };
-      case 'zip':
-        return {
-          bg: 'rgba(59, 130, 246, 0.15)',
-          border: 'rgba(59, 130, 246, 0.3)',
-          color: '#60a5fa',
-          icon: 'folder_zip',
-          label: 'ZIP Archive',
-        };
       case 'figma':
-        return {
-          bg: 'rgba(168, 85, 247, 0.15)',
-          border: 'rgba(168, 85, 247, 0.3)',
-          color: '#c084fc',
-          icon: 'design_services',
-          label: 'Figma Design',
-        };
+        return <Palette size={16} color="#a855f7" />;
+      case 'pdf':
+        return <FileText size={16} color="#38bdf8" />;
+      case 'zip':
+        return <FileCode size={16} color="#4edea3" />;
       case 'video':
-        return {
-          bg: 'rgba(245, 158, 11, 0.15)',
-          border: 'rgba(245, 158, 11, 0.3)',
-          color: '#fbbf24',
-          icon: 'movie',
-          label: 'Video Cut',
-        };
-      default:
-        return {
-          bg: 'rgba(148, 163, 184, 0.15)',
-          border: 'rgba(148, 163, 184, 0.3)',
-          color: '#cbd5e1',
-          icon: 'insert_drive_file',
-          label: 'File',
-        };
+        return <Film size={16} color="#ffb95f" />;
     }
   };
+
+  const getStatusBadge = (status: DeliverableItem['status']) => {
+    switch (status) {
+      case 'APPROVED':
+        return (
+          <span style={{ padding: '0.2rem 0.65rem', borderRadius: '9999px', background: 'rgba(78, 222, 163, 0.18)', border: '1px solid rgba(78, 222, 163, 0.3)', color: '#4edea3', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            <CheckCircle size={12} /> APPROVED
+          </span>
+        );
+      case 'PENDING CLIENT REVIEW':
+        return (
+          <span style={{ padding: '0.2rem 0.65rem', borderRadius: '9999px', background: 'rgba(56, 189, 248, 0.18)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            <Clock size={12} /> IN REVIEW
+          </span>
+        );
+      case 'REVISION REQUESTED':
+        return (
+          <span style={{ padding: '0.2rem 0.65rem', borderRadius: '9999px', background: 'rgba(255, 185, 95, 0.18)', border: '1px solid rgba(255, 185, 95, 0.3)', color: '#ffb95f', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            <AlertCircle size={12} /> REVISIONS
+          </span>
+        );
+    }
+  };
+
+  // Kanban Columns Definition
+  const kanbanColumns: {
+    status: DeliverableItem['status'];
+    label: string;
+    headerBg: string;
+    headerColor: string;
+  }[] = [
+    {
+      status: 'PENDING CLIENT REVIEW',
+      label: 'Submitted for Review',
+      headerBg: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+      headerColor: '#ffffff',
+    },
+    {
+      status: 'REVISION REQUESTED',
+      label: 'Revisions Requested',
+      headerBg: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      headerColor: '#ffffff',
+    },
+    {
+      status: 'APPROVED',
+      label: 'Approved & Production Ready',
+      headerBg: 'linear-gradient(135deg, #10b981, #059669)',
+      headerColor: '#ffffff',
+    },
+  ];
 
   return (
     <AppShell>
-      <div className="page-content">
-        {/* Header Title & Main CTA Bar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-            marginBottom: '0.75rem',
-          }}
-        >
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minHeight: 'calc(100vh - 100px)' }}>
+        {/* Top Header Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', paddingTop: '0.25rem' }}>
           <div>
-            <p
-              style={{
-                fontSize: '0.7rem',
-                color: 'var(--primary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.18em',
-                fontWeight: 700,
-                marginBottom: '0.25rem',
-                marginTop: '0.75rem',
-              }}
-            >
-              WORKFLOW / CLIENT TOUCHPOINTS
-            </p>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--on-surface)', lineHeight: 1.15 }}>
-              Deliverables & Approvals
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+              <Layers size={24} color="#a855f7" /> Deliverables & Client Sign-Off Hub
             </h1>
+            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', margin: '0.2rem 0 0 0' }}>
+              Manage design prototypes, engineering code bundles, and client review feedback workflows.
+            </p>
           </div>
 
-          <button
-            onClick={() => setUploadModalOpen(true)}
-            className="btn btn-primary"
-            style={{
-              padding: '0.45rem 1rem',
-              fontSize: '0.825rem',
-              whiteSpace: 'nowrap',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: '0 4px 12px rgba(192, 193, 255, 0.18)',
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>
-              upload_file
-            </span>
-            Upload Deliverable
-          </button>
-        </div>
-
-        {/* Unified Control Row: Filter Tabs (Left) + Search & Tools (Right) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-            marginBottom: '0.65rem',
-            flexWrap: 'wrap',
-          }}
-        >
-          {/* Left: Filter Pills Tabs */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.4rem',
-              overflowX: 'auto',
-              whiteSpace: 'nowrap',
-              alignItems: 'center',
-            }}
-          >
-            {[
-              { id: 'all', label: 'All Deliverables', count: counts.all },
-              { id: 'pending', label: 'Pending Review', count: counts.pending },
-              { id: 'approved', label: 'Approved', count: counts.approved },
-              { id: 'revisions', label: 'Revisions Requested', count: counts.revisions },
-            ].map((tab) => {
-              const isActive = filter === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setFilter(tab.id as any)}
-                  style={{
-                    padding: '0.4rem 0.85rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    background: isActive ? 'rgba(192, 193, 255, 0.18)' : 'rgba(23, 27, 38, 0.5)',
-                    color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
-                    border: isActive ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: isActive ? '0 0 10px rgba(192, 193, 255, 0.15)' : 'none',
-                  }}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      padding: '0.05rem 0.35rem',
-                      borderRadius: '9999px',
-                      background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.1)',
-                      color: isActive ? 'var(--on-primary)' : 'var(--on-surface-variant)',
-                    }}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right: Search, Sort, View Mode Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {/* Search Input (Compact 220px) */}
-            <div style={{ position: 'relative', width: '220px' }}>
-              <span
-                className="material-symbols-outlined"
+          {/* Action Buttons & View Mode Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* View Mode Toggle */}
+            <div style={{ display: 'flex', background: 'var(--surface-container-high)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <button
+                onClick={() => setViewMode('board')}
                 style={{
-                  position: 'absolute',
-                  left: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--on-surface-variant)',
-                  fontSize: '16px',
-                  pointerEvents: 'none',
+                  background: viewMode === 'board' ? 'var(--primary)' : 'transparent',
+                  color: viewMode === 'board' ? '#003355' : 'var(--on-surface-variant)',
+                  border: 'none',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
                 }}
               >
-                search
-              </span>
+                <LayoutGrid size={14} /> Board
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                style={{
+                  background: viewMode === 'list' ? 'var(--primary)' : 'transparent',
+                  color: viewMode === 'list' ? '#003355' : 'var(--on-surface-variant)',
+                  border: 'none',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                }}
+              >
+                <ListIcon size={14} /> List
+              </button>
+            </div>
+
+            {/* Search */}
+            <div style={{ position: 'relative' }}>
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--outline)' }} />
               <input
-                ref={searchInputRef}
                 type="text"
-                placeholder="Search..."
+                placeholder="Search deliverables..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  width: '100%',
-                  background: 'rgba(23, 27, 38, 0.8)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(192, 193, 255, 0.2)',
-                  borderRadius: 'var(--radius-DEFAULT)',
-                  padding: '0.4rem 3.2rem 0.4rem 2.1rem',
+                  padding: '0.45rem 0.75rem 0.45rem 2rem',
+                  background: 'var(--surface-container-high)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '6px',
+                  color: '#fff',
                   fontSize: '0.8rem',
-                  color: 'var(--on-surface)',
                   outline: 'none',
-                  transition: 'all 0.2s ease',
-                }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'rgba(192, 193, 255, 0.2)')}
-              />
-              <kbd
-                style={{
-                  position: 'absolute',
-                  right: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '3px',
-                  padding: '0.1rem 0.35rem',
-                  fontSize: '9px',
-                  fontWeight: 600,
-                  color: 'var(--on-surface-variant)',
-                  fontFamily: 'monospace',
-                  pointerEvents: 'none',
-                }}
-              >
-                ⌘K
-              </kbd>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <ArrowUpDown size={14} style={{ color: 'var(--on-surface-variant)' }} />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                aria-label="Sort deliverables"
-                style={{
-                  background: 'rgba(23, 27, 38, 0.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: 'var(--radius-DEFAULT)',
-                  padding: '0.4rem 0.65rem',
-                  fontSize: '0.8rem',
-                  color: 'var(--on-surface)',
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="newest">Sort: Newest</option>
-                <option value="oldest">Sort: Oldest</option>
-                <option value="client">Sort: Project</option>
-                <option value="status">Sort: Status</option>
-              </select>
-            </div>
-
-            {/* View Mode Switcher */}
-            <div
-              style={{
-                display: 'flex',
-                background: 'rgba(23, 27, 38, 0.8)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: 'var(--radius-DEFAULT)',
-                padding: '2px',
-                gap: '2px',
-              }}
-            >
-              <button
-                onClick={() => setViewMode('list')}
-                title="List View"
-                aria-label="List View"
-                style={{
-                  padding: '0.3rem 0.5rem',
-                  borderRadius: '4px',
-                  background: viewMode === 'list' ? 'rgba(192, 193, 255, 0.2)' : 'transparent',
-                  color: viewMode === 'list' ? 'var(--primary)' : 'var(--on-surface-variant)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <ListIcon size={14} />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                title="Grid View"
-                aria-label="Grid View"
-                style={{
-                  padding: '0.3rem 0.5rem',
-                  borderRadius: '4px',
-                  background: viewMode === 'grid' ? 'rgba(192, 193, 255, 0.2)' : 'transparent',
-                  color: viewMode === 'grid' ? 'var(--primary)' : 'var(--on-surface-variant)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <LayoutGrid size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Thin Sleek Summary Stats Bar */}
-        <div
-          style={{
-            background: 'rgba(23, 27, 38, 0.6)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '0.6rem',
-            padding: '0.35rem 0.85rem',
-            marginBottom: '0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.5rem',
-            fontSize: '0.775rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
-            <Clock size={13} style={{ color: '#4edea3' }} />
-            <span>Avg. Approval:</span>
-            <strong style={{ color: 'var(--on-surface)' }}>1.2 days</strong>
-          </div>
-
-          <div style={{ width: '1px', height: '12px', background: 'rgba(255, 255, 255, 0.1)' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#ffb95f' }}>
-              schedule
-            </span>
-            <span>Awaiting Review:</span>
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                padding: '0.05rem 0.35rem',
-                borderRadius: '9999px',
-                background: 'rgba(255, 185, 95, 0.15)',
-                color: '#ffb95f',
-                border: '1px solid rgba(255, 185, 95, 0.3)',
-              }}
-            >
-              4 items
-            </span>
-          </div>
-
-          <div style={{ width: '1px', height: '12px', background: 'rgba(255, 255, 255, 0.1)' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#ffb4ab' }}>
-              error_outline
-            </span>
-            <span>Overdue SLA:</span>
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                padding: '0.05rem 0.35rem',
-                borderRadius: '9999px',
-                background: 'rgba(255, 180, 171, 0.15)',
-                color: '#ffb4ab',
-                border: '1px solid rgba(255, 180, 171, 0.3)',
-              }}
-            >
-              2 items
-            </span>
-          </div>
-
-          <div style={{ width: '1px', height: '12px', background: 'rgba(255, 255, 255, 0.1)' }} />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--on-surface-variant)' }}>
-            <Calendar size={13} style={{ color: 'var(--primary)' }} />
-            <span>Next Milestone:</span>
-            <strong style={{ color: 'var(--on-surface)' }}>Aug 15 (TechFlow v2.4)</strong>
-          </div>
-        </div>
-
-        {/* Skeleton Loading State */}
-        {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {[1, 2, 3].map((n) => (
-              <div
-                key={n}
-                className="glass-card"
-                style={{
-                  height: '140px',
-                  background: 'rgba(23, 27, 38, 0.4)',
-                  borderRadius: '1rem',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  animation: 'pulse 1.5s infinite ease-in-out',
+                  width: '180px',
                 }}
               />
-            ))}
-          </div>
-        ) : filteredDeliverables.length === 0 ? (
-          /* Empty State */
-          <div
-            className="glass-card"
-            style={{
-              padding: '4rem 2rem',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(23, 27, 38, 0.5)',
-              borderRadius: '1rem',
-              border: '1px dashed rgba(192, 193, 255, 0.2)',
-              marginTop: '1rem',
-            }}
-          >
-            <div
+            </div>
+
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="btn btn-primary"
               style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: 'rgba(192, 193, 255, 0.1)',
+                background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+                border: 'none',
+                boxShadow: '0 0 20px rgba(168, 85, 247, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--primary)',
-                marginBottom: '1rem',
+                gap: '0.4rem',
+                fontWeight: 700,
               }}
             >
-              <Inbox size={32} />
+              <Upload size={15} /> Upload Asset
+            </button>
+          </div>
+        </div>
+
+        {/* Toast Alert Banner */}
+        {toastMsg && (
+          <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(78, 222, 163, 0.12)', border: '1px solid rgba(78, 222, 163, 0.3)', color: '#4edea3', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CheckCircle size={18} /> {toastMsg}
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '0.4rem' }}>
-              No deliverables found
-            </h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', maxWidth: '420px', marginBottom: '1.5rem' }}>
-              No deliverables match your active filter or search query. Try clearing filters or uploading a new file.
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button
-                onClick={() => {
-                  setFilter('all');
-                  setSearchQuery('');
-                }}
-                className="btn btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-              >
-                <RefreshCw size={15} /> Reset Filters
-              </button>
-              <button
-                onClick={() => setUploadModalOpen(true)}
-                className="btn btn-primary"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-              >
-                <Plus size={15} /> Upload Deliverable
-              </button>
+            <button onClick={() => setToastMsg(null)} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Top Approval SLA Metrics Bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+          {/* Pending Sign-off */}
+          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Clock size={20} />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, textTransform: 'uppercase' }}>In Client Review</span>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#38bdf8' }}>{pendingCount}</div>
             </div>
           </div>
-        ) : (
-          /* Deliverables Cards Stack (Supports List & Grid View) */
-          <div
-            style={{
-              display: viewMode === 'grid' ? 'grid' : 'flex',
-              gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(360px, 1fr))' : undefined,
-              flexDirection: viewMode === 'list' ? 'column' : undefined,
-              gap: '1.25rem',
-            }}
-          >
-            {filteredDeliverables.map((item) => {
-              const fileTypeBadge = getFileTypeBadge(item.fileType);
-              const urgency = getUrgencyDetails(item.hoursAgo);
 
-              // Background tint calculated per status type
-              const cardBg =
-                item.statusType === 'pending'
-                  ? 'rgba(245, 158, 11, 0.03)'
-                  : item.statusType === 'approved'
-                    ? 'rgba(78, 222, 163, 0.03)'
-                    : 'rgba(255, 180, 171, 0.04)';
+          {/* Approved This Month */}
+          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(78, 222, 163, 0.15)', color: '#4edea3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle size={20} />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, textTransform: 'uppercase' }}>Approved & Ready</span>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#4edea3' }}>{approvedCount}</div>
+            </div>
+          </div>
+
+          {/* Revisions Active */}
+          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255, 185, 95, 0.15)', color: '#ffb95f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, textTransform: 'uppercase' }}>Revisions Active</span>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#ffb95f' }}>{revisionsCount}</div>
+            </div>
+          </div>
+
+          {/* SLA Turnaround */}
+          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, textTransform: 'uppercase' }}>Avg Turnaround</span>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff' }}>1.8 days</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {(['ALL', 'PENDING', 'REVISIONS', 'APPROVED'] as const).map((st) => (
+            <button
+              key={st}
+              onClick={() => setStatusFilter(st)}
+              style={{
+                padding: '0.35rem 0.85rem',
+                borderRadius: '9999px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                background: statusFilter === st ? 'rgba(168, 85, 247, 0.2)' : 'var(--surface-container-low)',
+                border: statusFilter === st ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.08)',
+                color: statusFilter === st ? '#c084fc' : 'var(--on-surface-variant)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {st === 'ALL' ? 'All Deliverables' : st === 'PENDING' ? 'In Review' : st === 'REVISIONS' ? 'Revisions' : 'Approved'}
+            </button>
+          ))}
+        </div>
+
+        {/* Main Content Area */}
+        {loading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton-pulse" style={{ height: '400px', borderRadius: '12px' }} />
+            ))}
+          </div>
+        ) : error ? (
+          <UIStateCard type="error" description={error} onRetry={fetchDeliverables} />
+        ) : filteredDeliverables.length === 0 ? (
+          <EmptyState
+            icon={Layers}
+            title="No deliverables found"
+            description="Upload prototypes, PDFs, Loom walkthroughs, and code bundles for client sign-offs."
+            actionLabel="+ Upload Asset"
+            onAction={() => setIsCreateModalOpen(true)}
+          />
+        ) : viewMode === 'board' ? (
+          /* Kanban Review Board */
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem', alignItems: 'start', paddingBottom: '2rem' }}>
+            {kanbanColumns.map((col) => {
+              const colItems = filteredDeliverables.filter((d) => d.status === col.status);
+              const isOver = dragOverColumn === col.status;
 
               return (
                 <div
-                  key={item.id}
-                  className="glass-card deliverable-card"
+                  key={col.status}
+                  onDragOver={(e) => handleDragOver(e, col.status)}
+                  onDragLeave={(e) => handleDragLeave(e, col.status)}
+                  onDrop={(e) => handleDrop(e, col.status)}
                   style={{
+                    background: isOver ? 'rgba(168, 85, 247, 0.08)' : 'var(--surface-container-lowest)',
+                    borderRadius: '12px',
+                    border: isOver ? '2px dashed #a855f7' : '1px solid rgba(255, 255, 255, 0.08)',
                     display: 'flex',
-                    flexDirection: viewMode === 'list' ? 'row' : 'column',
-                    justifyContent: 'space-between',
-                    gap: '1.5rem',
-                    padding: '1.5rem',
-                    position: 'relative',
+                    flexDirection: 'column',
                     overflow: 'hidden',
-                    background: cardBg,
-                    borderRadius: '1rem',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    flexWrap: 'wrap',
                     transition: 'all 0.2s ease',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = item.accentColor;
-                    e.currentTarget.style.boxShadow = `0 6px 20px rgba(0,0,0,0.25), 0 0 10px ${item.accentColor}25`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
                 >
-                  {/* Left Accent Colored Bar */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: '4px',
-                      background: item.accentColor,
-                      boxShadow: `0 0 15px ${item.accentColor}`,
-                    }}
-                  />
+                  {/* Column Header */}
+                  <div style={{ background: col.headerBg, color: col.headerColor, padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 800 }}>{col.label}</span>
+                      <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.25)', fontSize: '11px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {colItems.length}
+                      </span>
+                    </div>
 
-                  {/* New Upload Pulse Indicator */}
-                  {item.isNew && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        padding: '0.15rem 0.5rem',
-                        borderRadius: '9999px',
-                        background: 'rgba(192, 193, 255, 0.2)',
-                        border: '1px solid var(--primary)',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        color: 'var(--primary)',
-                      }}
+                    <button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.25)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      title="Upload deliverable"
                     >
-                      <Sparkles size={11} /> NEW
-                    </div>
-                  )}
-
-                  {/* Main Content Area */}
-                  <div style={{ flex: 1, minWidth: viewMode === 'list' ? '300px' : 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                        {/* Type Colored Icon Badge */}
-                        <div
-                          style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '0.65rem',
-                            background: fileTypeBadge.bg,
-                            border: `1px solid ${fileTypeBadge.border}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ color: fileTypeBadge.color, fontSize: '24px' }}>
-                            {fileTypeBadge.icon}
-                          </span>
-                        </div>
-
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--on-surface)', lineHeight: 1.3 }}>
-                              {item.fileName}
-                            </h3>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '0.85rem',
-                              color: 'var(--on-surface-variant)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.5rem',
-                              marginTop: '0.3rem',
-                              flexWrap: 'wrap',
-                            }}
-                          >
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '15px', color: 'var(--primary)' }}>
-                                folder_open
-                              </span>
-                              {item.projectName}
-                            </span>
-                            <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--outline-variant)' }} />
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                padding: '0.1rem 0.45rem',
-                                borderRadius: '4px',
-                                background: 'rgba(255, 255, 255, 0.08)',
-                                fontFamily: 'monospace',
-                                color: 'var(--on-surface)',
-                                border: '1px solid rgba(255, 255, 255, 0.05)',
-                              }}
-                            >
-                              {item.version}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Interactive Status Badge Pill with Tooltip */}
-                      <div style={{ position: 'relative' }}>
-                        <div
-                          onMouseEnter={() => setHoveredBadgeId(item.id)}
-                          onMouseLeave={() => setHoveredBadgeId(null)}
-                          style={{
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '9999px',
-                            background:
-                              item.statusType === 'pending'
-                                ? 'rgba(245, 158, 11, 0.15)'
-                                : item.statusType === 'approved'
-                                  ? 'rgba(78, 222, 163, 0.15)'
-                                  : 'rgba(255, 180, 171, 0.15)',
-                            border: `1px solid ${item.accentColor}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            flexShrink: 0,
-                            cursor: 'help',
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ color: item.accentColor, fontSize: '14px' }}>
-                            {item.statusType === 'pending'
-                              ? 'schedule'
-                              : item.statusType === 'approved'
-                                ? 'check_circle'
-                                : 'flag'}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: item.accentColor, letterSpacing: '0.05em' }}>
-                            {item.status}
-                          </span>
-                        </div>
-
-                        {/* Tooltip on Badge Hover */}
-                        {hoveredBadgeId === item.id && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '100%',
-                              right: 0,
-                              marginTop: '6px',
-                              padding: '0.5rem 0.75rem',
-                              background: '#141721',
-                              border: '1px solid rgba(192, 193, 255, 0.3)',
-                              borderRadius: '8px',
-                              boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                              zIndex: 30,
-                              whiteSpace: 'nowrap',
-                              fontSize: '11px',
-                              color: 'var(--on-surface)',
-                            }}
-                          >
-                            <p style={{ margin: 0, fontWeight: 600 }}>Sent: {item.sentDate}</p>
-                            <p style={{ margin: '2px 0 0 0', color: 'var(--on-surface-variant)' }}>SLA: {item.dueDate}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Sub Info Footer / SLA Row */}
-                    <div style={{ marginTop: '0.5rem' }}>
-                      {/* SLA Due Date / Urgency Badge Row */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                          marginBottom: '0.6rem',
-                          flexWrap: 'wrap',
-                          fontSize: '0.8rem',
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.3rem',
-                            color: item.isOverdue ? '#ffb4ab' : 'var(--on-surface-variant)',
-                            fontWeight: item.isOverdue ? 600 : 400,
-                          }}
-                        >
-                          <Calendar size={14} style={{ color: item.isOverdue ? '#ffb4ab' : 'var(--primary)' }} />
-                          {item.dueDate}
-                        </span>
-
-                        {item.statusType === 'pending' && urgency.text && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: urgency.color, fontWeight: 500 }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
-                              {urgency.icon}
-                            </span>
-                            {urgency.text}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Pending Client Review Footer */}
-                      {item.statusType === 'pending' && (
-                        <div
-                          style={{
-                            padding: '0.75rem 1rem',
-                            borderRadius: '0.5rem',
-                            background: 'rgba(28, 31, 42, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.05)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.6rem',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '50%',
-                              background: 'rgba(255, 185, 95, 0.2)',
-                              border: '1px solid #ffb95f',
-                              color: '#ffb95f',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {item.clientAvatar || 'CL'}
-                          </div>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', margin: 0 }}>
-                            Waiting on client review from <strong style={{ color: 'var(--on-surface)' }}>{item.clientContact}</strong>
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Approved Footer */}
-                      {item.statusType === 'approved' && (
-                        <div
-                          style={{
-                            padding: '0.75rem 1rem',
-                            borderRadius: '0.5rem',
-                            background: 'rgba(78, 222, 163, 0.08)',
-                            border: '1px solid rgba(78, 222, 163, 0.2)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.6rem',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '50%',
-                              background: '#4edea3',
-                              color: '#003822',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {item.approvedAvatar || 'AR'}
-                          </div>
-                          <p style={{ fontSize: '0.85rem', color: '#4edea3', margin: 0 }}>
-                            Approved by <strong>{item.approvedBy}</strong> on {item.approvedDate}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Revision Requested Footer */}
-                      {item.statusType === 'revisions' && (
-                        <div
-                          style={{
-                            padding: '0.85rem 1rem',
-                            borderRadius: '0.5rem',
-                            background: 'rgba(255, 180, 171, 0.08)',
-                            border: '1px solid rgba(255, 180, 171, 0.2)',
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '0.75rem',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '50%',
-                              background: '#ffb4ab',
-                              color: '#600004',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {item.commenterAvatar || 'REV'}
-                          </div>
-                          <div>
-                            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffb4ab', marginBottom: '0.2rem', margin: 0 }}>
-                              {item.commenterName}{' '}
-                              <span style={{ color: 'var(--on-surface-variant)', fontWeight: 400, marginLeft: '0.4rem', fontSize: '11px' }}>
-                                {item.commentTime}
-                              </span>
-                            </p>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--on-surface)', marginTop: '0.25rem', margin: 0 }}>
-                              {item.commentText}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      <Plus size={15} />
+                    </button>
                   </div>
 
-                  {/* Right Action Column — Hierarchical Button Grouping & Mobile Overflow */}
-                  <div
-                    style={{
-                      width: viewMode === 'list' ? '240px' : '100%',
-                      display: 'flex',
-                      flexDirection: viewMode === 'list' ? 'column' : 'row',
-                      gap: '0.5rem',
-                      justifyContent: 'center',
-                      paddingLeft: viewMode === 'list' ? '1.25rem' : '0',
-                      borderLeft: viewMode === 'list' ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
-                      borderTop: viewMode === 'grid' ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
-                      paddingTop: viewMode === 'grid' ? '1rem' : '0',
-                    }}
-                  >
-                    {/* Primary Button */}
-                    {item.statusType === 'pending' && (
-                      <button
-                        className="btn btn-primary"
-                        style={{
-                          width: '100%',
-                          justifyContent: 'center',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                          upload
-                        </span>
-                        New Version
-                      </button>
+                  {/* Cards Column */}
+                  <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', minHeight: '160px' }}>
+                    {colItems.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '2rem 0.5rem', color: 'var(--outline)', fontSize: '0.75rem' }}>
+                        No deliverables in this stage
+                      </div>
+                    ) : (
+                      colItems.map((item) => {
+                        const isDragging = draggingDeliverableId === item.id;
+
+                        return (
+                          <div
+                            key={item.id}
+                            draggable={true}
+                            onDragStart={(e) => handleDragStart(e, item.id)}
+                            onDragEnd={handleDragEnd}
+                            onClick={() => setSelectedDeliverable(item)}
+                            style={{
+                              background: 'var(--surface-container)',
+                              color: 'var(--on-surface)',
+                              borderRadius: '10px',
+                              padding: '1rem',
+                              border: isDragging ? '1px dashed #a855f7' : '1px solid rgba(255, 255, 255, 0.08)',
+                              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.65rem',
+                              cursor: 'grab',
+                              opacity: isDragging ? 0.4 : 1,
+                              transform: isDragging ? 'scale(0.98)' : 'none',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            {/* Card Top: Asset Type Badge & Version */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600 }}>
+                                {getFileTypeIcon(item.fileType)}
+                                <span style={{ textTransform: 'uppercase' }}>{item.fileType}</span>
+                              </div>
+                              <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', color: '#d0bcff', fontSize: '0.7rem', fontWeight: 800 }}>
+                                {item.version}
+                              </span>
+                            </div>
+
+                            {/* Title & Project */}
+                            <div>
+                              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff', margin: '0 0 0.2rem 0', lineHeight: 1.35 }}>
+                                {item.title}
+                              </h3>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0 }}>
+                                {item.projectName} • <span style={{ color: '#fff' }}>{item.clientContact}</span>
+                              </p>
+                            </div>
+
+                            {/* Card Footer: Due Date & Action */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <Clock size={12} /> {item.dueDate}
+                              </div>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDeliverable(item);
+                                }}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', color: '#c084fc' }}
+                              >
+                                Review
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
                     )}
-
-                    {item.statusType === 'approved' && (
-                      <button
-                        className="btn btn-primary"
-                        style={{
-                          width: '100%',
-                          justifyContent: 'center',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                          download
-                        </span>
-                        Download Final
-                      </button>
-                    )}
-
-                    {item.statusType === 'revisions' && (
-                      <button
-                        className="btn btn-primary"
-                        style={{
-                          width: '100%',
-                          justifyContent: 'center',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                          upload
-                        </span>
-                        Upload v0.9
-                      </button>
-                    )}
-
-                    {/* Secondary Ghost Actions */}
-                    <div style={{ display: 'flex', gap: '0.4rem', width: '100%' }}>
-                      {item.statusType === 'pending' && (
-                        <button
-                          className="btn btn-secondary"
-                          style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '0.45rem 0.65rem' }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                            send
-                          </span>
-                          Resend
-                        </button>
-                      )}
-
-                      {item.statusType === 'approved' && (
-                        <button
-                          className="btn btn-secondary"
-                          style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '0.45rem 0.65rem' }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                            history
-                          </span>
-                          History
-                        </button>
-                      )}
-
-                      {item.statusType === 'revisions' && (
-                        <button
-                          className="btn btn-secondary"
-                          style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '0.45rem 0.65rem' }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                            forum
-                          </span>
-                          Thread ({item.threadCount || 3})
-                        </button>
-                      )}
-
-                      {/* Comments Button (Icon-only when 0, Labeled when > 0) */}
-                      {item.commentsCount === 0 ? (
-                        <button
-                          className="btn btn-secondary"
-                          title="No comments"
-                          style={{
-                            padding: '0.45rem 0.6rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            opacity: 0.6,
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                            chat_bubble_outline
-                          </span>
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-secondary"
-                          style={{
-                            padding: '0.45rem 0.65rem',
-                            fontSize: '0.8rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.3rem',
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                            forum
-                          </span>
-                          ({item.commentsCount})
-                        </button>
-                      )}
-                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
+        ) : (
+          /* Table View */
+          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--surface-container-high)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <th style={{ padding: '0.85rem 1.25rem', color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Deliverable Asset</th>
+                  <th style={{ padding: '0.85rem 1.25rem', color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Project & Client</th>
+                  <th style={{ padding: '0.85rem 1.25rem', color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Version</th>
+                  <th style={{ padding: '0.85rem 1.25rem', color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Due Date</th>
+                  <th style={{ padding: '0.85rem 1.25rem', color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ padding: '0.85rem 1.25rem', color: 'var(--on-surface-variant)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDeliverables.map((item) => (
+                  <tr
+                    key={item.id}
+                    onClick={() => setSelectedDeliverable(item)}
+                    style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', cursor: 'pointer', transition: 'background 0.15s ease' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <td style={{ padding: '1rem 1.25rem', color: '#fff', fontWeight: 700 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {getFileTypeIcon(item.fileType)}
+                        {item.title}
+                      </div>
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem', color: 'var(--on-surface-variant)' }}>
+                      {item.projectName} • <span style={{ color: '#fff', fontWeight: 600 }}>{item.clientContact}</span>
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem' }}>
+                      <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', color: '#d0bcff', fontSize: '0.75rem', fontWeight: 800 }}>
+                        {item.version}
+                      </span>
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem', color: 'var(--on-surface-variant)' }}>
+                      {item.dueDate}
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem' }}>
+                      {getStatusBadge(item.status)}
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setSelectedDeliverable(item)}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', color: '#c084fc' }}
+                      >
+                        Review
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
 
-      {/* Upload Deliverable Modal */}
-      {uploadModalOpen && (
-        <div
-          className="drawer-backdrop"
-          onClick={() => setUploadModalOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(6px)',
-            zIndex: 60,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            className="glass-card"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '520px',
-              width: '90%',
-              padding: '2rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.25rem',
-              background: 'var(--surface-container-low)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--on-surface)' }}>Upload New Deliverable</h2>
-              <button
-                onClick={() => setUploadModalOpen(false)}
-                aria-label="Close modal"
-                style={{ color: 'var(--on-surface-variant)' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', display: 'block', marginBottom: '0.4rem' }}>
-                Select Project
-              </label>
-              <select
-                aria-label="Select Project"
-                style={{
-                  width: '100%',
-                  padding: '0.6rem 1rem',
-                  background: 'var(--surface-container-high)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 'var(--radius-md)',
-                  color: '#fff',
-                  outline: 'none',
-                }}
-              >
-                <option>TechFlow Cloud Portal</option>
-                <option>Acme Brand Identity</option>
-                <option>Nexus Cloud Infrastructure</option>
-                <option>Apex Global Marketing</option>
-              </select>
-            </div>
-
+        {/* Interactive Deliverable Review Modal */}
+        {selectedDeliverable && (
+          <div className="drawer-backdrop" onClick={() => setSelectedDeliverable(null)}>
             <div
+              className="drawer-content"
+              onClick={(e) => e.stopPropagation()}
               style={{
-                border: '2px dashed rgba(192, 193, 255, 0.3)',
-                borderRadius: 'var(--radius-md)',
-                padding: '2rem',
-                textAlign: 'center',
-                background: 'rgba(192, 193, 255, 0.05)',
-                cursor: 'pointer',
+                width: '600px',
+                maxWidth: '95vw',
+                background: '#181a20',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+                padding: '1.5rem',
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--primary)' }}>
-                cloud_upload
-              </span>
-              <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)', marginTop: '0.5rem' }}>
-                Click or drag file to upload
-              </p>
-              <p style={{ fontSize: '11px', color: 'var(--on-surface-variant)', marginTop: '0.2rem' }}>
-                PDF, ZIP, FIG, or MP4 up to 50MB
-              </p>
-            </div>
+              {/* Modal Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                    {getFileTypeIcon(selectedDeliverable.fileType)}
+                    <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', textTransform: 'uppercase', fontWeight: 700 }}>
+                      {selectedDeliverable.fileType} Asset • {selectedDeliverable.version}
+                    </span>
+                    {getStatusBadge(selectedDeliverable.status)}
+                  </div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                    {selectedDeliverable.title}
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: '0.2rem 0 0 0' }}>
+                    Project: <strong>{selectedDeliverable.projectName}</strong> • Client: <strong>{selectedDeliverable.clientContact}</strong>
+                  </p>
+                </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <button onClick={() => setUploadModalOpen(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch('/api/v1/deliverables', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        title: 'Interactive Design Deliverable v1.0',
-                        fileName: 'Client_Deliverable_v1.0.pdf',
-                        fileType: 'pdf',
-                        version: 'v1.0',
-                        clientContact: 'Client Product Lead',
-                      }),
-                    });
-                    if (res.ok) {
-                      fetchDeliverables();
-                      window.dispatchEvent(new Event('agencyflow-refresh'));
-                    }
-                  } catch (err) {
-                    console.error('Deliverable upload error:', err);
-                  }
-                  setUploadModalOpen(false);
-                }}
-                className="btn btn-primary"
-              >
-                Upload & Request Review
-              </button>
+                <button onClick={() => setSelectedDeliverable(null)} style={{ background: 'transparent', border: 'none', color: 'var(--on-surface-variant)', cursor: 'pointer' }}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Client Feedback / Review Notes Section */}
+              <div style={{ background: 'var(--surface-container)', padding: '1rem 1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#d0bcff', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em' }}>
+                    Client Stakeholder Feedback:
+                  </span>
+
+                  <button
+                    onClick={() => handleAiSummarize(selectedDeliverable.feedbackNotes || '')}
+                    className="btn btn-secondary"
+                    style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#d0bcff' }}
+                  >
+                    <Sparkles size={12} color="#d0bcff" /> {summarizing ? 'Summarizing...' : 'AI Action Checklist'}
+                  </button>
+                </div>
+
+                <p style={{ fontSize: '0.85rem', color: '#e2e2e8', margin: 0, lineHeight: 1.5 }}>
+                  {selectedDeliverable.feedbackNotes}
+                </p>
+
+                {/* AI Summary Action Checklist */}
+                {aiSummaryChecklist && (
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 800 }}>
+                      ⚡ AI Developer Action Checklist:
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '0.4rem' }}>
+                      {aiSummaryChecklist.map((item, i) => (
+                        <div key={i} style={{ fontSize: '0.8rem', color: '#e2e2e8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Check size={13} color="#4edea3" /> {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons Toolbar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://agencyflow-crm-beta.vercel.app/review/${selectedDeliverable.id}`);
+                      setToastMsg('Secure client review link copied to clipboard!');
+                      setTimeout(() => setToastMsg(null), 3000);
+                    }}
+                    className="btn btn-secondary"
+                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    <Copy size={13} /> Copy Client Link
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteDeliverable(selectedDeliverable.id)}
+                    style={{ background: 'transparent', border: 'none', color: '#ffb4ab', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {selectedDeliverable.status !== 'APPROVED' && (
+                    <button
+                      onClick={() => handleUpdateStatus(selectedDeliverable.id, 'APPROVED')}
+                      className="btn btn-primary"
+                      style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem', background: '#4edea3', color: '#003822', border: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      <CheckCircle size={14} /> Approve Asset
+                    </button>
+                  )}
+
+                  {selectedDeliverable.status !== 'REVISION REQUESTED' && (
+                    <button
+                      onClick={() => handleUpdateStatus(selectedDeliverable.id, 'REVISION REQUESTED')}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem', color: '#ffb95f', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      <AlertCircle size={14} /> Request Revision
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Create / Upload Deliverable Modal */}
+        {isCreateModalOpen && (
+          <div className="drawer-backdrop" onClick={() => setIsCreateModalOpen(false)}>
+            <div
+              className="drawer-content"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '480px',
+                maxWidth: '95vw',
+                background: '#181a20',
+                padding: '1.5rem',
+                borderRadius: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Upload size={18} color="#a855f7" /> Upload Deliverable Asset
+                </h3>
+                <button onClick={() => setIsCreateModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--on-surface-variant)', cursor: 'pointer' }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateDeliverable} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.3rem' }}>
+                    Deliverable Title:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Luxury Real Estate UI Figma Prototype"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    style={{ width: '100%', padding: '0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.3rem' }}>
+                      Asset Format:
+                    </label>
+                    <select
+                      value={newFileType}
+                      onChange={(e: any) => setNewFileType(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+                    >
+                      <option value="figma">🎨 Figma Prototype</option>
+                      <option value="pdf">📄 PDF Document / SOW</option>
+                      <option value="zip">📦 Code Bundle (.zip)</option>
+                      <option value="video">🎥 Video Demo (.mp4)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.3rem' }}>
+                      Version Tag:
+                    </label>
+                    <input
+                      type="text"
+                      value={newVersion}
+                      onChange={(e) => setNewVersion(e.target.value)}
+                      style={{ width: '100%', padding: '0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.3rem' }}>
+                    Client Organization:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newClient}
+                    onChange={(e) => setNewClient(e.target.value)}
+                    style={{ width: '100%', padding: '0.6rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="btn btn-primary"
+                  style={{
+                    padding: '0.75rem',
+                    background: '#a855f7',
+                    border: 'none',
+                    fontWeight: 700,
+                    marginTop: '0.5rem',
+                  }}
+                >
+                  {creating ? 'Uploading...' : 'Submit for Review'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </AppShell>
   );
 }
