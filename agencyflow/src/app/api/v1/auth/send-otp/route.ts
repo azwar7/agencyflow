@@ -64,8 +64,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: `A 6-digit verification code has been sent to ${emailNormalized}`,
-      // Return code in dev / testing response preview so you are never locked out
-      debugOtp: process.env.NODE_ENV === 'development' || !process.env.GMAIL_APP_PASSWORD ? otpCode : undefined,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

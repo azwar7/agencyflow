@@ -47,7 +47,6 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [resendTimer, setResendTimer] = useState(45);
   const [canResend, setCanResend] = useState(false);
-  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
@@ -107,10 +106,6 @@ export default function SignupPage() {
         setError(json.error?.message || 'Failed to send verification code.');
         setLoading(false);
         return;
-      }
-
-      if (json.debugOtp) {
-        setDevOtpHint(json.debugOtp);
       }
 
       setStep(2);
@@ -212,7 +207,6 @@ export default function SignupPage() {
       if (json.success) {
         setResendTimer(45);
         setCanResend(false);
-        if (json.debugOtp) setDevOtpHint(json.debugOtp);
       } else {
         setError(json.error?.message || 'Failed to resend code.');
       }
@@ -460,13 +454,6 @@ export default function SignupPage() {
                 {email}
               </strong>
             </div>
-
-            {/* Dev hint if available */}
-            {devOtpHint && (
-              <div style={{ padding: '0.5rem', background: 'rgba(78, 222, 163, 0.1)', border: '1px dashed #4edea3', borderRadius: '6px', textAlign: 'center', fontSize: '0.75rem', color: '#4edea3' }}>
-                🔑 Dev Mode Verification Code: <strong>{devOtpHint}</strong>
-              </div>
-            )}
 
             {/* 6-Box OTP Input */}
             <div>
