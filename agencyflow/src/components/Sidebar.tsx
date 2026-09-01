@@ -23,7 +23,6 @@ export function Sidebar() {
 
   const managementItems = [
     { label: 'Team', path: '/team', icon: 'groups_3' },
-    { label: 'Files', path: '/files', icon: 'folder_open' },
     { label: 'Settings', path: '/settings', icon: 'settings' },
   ];
 

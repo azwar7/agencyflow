@@ -68,7 +68,7 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
     { title: 'Vanguard FinTech Mobile MVP', type: 'PROJECT', path: '/projects', client: 'Vanguard FinTech' },
     { title: 'Schedule Q3 Technical Architecture Audit', type: 'TASK', path: '/tasks', client: 'TechFlow Systems' },
     { title: 'David Miller (Lead Solutions Architect)', type: 'TEAM', path: '/team', client: 'Apex Digital' },
-    { title: 'TechFlow_Master_Services_Agreement_2026.pdf', type: 'FILE', path: '/files', client: 'TechFlow Systems' },
+    { title: 'TechFlow_Master_Services_Agreement_2026.pdf', type: 'PROPOSAL', path: '/proposals', client: 'TechFlow Systems' },
   ].filter(
     (item) =>
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
