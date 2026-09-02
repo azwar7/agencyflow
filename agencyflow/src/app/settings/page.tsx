@@ -654,14 +654,14 @@ export default function SettingsPage() {
             ))}
           </div>
 
-          {/* Right Content Panel */}
+          {/* Right Content Panel with Dedicated Scrollbar */}
           <div
+            className="settings-content-scroll"
             style={{
               background: 'var(--surface-container-lowest)',
               borderRadius: '12px',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               padding: '1.75rem',
-              minHeight: '600px',
             }}
           >
             {/* ------------------------------------------------------------- */}
