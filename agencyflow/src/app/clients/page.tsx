@@ -45,83 +45,6 @@ interface ClientItem {
   createdAt: string;
 }
 
-const defaultInitialClients: ClientItem[] = [
-  {
-    id: 'c-1',
-    name: 'TechFlow Systems',
-    domain: 'techflow.io',
-    industry: 'Enterprise Software',
-    contact: 'David Miller',
-    email: 'david@techflow.io',
-    phone: '+1 (555) 234-5678',
-    retainerValue: 12500,
-    retainerFormatted: '$12,500/mo',
-    status: 'Active',
-    projectsCount: 2,
-    projects: [
-      { title: 'TechFlow Cloud Portal', stage: 'DEVELOPMENT', value: 45000, progress: 78 },
-      { title: 'API Integration Engine', stage: 'QA_TESTING', value: 28000, progress: 92 },
-    ],
-    lastActivity: '2 hours ago',
-    createdAt: '2026-01-15',
-  },
-  {
-    id: 'c-2',
-    name: 'Elevate Creative Co.',
-    domain: 'elevatecreative.com',
-    industry: 'Digital Media & Brand',
-    contact: 'Rachel Green',
-    email: 'rachel@elevatecreative.com',
-    phone: '+1 (555) 876-5432',
-    retainerValue: 18000,
-    retainerFormatted: '$18,000/mo',
-    status: 'Active',
-    projectsCount: 3,
-    projects: [
-      { title: 'Global Rebrand & Design System', stage: 'DESIGN', value: 55000, progress: 64 },
-      { title: 'DTC Video Production', stage: 'PRODUCTION', value: 32000, progress: 40 },
-    ],
-    lastActivity: '4 hours ago',
-    createdAt: '2026-02-01',
-  },
-  {
-    id: 'c-3',
-    name: 'Summit Global Logistics',
-    domain: 'summitlogistics.com',
-    industry: 'Logistics & Freight',
-    contact: 'Marcus Vance',
-    email: 'marcus@summitlogistics.com',
-    phone: '+1 (555) 345-6789',
-    retainerValue: 9500,
-    retainerFormatted: '$9,500/mo',
-    status: 'At Risk',
-    projectsCount: 1,
-    projects: [
-      { title: 'Supply Chain Dashboard', stage: 'DISCOVERY', value: 24000, progress: 25 },
-    ],
-    lastActivity: '1 day ago',
-    createdAt: '2026-03-10',
-  },
-  {
-    id: 'c-4',
-    name: 'Nexus Cloud Infrastructure',
-    domain: 'nexuscloud.com',
-    industry: 'Cloud Infrastructure',
-    contact: 'Michael Chang',
-    email: 'm.chang@nexuscloud.com',
-    phone: '+1 (555) 901-2345',
-    retainerValue: 15000,
-    retainerFormatted: '$15,000/mo',
-    status: 'Active',
-    projectsCount: 2,
-    projects: [
-      { title: 'DevOps Automation Suite', stage: 'DEPLOYED', value: 65000, progress: 100 },
-    ],
-    lastActivity: '3 hours ago',
-    createdAt: '2026-03-22',
-  },
-];
-
 export default function ClientsOverviewPage() {
   const router = useRouter();
   const [clients, setClients] = useState<ClientItem[]>([]);
@@ -320,15 +243,15 @@ export default function ClientsOverviewPage() {
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 ACTIVE RETAINERS
               </span>
-              <div style={{ background: 'rgba(0, 165, 114, 0.2)', color: 'var(--secondary)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
-                <TrendingUp size={12} /> +12.4% vs last month
+              <div style={{ background: totalRetainerRevenue > 0 ? 'rgba(0, 165, 114, 0.2)' : 'rgba(255, 255, 255, 0.06)', color: totalRetainerRevenue > 0 ? 'var(--secondary)' : 'var(--on-surface-variant)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                {totalRetainerRevenue > 0 ? <><TrendingUp size={12} /> Active</> : 'Contracted: $0'}
               </div>
             </div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--secondary)', marginTop: '0.4rem' }}>
+            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: totalRetainerRevenue > 0 ? 'var(--secondary)' : 'var(--on-surface)', marginTop: '0.4rem' }}>
               ${totalRetainerRevenue.toLocaleString()} / mo
             </div>
             <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: '0.2rem 0 0 0' }}>
-              Contracted recurring revenue
+              {totalRetainerRevenue > 0 ? 'Contracted recurring revenue' : 'No active retainers contracted'}
             </p>
           </div>
 
@@ -338,8 +261,8 @@ export default function ClientsOverviewPage() {
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 TOTAL ACCOUNTS
               </span>
-              <span style={{ background: 'rgba(192, 193, 255, 0.15)', color: 'var(--primary)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>
-                2 added this quarter
+              <span style={{ background: clients.length > 0 ? 'rgba(192, 193, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)', color: clients.length > 0 ? 'var(--primary)' : 'var(--on-surface-variant)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>
+                {clients.length > 0 ? `${clients.length} Total Accounts` : '0 added this quarter'}
               </span>
             </div>
             <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.4rem' }}>
@@ -356,15 +279,15 @@ export default function ClientsOverviewPage() {
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 SATISFACTION SCORE
               </span>
-              <div style={{ background: 'rgba(0, 165, 114, 0.2)', color: 'var(--secondary)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
-                <TrendingUp size={12} /> +3.2% vs prev
+              <div style={{ background: clients.length > 0 ? 'rgba(0, 165, 114, 0.2)' : 'rgba(255, 255, 255, 0.06)', color: clients.length > 0 ? 'var(--secondary)' : 'var(--on-surface-variant)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                {clients.length > 0 ? <><TrendingUp size={12} /> Verified</> : 'No reviews yet'}
               </div>
             </div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--tertiary)', marginTop: '0.4rem' }}>
-              98% CSAT
+            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: clients.length > 0 ? 'var(--tertiary)' : 'var(--on-surface-variant)', marginTop: '0.4rem' }}>
+              {clients.length > 0 ? '98% CSAT' : 'N/A'}
             </div>
             <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: '0.2rem 0 0 0' }}>
-              NPS 74 • Zero active escalations
+              {clients.length > 0 ? 'NPS 74 • Zero active escalations' : 'Awaiting initial client project feedback'}
             </p>
           </div>
         </div>
