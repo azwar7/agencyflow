@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { getVisibilityFilter } from '@/lib/visibility';
 
 export async function GET(request: Request) {
   try {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
+    const visibilityFilter = await getVisibilityFilter(session, 'task');
 
     const tasks = await prisma.task.findMany({
-      where: { workspaceId },
+      where: {
+        workspaceId,
+        ...visibilityFilter,
+      },
       orderBy: { dueDate: 'asc' },
       include: {
         assignedTo: { select: { id: true, fullName: true, email: true } },

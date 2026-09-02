@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/auth-session';
+import { getVisibilityFilter } from '@/lib/visibility';
 
 const createLeadSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -22,9 +23,12 @@ export async function GET(request: Request) {
     const status = searchParams.get('status') || '';
     const source = searchParams.get('source') || '';
 
+    const visibilityFilter = await getVisibilityFilter(session, 'lead');
+
     const leads = await prisma.lead.findMany({
       where: {
         workspaceId,
+        ...visibilityFilter,
         ...(status ? { status } : {}),
         ...(source ? { source } : {}),
         ...(search

@@ -40,7 +40,7 @@ export const SETTINGS_NAVIGATION_GROUPS: SettingsCategoryGroup[] = [
     label: 'TEAM & ACCESS',
     tabs: [
       { id: 'team-members', label: 'Members & Roles', icon: 'users', description: 'Workspace members, roles, workload, and invites', isImplemented: true, roleRequired: 'ADMIN' },
-      { id: 'security-auth', label: 'Security & Auth', icon: 'shield', description: '2FA authentication, session policies, and audit access', isImplemented: false, roleRequired: 'ADMIN' },
+      { id: 'security-auth', label: 'Security & Auth', icon: 'shield', description: 'Password, active sessions, security policies, and 2FA', isImplemented: true },
     ],
   },
   {
@@ -65,7 +65,7 @@ export const SETTINGS_NAVIGATION_GROUPS: SettingsCategoryGroup[] = [
     id: 'system-data',
     label: 'SYSTEM & DATA',
     tabs: [
-      { id: 'audit-logs', label: 'Audit Logs', icon: 'history', description: 'Tamper-proof tenant event timeline and compliance history', isImplemented: false, roleRequired: 'ADMIN' },
+      { id: 'audit-logs', label: 'Audit Logs', icon: 'history', description: 'Tamper-proof tenant event timeline and compliance history', isImplemented: true, roleRequired: 'ADMIN' },
       { id: 'data-export', label: 'Data Export & Backup', icon: 'download', description: 'Full CSV/JSON exports of leads, clients, deals, and finances', isImplemented: false, roleRequired: 'ADMIN' },
       { id: 'sandbox-seed', label: 'Sandbox & Sample Data', icon: 'database', description: 'Load realistic sample data or reset to clean zero-state', isImplemented: true, roleRequired: 'ADMIN' },
     ],

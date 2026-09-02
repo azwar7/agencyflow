@@ -4,6 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/AppShell';
 import { SettingsSearchModal } from '@/components/SettingsSearchModal';
+import { TeamMembersTab } from '@/components/settings/TeamMembersTab';
+import { SecurityAuthTab } from '@/components/settings/SecurityAuthTab';
+import { AuditLogsTab } from '@/components/settings/AuditLogsTab';
 import {
   SETTINGS_NAVIGATION_GROUPS,
   SETTINGS_REGISTRY,
@@ -1490,33 +1493,21 @@ export default function SettingsPage() {
             {/* TAB: MEMBERS & ROLES */}
             {/* ------------------------------------------------------------- */}
             {activeTab === 'team-members' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '1rem' }}>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                    Team Members & RBAC Roles
-                  </h2>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: '0.25rem 0 0 0' }}>
-                    Manage workspace collaborator access, role tiers, and revenue attribution.
-                  </p>
-                </div>
+              <TeamMembersTab currentUserRole={user?.role} showToast={showToast} />
+            )}
 
-                <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--surface-container)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <Users size={36} color="#8b5cf6" style={{ margin: '0 auto 1rem auto' }} />
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '0.5rem' }}>
-                    Collaborator & Workload Command Center
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: '480px', margin: '0 auto 1.5rem auto' }}>
-                    Manage reps, workload bandwidth, permissions, and cryptographic team invitations directly in the command center.
-                  </p>
-                  <a
-                    href="/team"
-                    className="btn btn-primary"
-                    style={{ background: '#8b5cf6', border: 'none', padding: '0.6rem 1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}
-                  >
-                    Open Team Command Center <ExternalLink size={14} />
-                  </a>
-                </div>
-              </div>
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: SECURITY & AUTHENTICATION */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'security-auth' && (
+              <SecurityAuthTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: AUDIT LOGS */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'audit-logs' && (
+              <AuditLogsTab currentUserRole={user?.role} showToast={showToast} />
             )}
 
             {/* ------------------------------------------------------------- */}
@@ -1576,9 +1567,9 @@ export default function SettingsPage() {
             )}
 
             {/* ------------------------------------------------------------- */}
-            {/* STUBBED TABS: COMING SOON IN PHASE 2 */}
+            {/* STUBBED TABS: COMING SOON IN PHASE 3 */}
             {/* ------------------------------------------------------------- */}
-            {['security-auth', 'pipeline-stages', 'custom-fields', 'lead-routing', 'webhooks-api', 'ai-config', 'email-templates', 'audit-logs', 'data-export', 'subscription-billing'].includes(activeTab) && (
+            {['pipeline-stages', 'custom-fields', 'lead-routing', 'webhooks-api', 'ai-config', 'email-templates', 'data-export', 'subscription-billing'].includes(activeTab) && (
               <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
                   <Sparkles size={24} />
@@ -1588,7 +1579,7 @@ export default function SettingsPage() {
                     {SETTINGS_REGISTRY.find((r) => r.tabId === activeTab)?.title || 'Settings Module'}
                   </h3>
                   <div style={{ display: 'inline-block', fontSize: '0.7rem', color: '#a78bfa', background: 'rgba(139, 92, 246, 0.15)', padding: '2px 10px', borderRadius: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Coming Soon in Phase 2
+                    Coming Soon in Phase 3
                   </div>
                 </div>
                 <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: '420px', margin: 0 }}>

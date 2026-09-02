@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { getVisibilityFilter } from '@/lib/visibility';
 
 const createDealSchema = z.object({
   title: z.string().min(1, 'Deal title is required').max(255),
@@ -22,9 +23,13 @@ export async function GET(request: Request) {
   try {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
+    const visibilityFilter = await getVisibilityFilter(session, 'deal');
 
     const deals = await prisma.deal.findMany({
-      where: { workspaceId },
+      where: {
+        workspaceId,
+        ...visibilityFilter,
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         company: { select: { name: true } },
