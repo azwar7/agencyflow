@@ -538,5 +538,41 @@ html[data-high-contrast="true"] * {
   border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
+/* ==========================================================================
+   Dedicated Scrollbar for Settings Options Sidebar
+   ========================================================================== */
+.settings-options-scroll {
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: sticky;
+  top: 1.5rem;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.5) rgba(255, 255, 255, 0.04);
+}
+
+.settings-options-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-options-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+  margin: 6px 0;
+}
+
+.settings-options-scroll::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.45);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease;
+}
+
+.settings-options-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.85);
+}
+
+
 
 

@@ -567,8 +567,9 @@ export default function SettingsPage() {
         {/* Two-Column Responsive Layout */}
         <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', alignItems: 'start' }}>
           
-          {/* Grouped Navigation Sidebar */}
+          {/* Grouped Navigation Sidebar with Dedicated Scrollbar */}
           <div
+            className="settings-options-scroll"
             style={{
               background: 'var(--surface-container-lowest)',
               borderRadius: '12px',
