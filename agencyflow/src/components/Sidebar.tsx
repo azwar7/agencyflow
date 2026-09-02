@@ -19,7 +19,14 @@ export function Sidebar() {
     .join('')
     .substring(0, 2)
     .toUpperCase() || 'U';
-  const roleLabel = user?.role === 'OWNER' ? 'Agency Owner' : user?.role ? user.role.replace('_', ' ') : 'Workspace Owner';
+  const isFreelancer = user?.persona === 'FREELANCER';
+  const roleLabel = isFreelancer
+    ? 'Solo Freelancer'
+    : user?.role === 'OWNER'
+    ? 'Agency Owner'
+    : user?.role
+    ? user.role.replace('_', ' ')
+    : 'Workspace Owner';
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
@@ -35,7 +42,7 @@ export function Sidebar() {
   ];
 
   const managementItems = [
-    { label: 'Team', path: '/team', icon: 'groups_3' },
+    { label: isFreelancer ? 'Collaborators' : 'Team', path: '/team', icon: 'groups_3' },
     { label: 'Settings', path: '/settings', icon: 'settings' },
   ];
 

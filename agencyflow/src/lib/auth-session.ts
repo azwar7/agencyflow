@@ -11,6 +11,7 @@ export interface SessionData {
   fullName: string;
   role: string;
   agencyName: string;
+  persona?: string;
 }
 
 export const SESSION_COOKIE_NAME = 'agencyflow_session';
@@ -125,6 +126,7 @@ export async function getAuthSession(request?: Request): Promise<SessionData> {
     fullName: user.fullName,
     role: user.role,
     agencyName: user.workspace.name,
+    persona: user.workspace.persona || 'AGENCY',
   };
 }
 

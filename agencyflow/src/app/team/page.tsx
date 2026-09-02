@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/AppShell';
 import { UIStateCard } from '@/components/UIStateCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -69,6 +70,7 @@ const getAvatarGradient = (name: string) => {
 };
 
 export default function TeamPage() {
+  const { user } = useAuth();
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -210,10 +212,12 @@ export default function TeamPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', paddingTop: '0.25rem' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-              <Users size={24} color="#38bdf8" /> Team & Workload Command Center
+              <Users size={24} color="#38bdf8" /> {user?.persona === 'FREELANCER' ? 'Collaborator & Contractor Network' : 'Team & Workload Command Center'}
             </h1>
             <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', margin: '0.2rem 0 0 0' }}>
-              Manage reps, track workload bandwidth capacity, revenue attribution, and team RBAC permissions.
+              {user?.persona === 'FREELANCER'
+                ? 'Manage collaborators, subcontractors, workload capacity, and joint revenue attribution.'
+                : 'Manage reps, track workload bandwidth capacity, revenue attribution, and team RBAC permissions.'}
             </p>
           </div>
 
@@ -265,7 +269,7 @@ export default function TeamPage() {
                 fontWeight: 700,
               }}
             >
-              <UserPlus size={16} /> Invite Member
+              <UserPlus size={16} /> {user?.persona === 'FREELANCER' ? 'Invite Collaborator' : 'Invite Member'}
             </button>
           </div>
         </div>
@@ -290,8 +294,12 @@ export default function TeamPage() {
               <Users size={20} />
             </div>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, textTransform: 'uppercase' }}>Active Team</span>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff' }}>{totalMembers} Reps & Leads</div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, textTransform: 'uppercase' }}>
+                {user?.persona === 'FREELANCER' ? 'Active Collaborators' : 'Active Team'}
+              </span>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff' }}>
+                {totalMembers} {user?.persona === 'FREELANCER' ? 'Collaborators' : 'Reps & Leads'}
+              </div>
             </div>
           </div>
 

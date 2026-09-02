@@ -10,6 +10,7 @@ export interface UserProfile {
   role?: string;
   agency?: string;
   workspaceId?: string;
+  persona?: 'AGENCY' | 'FREELANCER' | string;
   isFirstLogin?: boolean;
 }
 
@@ -18,6 +19,7 @@ export interface WorkspaceChecklist {
   hasDealOrLead: boolean;
   hasDeliverableOrProject: boolean;
   hasTask: boolean;
+  persona?: string;
 }
 
 interface AuthContextType {

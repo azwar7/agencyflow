@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/AppShell';
 import { EmptyState } from '@/components/EmptyState';
 import {
@@ -47,6 +48,7 @@ interface ClientItem {
 
 export default function ClientsOverviewPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -209,10 +211,10 @@ export default function ClientsOverviewPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <p style={{ fontSize: '0.75rem', color: 'var(--primary)', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem', marginTop: '0.75rem' }}>
-              AGENCY DIRECTORY
+              {user?.persona === 'FREELANCER' ? 'CLIENT DIRECTORY' : 'AGENCY DIRECTORY'}
             </p>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
-              Clients & Retainers
+              {user?.persona === 'FREELANCER' ? 'Clients & Engagements' : 'Clients & Retainers'}
             </h1>
           </div>
 
