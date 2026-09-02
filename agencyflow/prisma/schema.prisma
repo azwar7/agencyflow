@@ -20,6 +20,35 @@ model Workspace {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Org Identity Settings
+  logoUrl         String?
+  website         String?
+  industry        String?
+  companySize     String? // "1-5", "6-20", "21-50", "50+"
+  businessEmail   String?
+  businessPhone   String?
+  businessAddress String?
+
+  // Regional Preferences
+  timezone             String @default("UTC")
+  language             String @default("en")
+  dateFormat           String @default("YYYY-MM-DD")
+  timeFormat           String @default("24h") // "12h" | "24h"
+  currency             String @default("USD")
+  additionalCurrencies Json?  // string[]
+  numberFormat         String @default("standard") // "standard" | "european"
+  firstDayOfWeek       Int    @default(1) // 0 = Sunday, 1 = Monday
+
+  // Business Calendar
+  workingDays       Json?  // number[] e.g. [1,2,3,4,5]
+  workingHoursStart String @default("09:00")
+  workingHoursEnd   String @default("17:00")
+  holidays          Json?  // { date: string, name: string }[]
+
+  // Fiscal Settings
+  fiscalYearStartMonth Int    @default(1) // 1-12
+  fiscalYearType       String @default("standard") // "standard" | "custom"
+
   users        User[]
   invitations  Invitation[]
   leads        Lead[]
@@ -45,7 +74,38 @@ model User {
   fullName     String
   role         String   @default("SALES_REP") // OWNER, MANAGER, SALES_REP
   avatarUrl    String?
+  phone        String?
+  jobTitle     String?
   createdAt    DateTime @default(now())
+
+  // Personal Regional Overrides (null/false = inherit Workspace default)
+  usePersonalPreferences Boolean @default(false)
+  personalTimezone       String?
+  personalDateFormat     String?
+  personalTimeFormat     String?
+
+  // Interface Preferences
+  defaultLandingPage String  @default("/dashboard")
+  defaultCrmView     String  @default("kanban") // "kanban" | "table"
+  rememberFilters    Boolean @default(true)
+  sidebarCollapsed   Boolean @default(false)
+
+  // Appearance & Accessibility
+  theme         String  @default("dark") // "system" | "dark" | "light"
+  density       String  @default("comfortable") // "comfortable" | "compact"
+  reducedMotion Boolean @default(false)
+  textSize      String  @default("normal") // "normal" | "large"
+  highContrast  Boolean @default(false)
+
+  // Granular Notification Preferences
+  notifyEmailDeals     Boolean @default(true)
+  notifyEmailTasks     Boolean @default(true)
+  notifyEmailProposals Boolean @default(true)
+  notifyEmailInvoices  Boolean @default(true)
+  notifyInAppDeals     Boolean @default(true)
+  notifyInAppTasks     Boolean @default(true)
+  notifyInAppProposals Boolean @default(true)
+  notifyInAppInvoices  Boolean @default(true)
 
   workspace       Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   sessions        Session[]

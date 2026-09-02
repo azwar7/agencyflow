@@ -36,16 +36,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const handleOpenDealModal = () => setIsDealModalOpen(true);
     const handleStartTour = () => setIsTourOpen(true);
 
+    const applyAppearance = (detail: any) => {
+      if (typeof document === 'undefined') return;
+      if (detail.theme) document.documentElement.setAttribute('data-theme', detail.theme);
+      if (detail.density) document.documentElement.setAttribute('data-density', detail.density);
+      if (detail.reducedMotion !== undefined)
+        document.documentElement.setAttribute('data-reduced-motion', String(detail.reducedMotion));
+      if (detail.textSize) document.documentElement.setAttribute('data-text-size', detail.textSize);
+      if (detail.highContrast !== undefined)
+        document.documentElement.setAttribute('data-high-contrast', String(detail.highContrast));
+    };
+
+    const handleAppearanceUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) applyAppearance(customEvent.detail);
+    };
+
     window.addEventListener('agencyflow-open-new-lead', handleOpenLeadModal);
     window.addEventListener('agencyflow-open-new-deal', handleOpenDealModal);
     window.addEventListener('agencyflow-start-tour', handleStartTour);
+    window.addEventListener('agencyflow-appearance-updated', handleAppearanceUpdated);
+
+    // Initial appearance fetch
+    if (isAuthenticated) {
+      fetch('/api/v1/settings/appearance')
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && json.data) applyAppearance(json.data);
+        })
+        .catch(() => {});
+    }
 
     return () => {
       window.removeEventListener('agencyflow-open-new-lead', handleOpenLeadModal);
       window.removeEventListener('agencyflow-open-new-deal', handleOpenDealModal);
       window.removeEventListener('agencyflow-start-tour', handleStartTour);
+      window.removeEventListener('agencyflow-appearance-updated', handleAppearanceUpdated);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (

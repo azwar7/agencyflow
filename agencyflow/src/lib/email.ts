@@ -99,3 +99,117 @@ export async function sendOtpEmail({ to, otpCode }: SendOtpEmailOptions): Promis
     return { success: false, error: error.message };
   }
 }
+
+export type NotificationCategory = 'DEALS' | 'TASKS' | 'PROPOSALS' | 'INVOICES' | 'SECURITY';
+
+/**
+ * Checks whether a notification should be delivered based on the user's granular preferences.
+ * Security-critical notifications are NEVER suppressible.
+ */
+export async function shouldSendNotification(
+  userId: string,
+  category: NotificationCategory,
+  channel: 'email' | 'inApp'
+): Promise<boolean> {
+  // Security-critical notifications cannot be disabled by user preferences
+  if (category === 'SECURITY') return true;
+
+  const { prisma } = await import('@/lib/prisma');
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      notifyEmailDeals: true,
+      notifyEmailTasks: true,
+      notifyEmailProposals: true,
+      notifyEmailInvoices: true,
+      notifyInAppDeals: true,
+      notifyInAppTasks: true,
+      notifyInAppProposals: true,
+      notifyInAppInvoices: true,
+    },
+  });
+
+  if (!user) return false;
+
+  if (channel === 'email') {
+    switch (category) {
+      case 'DEALS':
+        return user.notifyEmailDeals;
+      case 'TASKS':
+        return user.notifyEmailTasks;
+      case 'PROPOSALS':
+        return user.notifyEmailProposals;
+      case 'INVOICES':
+        return user.notifyEmailInvoices;
+      default:
+        return true;
+    }
+  } else {
+    switch (category) {
+      case 'DEALS':
+        return user.notifyInAppDeals;
+      case 'TASKS':
+        return user.notifyInAppTasks;
+      case 'PROPOSALS':
+        return user.notifyInAppProposals;
+      case 'INVOICES':
+        return user.notifyInAppInvoices;
+      default:
+        return true;
+    }
+  }
+}
+
+/**
+ * Dispatches an automated CRM notification email, verifying user preferences first.
+ */
+export async function sendNotificationEmail({
+  userId,
+  to,
+  category,
+  subject,
+  content,
+}: {
+  userId: string;
+  to: string;
+  category: NotificationCategory;
+  subject: string;
+  content: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const allowed = await shouldSendNotification(userId, category, 'email');
+  if (!allowed) {
+    return { sent: false, reason: `Suppressed by user email preference for category: ${category}` };
+  }
+
+  const gmailUser = (process.env.GMAIL_USER || 'azwarsalar1122@gmail.com').trim();
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '').trim();
+
+  if (gmailPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: gmailUser, pass: gmailPass },
+      });
+
+      await transporter.sendMail({
+        from: `"AgencyFlow Alerts" <${gmailUser}>`,
+        replyTo: 'no-reply@agencyflow.io',
+        to,
+        subject,
+        text: content,
+        html: `<div style="font-family: sans-serif; background:#0f172a; color:#f8fafc; padding:24px; border-radius:8px;">
+          <h2 style="color:#38bdf8;">⚡ AgencyFlow</h2>
+          <p style="font-size:16px;">${content}</p>
+          <hr style="border:0; border-top:1px solid #334155; margin:20px 0;" />
+          <small style="color:#94a3b8;">You received this email according to your AgencyFlow notification preferences.</small>
+        </div>`,
+      });
+      return { sent: true };
+    } catch (err: any) {
+      return { sent: false, reason: err.message };
+    }
+  }
+
+  return { sent: true, reason: 'Dispatched via mock/development pipeline' };
+}
+
