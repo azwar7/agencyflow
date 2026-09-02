@@ -14,6 +14,11 @@ import { AiConfigTab } from '@/components/settings/AiConfigTab';
 import { EmailOutreachTab } from '@/components/settings/EmailOutreachTab';
 import { IntegrationsHubTab } from '@/components/settings/IntegrationsHubTab';
 import { WorkflowSettingsTab } from '@/components/settings/WorkflowSettingsTab';
+import { ApiWebhooksTab } from '@/components/settings/ApiWebhooksTab';
+import { DataManagementTab } from '@/components/settings/DataManagementTab';
+import { SandboxTab } from '@/components/settings/SandboxTab';
+import { SubscriptionBillingTab } from '@/components/settings/SubscriptionBillingTab';
+import { DangerZoneTab } from '@/components/settings/DangerZoneTab';
 import {
   SETTINGS_NAVIGATION_GROUPS,
   SETTINGS_REGISTRY,
@@ -1518,59 +1523,10 @@ export default function SettingsPage() {
             )}
 
             {/* ------------------------------------------------------------- */}
-            {/* TAB: SANDBOX & SAMPLE DATA */}
+            {/* TAB: SANDBOX & DEMO DATA */}
             {/* ------------------------------------------------------------- */}
             {activeTab === 'sandbox-seed' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '1rem' }}>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                    Sandbox Environment & Sample Agency Data
-                  </h2>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: '0.25rem 0 0 0' }}>
-                    Populate your workspace with realistic mock deals and sprint roadmaps, or reset to clean zero-state.
-                  </p>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                  {/* Load Sample Data */}
-                  <div style={{ padding: '1.5rem', borderRadius: '12px', background: 'var(--surface-container)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <Database size={28} color="#4edea3" style={{ marginBottom: '0.75rem' }} />
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '0.35rem' }}>
-                      Load Agency Sample Data
-                    </h3>
-                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.25rem' }}>
-                      Injects 3 sample companies, 4 pipeline deals, active deliverable milestones, and realistic tasks.
-                    </p>
-                    <button
-                      onClick={handleLoadSampleData}
-                      disabled={seeding || !isOwnerOrAdmin}
-                      className="btn btn-secondary"
-                      style={{ border: '1px solid rgba(78, 222, 163, 0.4)', color: '#4edea3', fontWeight: 700, fontSize: '0.85rem' }}
-                    >
-                      {seeding ? 'Processing...' : '⚡ Load Sample Data'}
-                    </button>
-                  </div>
-
-                  {/* Clear Sample Data */}
-                  <div style={{ padding: '1.5rem', borderRadius: '12px', background: 'var(--surface-container)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <X size={28} color="#f87171" style={{ marginBottom: '0.75rem' }} />
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '0.35rem' }}>
-                      Reset to Clean Zero-State
-                    </h3>
-                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.25rem' }}>
-                      Safely removes all tagged sample data without affecting your custom leads, team accounts, or settings.
-                    </p>
-                    <button
-                      onClick={handleClearSampleData}
-                      disabled={seeding || !isOwnerOrAdmin}
-                      className="btn btn-secondary"
-                      style={{ border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', fontWeight: 700, fontSize: '0.85rem' }}
-                    >
-                      {seeding ? 'Processing...' : 'Clear Sample Records'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <SandboxTab currentUserRole={user?.role} showToast={showToast} />
             )}
 
             {/* ------------------------------------------------------------- */}
@@ -1623,25 +1579,31 @@ export default function SettingsPage() {
             )}
 
             {/* ------------------------------------------------------------- */}
-            {/* STUBBED TABS: COMING SOON IN PHASE 5 */}
+            {/* TAB: REST API KEYS & WEBHOOKS */}
             {/* ------------------------------------------------------------- */}
-            {['data-export', 'subscription-billing'].includes(activeTab) && (
-              <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
-                  <Sparkles size={24} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', margin: '0 0 0.25rem 0' }}>
-                    {SETTINGS_REGISTRY.find((r) => r.tabId === activeTab)?.title || 'Settings Module'}
-                  </h3>
-                  <div style={{ display: 'inline-block', fontSize: '0.7rem', color: '#a78bfa', background: 'rgba(139, 92, 246, 0.15)', padding: '2px 10px', borderRadius: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Coming Soon in Phase 5
-                  </div>
-                </div>
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: '420px', margin: 0 }}>
-                  This module is scheduled for the upcoming data export & subscription release.
-                </p>
-              </div>
+            {activeTab === 'api-webhooks' && (
+              <ApiWebhooksTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: DATA MANAGEMENT */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'data-export' && (
+              <DataManagementTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: SUBSCRIPTION & USAGE */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'subscription-billing' && (
+              <SubscriptionBillingTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: DANGER ZONE */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'danger-zone' && (
+              <DangerZoneTab currentUserRole={user?.role} workspaceName={wsData.name} showToast={showToast} />
             )}
           </div>
         </div>

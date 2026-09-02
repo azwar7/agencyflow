@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
 import { requireRole } from '@/lib/authorization';
+import { logAuditEvent } from '@/lib/audit';
 
 export async function GET(request: Request) {
   try {
@@ -397,6 +398,15 @@ export async function DELETE(request: Request) {
     requireRole(session, ['OWNER', 'ADMIN']);
 
     await clearWorkspaceSampleData(session.workspaceId);
+
+    await logAuditEvent({
+      workspaceId: session.workspaceId,
+      userId: session.userId,
+      action: 'SAMPLE_DATA_PURGE',
+      entityType: 'Workspace',
+      entityId: session.workspaceId,
+      metadata: { initiatedBy: session.fullName },
+    });
 
     return NextResponse.json({
       success: true,

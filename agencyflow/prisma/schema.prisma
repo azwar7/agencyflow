@@ -92,6 +92,9 @@ model Workspace {
   outreachDelayBetweenEmails   Int     @default(30) // seconds
   outreachDefaultSenderAccount String  @default("GMAIL_SMTP") // GMAIL_SMTP | OUTLOOK_OAUTH | N8N_RELAY
 
+  // Phase 5: Developer & Sandbox
+  sandboxMode                  Boolean @default(false)
+
   users             User[]
   invitations       Invitation[]
   leads             Lead[]
@@ -112,6 +115,8 @@ model Workspace {
   pipelineStages    PipelineStage[]
   customFields      CustomField[]
   customFieldValues CustomFieldValue[]
+  apiKeys           ApiKey[]
+  webhooks          WebhookSubscription[]
 }
 
 model User {
@@ -647,5 +652,63 @@ model CustomFieldValue {
   @@index([workspaceId])
   @@index([recordId])
 }
+
+// ============================================================================
+// Phase 5: Developer & API Models
+// ============================================================================
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  workspaceId String
+  name        String
+  keyPrefix   String    // e.g. "af_live_a1b2c3" (safe display prefix)
+  keyHash     String    // SHA-256 hash of raw key (never plaintext)
+  role        String    @default("ADMIN")
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([keyHash])
+}
+
+model WebhookSubscription {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  targetUrl   String
+  secret      String   // HMAC signing secret
+  events      Json     // string[] e.g. ["lead.created", "lead.updated", "deal.created", "deal.stage_changed"]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace  Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([workspaceId])
+}
+
+model WebhookDelivery {
+  id             String   @id @default(uuid())
+  subscriptionId String
+  event          String
+  payload        Json
+  status         String   // SUCCESS, FAILED
+  statusCode     Int?
+  responseBody   String?
+  attemptCount   Int      @default(1)
+  error          String?
+  createdAt      DateTime @default(now())
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([createdAt])
+}
+
 
 
