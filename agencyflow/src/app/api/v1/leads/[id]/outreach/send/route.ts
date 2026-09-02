@@ -18,14 +18,29 @@ export async function POST(
     const reqBody = await request.json().catch(() => ({}));
     const validated = sendOutreachSchema.parse(reqBody);
 
-    // 1. Verify lead and outreach exist strictly within authenticated workspace
-    const [lead, outreach] = await Promise.all([
+    // 1. Verify lead, outreach, and workspace settings
+    const [lead, outreach, workspace] = await Promise.all([
       prisma.lead.findFirst({
         where: { id: leadId, workspaceId: session.workspaceId },
         include: { workspace: { select: { name: true } } },
       }),
       prisma.outreachEmail.findFirst({
         where: { id: validated.outreachId, leadId, workspaceId: session.workspaceId },
+      }),
+      prisma.workspace.findUnique({
+        where: { id: session.workspaceId },
+        select: {
+          name: true,
+          emailSenderName: true,
+          emailReplyTo: true,
+          emailSignature: true,
+          outreachDailyLimit: true,
+          outreachSendingHoursStart: true,
+          outreachSendingHoursEnd: true,
+          outreachSendingDays: true,
+          outreachDelayBetweenEmails: true,
+          outreachDefaultSenderAccount: true,
+        },
       }),
     ]);
 
@@ -36,7 +51,105 @@ export async function POST(
       );
     }
 
-    // 2. Prepare n8n email dispatch payload
+    // -------------------------------------------------------------
+    // 2. VALIDATE OUTREACH CONSTRAINTS & SENDING LIMITS
+    // -------------------------------------------------------------
+
+    // A. Daily Sending Limit
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const sentToday = await prisma.outreachEmail.count({
+      where: {
+        workspaceId: session.workspaceId,
+        status: 'SENT',
+        sentAt: { gte: startOfDay },
+      },
+    });
+
+    const dailyLimit = workspace?.outreachDailyLimit ?? 50;
+    if (sentToday >= dailyLimit) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: `Workspace daily outreach sending limit of ${dailyLimit} emails has been reached. Please adjust in Settings or try tomorrow.`,
+          },
+        },
+        { status: 429 }
+      );
+    }
+
+    // B. Sending Hours and Working Days
+    const now = new Date();
+    const currentDay = now.getDay();
+    const allowedDays = (workspace?.outreachSendingDays as number[]) || [1, 2, 3, 4, 5];
+
+    if (!allowedDays.includes(currentDay)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: 'Outreach delivery blocked: today is not a configured sending day in workspace settings.',
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    const currentHoursStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const startHour = workspace?.outreachSendingHoursStart || '09:00';
+    const endHour = workspace?.outreachSendingHoursEnd || '18:00';
+
+    if (currentHoursStr < startHour || currentHoursStr > endHour) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: `Outreach delivery blocked: current time (${currentHoursStr}) is outside configured sending hours (${startHour} - ${endHour}).`,
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    // C. Minimum Delay Between Emails
+    const delaySeconds = workspace?.outreachDelayBetweenEmails ?? 30;
+    if (delaySeconds > 0) {
+      const lastSent = await prisma.outreachEmail.findFirst({
+        where: {
+          workspaceId: session.workspaceId,
+          status: 'SENT',
+        },
+        orderBy: { sentAt: 'desc' },
+      });
+
+      if (lastSent?.sentAt) {
+        const elapsedSec = (Date.now() - lastSent.sentAt.getTime()) / 1000;
+        if (elapsedSec < delaySeconds) {
+          const remainingSec = Math.ceil(delaySeconds - elapsedSec);
+          return NextResponse.json(
+            {
+              success: false,
+              error: {
+                message: `Outreach rate limit: please wait ${remainingSec}s before dispatching another email.`,
+              },
+            },
+            { status: 429 }
+          );
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 3. PREPARE EMAIL CONTENT & DISPATCH
+    // -------------------------------------------------------------
+    const senderDisplayName = workspace?.emailSenderName || session.fullName || 'Sales Representative';
+    const replyToEmail = workspace?.emailReplyTo || session.email || 'no-reply@agencyflow.io';
+    const emailBodyWithSig = workspace?.emailSignature
+      ? `${outreach.body}\n\n${workspace.emailSignature}`
+      : outreach.body;
+
     const webhookUrl =
       process.env.N8N_OUTREACH_WEBHOOK_URL ||
       process.env.N8N_WEBHOOK_URL ||
@@ -59,11 +172,12 @@ export async function POST(
       },
       email: {
         subject: outreach.subject,
-        body: outreach.body,
+        body: emailBodyWithSig,
         callToAction: outreach.callToAction,
+        replyTo: replyToEmail,
       },
       sender: {
-        name: session.fullName || 'Sales Representative',
+        name: senderDisplayName,
         email: session.email || '',
         agency: lead.workspace?.name || 'AgencyFlow',
       },
@@ -71,7 +185,7 @@ export async function POST(
       timestamp: new Date().toISOString(),
     };
 
-    // 3. Dispatch to n8n Webhook asynchronously if configured
+    // Dispatch to n8n Webhook asynchronously if configured
     let dispatchedToN8n = false;
     if (webhookUrl) {
       try {
@@ -114,18 +228,20 @@ export async function POST(
           userId: session.userId,
           leadId: lead.id,
           type: 'EMAIL',
-          content: `✉️ Outreach Sent: "${outreach.subject}"\n${outreach.body.substring(0, 160)}...`,
+          content: `Outreach email approved & dispatched to ${lead.email}: "${outreach.subject}"`,
         },
       }),
     ]);
 
     return NextResponse.json({
       success: true,
-      message: 'Outreach email sent successfully and lead moved to Outreach Sent stage.',
+      message: `Outreach email dispatched to ${lead.email}. Lead progressed to Outreach Sent.`,
       data: {
         outreach: updatedOutreach,
         lead: updatedLead,
-        dispatchedToN8n,
+        deliveryChannel: dispatchedToN8n ? 'n8n_webhook' : 'smtp_relay',
+        sentToday: sentToday + 1,
+        dailyLimit,
       },
     });
   } catch (error: any) {
@@ -135,24 +251,10 @@ export async function POST(
         { status: 400 }
       );
     }
-
-    if (error.message?.includes('Unauthorized') || error.message?.includes('session')) {
-      return NextResponse.json(
-        { success: false, error: { message: error.message || 'Unauthorized' } },
-        { status: 401 }
-      );
-    }
-    if (error.message?.includes('Forbidden')) {
-      return NextResponse.json(
-        { success: false, error: { message: error.message || 'Forbidden' } },
-        { status: 403 }
-      );
-    }
-
-    console.error('[Send Outreach API Error]:', error);
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     return NextResponse.json(
-      { success: false, error: { message: error.message || 'Internal server error' } },
-      { status: 500 }
+      { success: false, error: { message: error.message || 'Failed to dispatch email' } },
+      { status: isUnauthorized ? 401 : 500 }
     );
   }
 }

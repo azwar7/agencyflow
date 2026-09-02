@@ -49,15 +49,33 @@ export async function POST(request: Request) {
     const validated = scoreLeadRequestSchema.parse(body);
     const leadId = validated.leadId;
 
-    // 4. Build sanitized, workspace-isolated LeadContext (strictly scoped to session.workspaceId)
+    // 4. Verify workspace AI settings
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: session.workspaceId },
+      select: { aiLeadScoringEnabled: true, aiProvider: true },
+    });
+
+    if (!workspace?.aiLeadScoringEnabled) {
+      return NextResponse.json(
+        { success: false, error: { message: 'AI Lead Scoring is disabled in your workspace settings.' } },
+        { status: 403 }
+      );
+    }
+
+    // 5. Build sanitized, workspace-isolated LeadContext (strictly scoped to session.workspaceId)
     const leadContext = await buildLeadContext(leadId, session);
 
-    // 5. Build versioned LeadAnalysisPrompt with prompt injection isolation
+    // 6. Build versioned LeadAnalysisPrompt with prompt injection isolation
     const prompt = buildLeadAnalysisPrompt(leadContext, validated.customInstructions);
 
-    // 6. Execute structured AI generation via provider-independent AiService
+    // 7. Resolve provider
+    const resolvedProvider =
+      validated.provider ||
+      (workspace.aiProvider && workspace.aiProvider !== 'system' ? (workspace.aiProvider as any) : undefined);
+
+    // 8. Execute structured AI generation via provider-independent AiService
     const aiResult = await aiService.generateStructured<LeadAnalysis>({
-      provider: validated.provider,
+      provider: resolvedProvider,
       systemPrompt: prompt.systemPrompt,
       userPrompt: prompt.userPrompt,
       schema: LeadAnalysisSchema,

@@ -50,13 +50,26 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const validated = analyzeRequestSchema.parse(body);
 
-    // 4. Verify lead exists and belongs strictly to authenticated workspace
-    const existingLead = await prisma.lead.findFirst({
-      where: {
-        id: leadId,
-        workspaceId: session.workspaceId,
-      },
-    });
+    // 4. Verify workspace AI settings & lead ownership
+    const [workspace, existingLead] = await Promise.all([
+      prisma.workspace.findUnique({
+        where: { id: session.workspaceId },
+        select: { aiLeadAnalysisEnabled: true, aiProvider: true },
+      }),
+      prisma.lead.findFirst({
+        where: {
+          id: leadId,
+          workspaceId: session.workspaceId,
+        },
+      }),
+    ]);
+
+    if (!workspace?.aiLeadAnalysisEnabled) {
+      return NextResponse.json(
+        { success: false, error: { message: 'AI Lead Analysis is disabled in your workspace settings.' } },
+        { status: 403 }
+      );
+    }
 
     if (!existingLead) {
       return NextResponse.json(
@@ -71,9 +84,14 @@ export async function POST(
     // 6. Build structured LeadIntelligence prompt
     const prompt = buildLeadIntelligencePrompt(leadContext, validated.customInstructions);
 
-    // 7. Execute AI structured generation via provider-independent AiService
+    // 7. Resolve provider from request or workspace preference
+    const resolvedProvider =
+      validated.provider ||
+      (workspace.aiProvider && workspace.aiProvider !== 'system' ? (workspace.aiProvider as any) : undefined);
+
+    // 8. Execute AI structured generation via provider-independent AiService
     const aiResult = await aiService.generateStructured<LeadIntelligence>({
-      provider: validated.provider,
+      provider: resolvedProvider,
       systemPrompt: prompt.systemPrompt,
       userPrompt: prompt.userPrompt,
       schema: LeadIntelligenceSchema,

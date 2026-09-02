@@ -56,9 +56,10 @@ export const SETTINGS_NAVIGATION_GROUPS: SettingsCategoryGroup[] = [
     id: 'automation-ai',
     label: 'AUTOMATION & AI',
     tabs: [
-      { id: 'webhooks-api', label: 'Webhooks & API Keys', icon: 'webhook', description: 'Inbound webhooks, REST API keys, and endpoint triggers', isImplemented: false, roleRequired: 'ADMIN' },
-      { id: 'ai-config', label: 'AI Configuration', icon: 'sparkles', description: 'Gemini model parameters, prompt templates, and scoring criteria', isImplemented: false, roleRequired: 'ADMIN' },
-      { id: 'email-templates', label: 'Email Templates', icon: 'mail', description: 'Reusable B2B cold email sequences and signature blocks', isImplemented: false },
+      { id: 'ai-config', label: 'AI & Intelligence', icon: 'sparkles', description: 'Provider selection, feature gates, and usage metrics', isImplemented: true, roleRequired: 'ADMIN' },
+      { id: 'email-config', label: 'Email & Outreach', icon: 'mail', description: 'Sender identity, delivery hours, and daily limits', isImplemented: true, roleRequired: 'ADMIN' },
+      { id: 'integrations-hub', label: 'Integrations Hub', icon: 'webhook', description: 'Live connectivity status for Gmail, Outlook, n8n, Gemini, OpenAI, Anthropic', isImplemented: true, roleRequired: 'ADMIN' },
+      { id: 'workflow-config', label: 'Workflows & n8n', icon: 'sliders', description: 'Inbound lead ingestion pipelines, webhook endpoints, and activity', isImplemented: true, roleRequired: 'ADMIN' },
     ],
   },
   {
@@ -390,5 +391,52 @@ export const SETTINGS_REGISTRY: SettingRegistryEntry[] = [
     roleRequired: 'ADMIN',
     isImplemented: true,
   },
+
+  // Automation & AI
+  {
+    id: 'auto-ai-engine',
+    title: 'AI Engine & Pipeline Feature Gates',
+    category: 'Automation & AI',
+    tabId: 'ai-config',
+    sectionId: 'ai-feature-gates',
+    description: 'Provider selection, temperature, auto-analyze leads, and feature switches.',
+    keywords: ['ai', 'gemini', 'openai', 'anthropic', 'scoring', 'email generation', 'auto analyze'],
+    roleRequired: 'ADMIN',
+    isImplemented: true,
+  },
+  {
+    id: 'auto-email-outreach',
+    title: 'Email Communication & Outreach Rules',
+    category: 'Automation & AI',
+    tabId: 'email-config',
+    sectionId: 'outreach-rules',
+    description: 'Daily sending limit, delivery window, inter-email delay, sender identity, and signature.',
+    keywords: ['outreach', 'email limit', 'daily limit', 'sending hours', 'signature', 'reply-to', 'smtp'],
+    roleRequired: 'ADMIN',
+    isImplemented: true,
+  },
+  {
+    id: 'auto-integrations',
+    title: 'Integrations Hub & Service Connectors',
+    category: 'Automation & AI',
+    tabId: 'integrations-hub',
+    sectionId: 'live-integrations',
+    description: 'Real-time verified status for Gmail, Outlook, n8n, Gemini, OpenAI, Anthropic.',
+    keywords: ['integrations', 'gmail', 'outlook', 'n8n', 'gemini', 'openai', 'anthropic', 'status'],
+    roleRequired: 'ADMIN',
+    isImplemented: true,
+  },
+  {
+    id: 'auto-workflows',
+    title: 'Workflow Endpoints & n8n Automation',
+    category: 'Automation & AI',
+    tabId: 'workflow-config',
+    sectionId: 'n8n-pipelines',
+    description: 'Inbound lead ingestion webhook, authentication headers, and activity logs.',
+    keywords: ['n8n', 'workflows', 'webhook', 'inbound', 'automation', 'endpoints'],
+    roleRequired: 'ADMIN',
+    isImplemented: true,
+  },
 ];
+
 

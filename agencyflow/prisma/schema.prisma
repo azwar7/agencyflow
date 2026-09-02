@@ -72,6 +72,26 @@ model Workspace {
   dealLossReasons         Json?   // string[]
   dealRequiredFields      Json?   // string[]
 
+  // Phase 4: AI Configuration & Feature Gates
+  aiProvider                   String  @default("system") // system | gemini | openai | anthropic | huggingface | mock
+  aiLeadAnalysisEnabled        Boolean @default(true)
+  aiLeadScoringEnabled         Boolean @default(true)
+  aiEmailGenerationEnabled     Boolean @default(true)
+  aiFollowUpSuggestionsEnabled Boolean @default(true)
+  aiAutoAnalyzeLeads           Boolean @default(false)
+  aiModelTemperature           Float   @default(0.7)
+
+  // Phase 4: Email & Outreach Controls
+  emailSenderName              String?
+  emailReplyTo                 String?
+  emailSignature               String?
+  outreachDailyLimit           Int     @default(50)
+  outreachSendingHoursStart    String  @default("09:00")
+  outreachSendingHoursEnd      String  @default("18:00")
+  outreachSendingDays          Json?   // [1, 2, 3, 4, 5] (Mon-Fri)
+  outreachDelayBetweenEmails   Int     @default(30) // seconds
+  outreachDefaultSenderAccount String  @default("GMAIL_SMTP") // GMAIL_SMTP | OUTLOOK_OAUTH | N8N_RELAY
+
   users             User[]
   invitations       Invitation[]
   leads             Lead[]

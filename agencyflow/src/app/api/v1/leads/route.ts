@@ -65,13 +65,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = createLeadSchema.parse(body);
 
-    // 1. Fetch workspace lead settings for duplicate detection & assignment rules
+    // 1. Fetch workspace lead settings for duplicate detection, assignment rules & AI auto-analyze
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
       select: {
         duplicateLeadDetection: true,
         defaultLeadOwnerId: true,
         leadAssignmentRule: true,
+        aiAutoAnalyzeLeads: true,
+        aiLeadAnalysisEnabled: true,
+        aiProvider: true,
       },
     });
 
@@ -194,7 +197,62 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, data: newLead }, { status: 201 });
+    // 5. Auto-analyze new lead if enabled in workspace AI settings
+    let finalLeadRecord = newLead;
+    if (workspace?.aiAutoAnalyzeLeads && workspace.aiLeadAnalysisEnabled) {
+      try {
+        const { buildLeadContext } = await import('@/lib/ai/context/lead-context');
+        const { buildLeadIntelligencePrompt } = await import('@/lib/ai/prompts/lead-intelligence.prompt');
+        const { aiService } = await import('@/lib/ai/ai-service');
+        const { LeadIntelligenceSchema } = await import('@/lib/ai/schemas/lead-intelligence.schema');
+
+        const leadContext = await buildLeadContext(newLead.id, session);
+        const prompt = buildLeadIntelligencePrompt(leadContext);
+        const provider =
+          workspace.aiProvider && workspace.aiProvider !== 'system'
+            ? (workspace.aiProvider as any)
+            : undefined;
+
+        const aiResult = await aiService.generateStructured({
+          provider,
+          systemPrompt: prompt.systemPrompt,
+          userPrompt: prompt.userPrompt,
+          schema: LeadIntelligenceSchema,
+        });
+
+        const intel = aiResult.data;
+        await prisma.leadAiAnalysis.create({
+          data: {
+            workspaceId,
+            leadId: newLead.id,
+            score: intel.score,
+            qualification: intel.qualification,
+            companySummary: intel.companySummary,
+            likelyPainPoints: intel.likelyPainPoints,
+            recommendedServices: intel.recommendedServices,
+            recommendedPitch: intel.recommendedPitch,
+            reasoning: intel.reasoning,
+            confidence: intel.confidence,
+            provider: aiResult.provider,
+            model: aiResult.model,
+          },
+        });
+
+        finalLeadRecord = await prisma.lead.update({
+          where: { id: newLead.id },
+          data: {
+            leadScore: intel.score,
+            aiSummary: intel.companySummary,
+            status: intel.score >= 70 ? 'QUALIFIED' : newLead.status,
+          },
+          include: { assignedTo: { select: { fullName: true } } },
+        });
+      } catch (aiErr: any) {
+        console.warn('[Lead Ingestion] Auto-analyze skipped/failed:', aiErr.message);
+      }
+    }
+
+    return NextResponse.json({ success: true, data: finalLeadRecord }, { status: 201 });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

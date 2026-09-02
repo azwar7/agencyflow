@@ -10,6 +10,10 @@ import { AuditLogsTab } from '@/components/settings/AuditLogsTab';
 import { PipelineStagesTab } from '@/components/settings/PipelineStagesTab';
 import { CustomFieldsTab } from '@/components/settings/CustomFieldsTab';
 import { LeadRoutingTab } from '@/components/settings/LeadRoutingTab';
+import { AiConfigTab } from '@/components/settings/AiConfigTab';
+import { EmailOutreachTab } from '@/components/settings/EmailOutreachTab';
+import { IntegrationsHubTab } from '@/components/settings/IntegrationsHubTab';
+import { WorkflowSettingsTab } from '@/components/settings/WorkflowSettingsTab';
 import {
   SETTINGS_NAVIGATION_GROUPS,
   SETTINGS_REGISTRY,
@@ -1591,9 +1595,37 @@ export default function SettingsPage() {
             )}
 
             {/* ------------------------------------------------------------- */}
-            {/* STUBBED TABS: COMING SOON IN PHASE 4 */}
+            {/* TAB: AI & INTELLIGENCE */}
             {/* ------------------------------------------------------------- */}
-            {['webhooks-api', 'ai-config', 'email-templates', 'data-export', 'subscription-billing'].includes(activeTab) && (
+            {activeTab === 'ai-config' && (
+              <AiConfigTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: EMAIL & OUTREACH */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'email-config' && (
+              <EmailOutreachTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: INTEGRATIONS HUB */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'integrations-hub' && (
+              <IntegrationsHubTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: WORKFLOWS & N8N */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'workflow-config' && (
+              <WorkflowSettingsTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* STUBBED TABS: COMING SOON IN PHASE 5 */}
+            {/* ------------------------------------------------------------- */}
+            {['data-export', 'subscription-billing'].includes(activeTab) && (
               <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
                   <Sparkles size={24} />
@@ -1603,11 +1635,11 @@ export default function SettingsPage() {
                     {SETTINGS_REGISTRY.find((r) => r.tabId === activeTab)?.title || 'Settings Module'}
                   </h3>
                   <div style={{ display: 'inline-block', fontSize: '0.7rem', color: '#a78bfa', background: 'rgba(139, 92, 246, 0.15)', padding: '2px 10px', borderRadius: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Coming Soon in Phase 4
+                    Coming Soon in Phase 5
                   </div>
                 </div>
                 <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: '420px', margin: 0 }}>
-                  This module is scheduled for the upcoming automation & AI integrations release.
+                  This module is scheduled for the upcoming data export & subscription release.
                 </p>
               </div>
             )}

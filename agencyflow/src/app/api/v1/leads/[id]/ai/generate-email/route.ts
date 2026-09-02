@@ -50,17 +50,30 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const validated = generateEmailSchema.parse(body);
 
-    // 4. Verify lead exists and belongs strictly to authenticated workspace
-    const existingLead = await prisma.lead.findFirst({
-      where: {
-        id: leadId,
-        workspaceId: session.workspaceId,
-      },
-      include: {
-        workspace: { select: { name: true } },
-        assignedTo: { select: { fullName: true } },
-      },
-    });
+    // 4. Verify workspace AI settings & lead ownership
+    const [workspace, existingLead] = await Promise.all([
+      prisma.workspace.findUnique({
+        where: { id: session.workspaceId },
+        select: { aiEmailGenerationEnabled: true, aiProvider: true, emailSenderName: true, emailSignature: true },
+      }),
+      prisma.lead.findFirst({
+        where: {
+          id: leadId,
+          workspaceId: session.workspaceId,
+        },
+        include: {
+          workspace: { select: { name: true } },
+          assignedTo: { select: { fullName: true } },
+        },
+      }),
+    ]);
+
+    if (!workspace?.aiEmailGenerationEnabled) {
+      return NextResponse.json(
+        { success: false, error: { message: 'AI Email Generation is disabled in your workspace settings.' } },
+        { status: 403 }
+      );
+    }
 
     if (!existingLead) {
       return NextResponse.json(
@@ -101,13 +114,18 @@ export async function POST(
       intelligence: intelligenceData,
       tone: validated.tone,
       customInstructions: validated.customInstructions,
-      senderName: existingLead.assignedTo?.fullName || session.fullName || 'Account Representative',
+      senderName: workspace?.emailSenderName || existingLead.assignedTo?.fullName || session.fullName || 'Account Representative',
       agencyName: existingLead.workspace?.name || 'AgencyFlow',
     });
 
-    // 8. Execute AI generation
+    // 8. Resolve provider
+    const resolvedProvider =
+      validated.provider ||
+      (workspace.aiProvider && workspace.aiProvider !== 'system' ? (workspace.aiProvider as any) : undefined);
+
+    // 9. Execute AI generation
     const aiResult = await aiService.generateStructured<EmailGeneration>({
-      provider: validated.provider,
+      provider: resolvedProvider,
       systemPrompt: prompt.systemPrompt,
       userPrompt: prompt.userPrompt,
       schema: EmailGenerationSchema,
