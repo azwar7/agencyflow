@@ -7,7 +7,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const session = await getAuthSession(request);
     const { id } = await params;
     const body = await request.json();
-    const { stage, lossReason } = body;
+    const { stage, stageId, lossReason } = body;
 
     // Verify deal exists and strictly belongs to authenticated tenant workspace
     const existingDeal = await prisma.deal.findFirst({
@@ -21,10 +21,42 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ success: false, error: 'Deal not found' }, { status: 404 });
     }
 
+    // Resolve target stage from pipeline stages
+    const targetStage = await prisma.pipelineStage.findFirst({
+      where: {
+        workspaceId: session.workspaceId,
+        OR: [
+          ...(stageId ? [{ id: stageId }] : []),
+          ...(stage ? [{ key: stage }, { name: stage }] : []),
+        ],
+      },
+    });
+
+    // Check stage-specific required fields
+    if (targetStage?.requiredFields && Array.isArray(targetStage.requiredFields)) {
+      for (const field of targetStage.requiredFields) {
+        if (field === 'value' && (!existingDeal.value || existingDeal.value <= 0)) {
+          return NextResponse.json(
+            { success: false, error: `Stage '${targetStage.name}' requires a deal value greater than $0.` },
+            { status: 400 }
+          );
+        }
+        if (field === 'expectedCloseDate' && !existingDeal.expectedCloseDate) {
+          return NextResponse.json(
+            { success: false, error: `Stage '${targetStage.name}' requires an expected close date.` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    const nextStageKey = targetStage ? targetStage.key : stage;
+
     const updated = await prisma.deal.update({
       where: { id },
       data: {
-        stage,
+        stage: nextStageKey,
+        stageId: targetStage?.id || existingDeal.stageId,
         ...(lossReason ? { lossReason } : {}),
       },
     });
@@ -36,7 +68,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         userId: session.userId,
         dealId: id,
         type: 'STAGE_CHANGE',
-        content: `Moved deal "${existingDeal.title}" from ${existingDeal.stage} to ${stage}.${
+        content: `Moved deal "${existingDeal.title}" to ${targetStage?.name || nextStageKey}.${
           lossReason ? ` Reason: "${lossReason}"` : ''
         }`,
       },
@@ -49,7 +81,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const status = isUnauthorized ? 401 : isForbidden ? 403 : 400;
 
     return NextResponse.json(
-      { success: false, error: { message: error.message } },
+      { success: false, error: error.message || 'Failed to update deal stage' },
       { status }
     );
   }

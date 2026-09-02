@@ -179,11 +179,11 @@ export default function PipelinePage() {
                             cursor: 'pointer',
                           }}
                         >
-                          <option value="DISCOVERY">Discovery</option>
-                          <option value="PROPOSAL">Proposal</option>
-                          <option value="NEGOTIATION">Negotiation</option>
-                          <option value="CLOSED_WON">Closed Won</option>
-                          <option value="CLOSED_LOST">Closed Lost</option>
+                          {pipelineData.columns.map((c: any) => (
+                            <option key={c.stageId} value={c.stageKey || c.stageId}>
+                              {c.label} ({c.probability}%)
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>

@@ -63,22 +63,35 @@ model Workspace {
   dealVisibility    String @default("ALL")
   taskVisibility    String @default("ALL")
 
-  users        User[]
-  invitations  Invitation[]
-  leads        Lead[]
-  companies    Company[]
-  contacts     Contact[]
-  deals        Deal[]
-  activities   Activity[]
-  tasks        Task[]
-  projects     Project[]
-  deliverables Deliverable[]
-  invoices     Invoice[]
-  proposals    Proposal[]
-  files        FileRecord[]
-  leadAiAnalyses LeadAiAnalysis[]
-  outreachEmails OutreachEmail[]
-  auditLogs      AuditLog[]
+  // Phase 3: CRM Configuration & Defaults
+  leadSources             Json?   // string[]
+  leadStatuses            Json?   // { key: string, label: string, color: string }[]
+  defaultLeadOwnerId      String?
+  leadAssignmentRule      String  @default("MANUAL") // MANUAL | ROUND_ROBIN | DEFAULT_OWNER
+  duplicateLeadDetection  String  @default("EMAIL_AND_PHONE") // OFF | EMAIL_ONLY | EMAIL_AND_PHONE
+  dealLossReasons         Json?   // string[]
+  dealRequiredFields      Json?   // string[]
+
+  users             User[]
+  invitations       Invitation[]
+  leads             Lead[]
+  companies         Company[]
+  contacts          Contact[]
+  deals             Deal[]
+  activities        Activity[]
+  tasks             Task[]
+  projects          Project[]
+  deliverables      Deliverable[]
+  invoices          Invoice[]
+  proposals         Proposal[]
+  files             FileRecord[]
+  leadAiAnalyses    LeadAiAnalysis[]
+  outreachEmails    OutreachEmail[]
+  auditLogs         AuditLog[]
+  pipelines         Pipeline[]
+  pipelineStages    PipelineStage[]
+  customFields      CustomField[]
+  customFieldValues CustomFieldValue[]
 }
 
 model User {
@@ -266,6 +279,8 @@ model Lead {
 model Deal {
   id                String    @id @default(uuid())
   workspaceId       String
+  pipelineId        String?
+  stageId           String?
   contactId         String?
   companyId         String?
   assignedToId      String?
@@ -277,16 +292,20 @@ model Deal {
   isSample          Boolean   @default(false)
   createdAt         DateTime  @default(now())
 
-  workspace  Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  contact    Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  company    Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  assignedTo User?      @relation("AssignedDeals", fields: [assignedToId], references: [id], onDelete: SetNull)
-  activities Activity[]
-  tasks      Task[]
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  pipeline      Pipeline?      @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  pipelineStage PipelineStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  contact       Contact?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  company       Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  assignedTo    User?          @relation("AssignedDeals", fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities    Activity[]
+  tasks         Task[]
 
   @@index([workspaceId])
   @@index([workspaceId, stage])
   @@index([workspaceId, createdAt])
+  @@index([pipelineId])
+  @@index([stageId])
   @@index([companyId])
   @@index([contactId])
   @@index([assignedToId])
@@ -522,6 +541,91 @@ model EmailVerification {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+model Pipeline {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  isDefault   Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  stages    PipelineStage[]
+  deals     Deal[]
+
+  @@index([workspaceId])
+}
+
+model PipelineStage {
+  id             String   @id @default(uuid())
+  workspaceId    String
+  pipelineId     String
+  name           String   // e.g. "Discovery", "Proposal Sent", "Negotiation", "Closed Won", "Closed Lost"
+  key            String   // e.g. "DISCOVERY", "PROPOSAL", "NEGOTIATION", "CLOSED_WON", "CLOSED_LOST", etc.
+  probability    Int      @default(50) // 0 to 100
+  color          String   @default("#8b5cf6")
+  order          Int      @default(0)
+  isWon          Boolean  @default(false)
+  isLost         Boolean  @default(false)
+  requiredFields Json?    // string[] e.g. ["value", "expectedCloseDate"]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  pipeline  Pipeline  @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  deals     Deal[]
+
+  @@index([workspaceId])
+  @@index([pipelineId])
+  @@index([order])
+}
+
+model CustomField {
+  id          String   @id @default(uuid())
+  workspaceId String
+  entityType  String   // "LEAD" | "CONTACT" | "COMPANY" | "DEAL"
+  name        String   // e.g. "Budget Range", "Tech Stack"
+  key         String   // e.g. "budget_range", "tech_stack"
+  fieldType   String   // "TEXT" | "LONG_TEXT" | "NUMBER" | "CURRENCY" | "DATE" | "DROPDOWN" | "MULTI_SELECT" | "CHECKBOX" | "URL"
+  options     Json?    // For DROPDOWN and MULTI_SELECT: string[]
+  placeholder String?
+  description String?
+  isRequired  Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  values    CustomFieldValue[]
+
+  @@unique([workspaceId, entityType, key])
+  @@index([workspaceId])
+  @@index([entityType])
+}
+
+model CustomFieldValue {
+  id            String    @id @default(uuid())
+  workspaceId   String
+  customFieldId String
+  recordId      String    // ID of Lead, Contact, Company, or Deal
+  textValue     String?
+  numberValue   Float?
+  dateValue     DateTime?
+  booleanValue  Boolean?
+  jsonValue     Json?     // For MULTI_SELECT: string[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customField CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([customFieldId, recordId])
+  @@index([workspaceId])
+  @@index([recordId])
 }
 
 

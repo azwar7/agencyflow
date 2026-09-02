@@ -8,9 +8,11 @@ const createLeadSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().optional(),
-  companyName: z.string().optional(),
-  source: z.string().default('Website Inbound'),
+  phone: z.string().optional().nullable(),
+  companyName: z.string().optional().nullable(),
+  source: z.string().optional().default('Website Inbound'),
+  status: z.string().optional().default('NEW'),
+  customFields: z.record(z.any()).optional(),
 });
 
 export async function GET(request: Request) {
@@ -34,10 +36,10 @@ export async function GET(request: Request) {
         ...(search
           ? {
               OR: [
-                { firstName: { contains: search } },
-                { lastName: { contains: search } },
-                { email: { contains: search } },
-                { companyName: { contains: search } },
+                { firstName: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { companyName: { contains: search, mode: 'insensitive' } },
               ],
             }
           : {}),
@@ -63,33 +65,119 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = createLeadSchema.parse(body);
 
+    // 1. Fetch workspace lead settings for duplicate detection & assignment rules
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: {
+        duplicateLeadDetection: true,
+        defaultLeadOwnerId: true,
+        leadAssignmentRule: true,
+      },
+    });
+
+    // 2. Duplicate Detection
+    const dupRule = workspace?.duplicateLeadDetection || 'EMAIL_AND_PHONE';
+    if (dupRule !== 'OFF') {
+      const emailDup = await prisma.lead.findFirst({
+        where: { workspaceId, email: validated.email.trim().toLowerCase() },
+      });
+      if (emailDup) {
+        return NextResponse.json(
+          { success: false, error: { message: `A lead with email '${validated.email}' already exists in your workspace.` } },
+          { status: 400 }
+        );
+      }
+
+      if (dupRule === 'EMAIL_AND_PHONE' && validated.phone) {
+        const phoneDup = await prisma.lead.findFirst({
+          where: { workspaceId, phone: validated.phone.trim() },
+        });
+        if (phoneDup) {
+          return NextResponse.json(
+            { success: false, error: { message: `A lead with phone number '${validated.phone}' already exists.` } },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // 3. Assignment Rule
+    let assignedUserId = userId;
+    if (workspace?.leadAssignmentRule === 'DEFAULT_OWNER' && workspace.defaultLeadOwnerId) {
+      assignedUserId = workspace.defaultLeadOwnerId;
+    }
+
     const newLead = await prisma.lead.create({
       data: {
         workspaceId,
-        assignedToId: userId,
-        firstName: validated.firstName,
-        lastName: validated.lastName,
-        email: validated.email,
-        phone: validated.phone || null,
-        companyName: validated.companyName || null,
-        source: validated.source,
-        status: 'NEW',
+        assignedToId: assignedUserId,
+        firstName: validated.firstName.trim(),
+        lastName: validated.lastName.trim(),
+        email: validated.email.trim().toLowerCase(),
+        phone: validated.phone?.trim() || null,
+        companyName: validated.companyName?.trim() || null,
+        source: validated.source || 'Website Inbound',
+        status: validated.status || 'NEW',
         leadScore: 60,
         aiSummary: 'New inbound prospect ingested into CRM.',
       },
       include: { assignedTo: { select: { fullName: true } } },
     });
 
-    // Also auto-create company if companyName provided
+    // 4. Save Custom Field values if provided
+    if (validated.customFields && typeof validated.customFields === 'object') {
+      const fields = await prisma.customField.findMany({
+        where: { workspaceId, entityType: 'LEAD' },
+      });
+      const fieldMap = new Map(fields.map((f) => [f.key, f]));
+
+      for (const [k, val] of Object.entries(validated.customFields)) {
+        const field = fieldMap.get(k);
+        if (!field) continue;
+
+        let textValue: string | null = null;
+        let numberValue: number | null = null;
+        let dateValue: Date | null = null;
+        let booleanValue: boolean | null = null;
+        let jsonValue: any = null;
+
+        if (field.fieldType === 'NUMBER' || field.fieldType === 'CURRENCY') {
+          numberValue = val !== null && val !== undefined && val !== '' ? Number(val) : null;
+        } else if (field.fieldType === 'DATE') {
+          dateValue = val ? new Date(val as any) : null;
+        } else if (field.fieldType === 'CHECKBOX') {
+          booleanValue = Boolean(val);
+        } else if (field.fieldType === 'MULTI_SELECT') {
+          jsonValue = Array.isArray(val) ? val : [];
+        } else {
+          textValue = val !== null && val !== undefined ? String(val) : null;
+        }
+
+        await prisma.customFieldValue.create({
+          data: {
+            workspaceId,
+            customFieldId: field.id,
+            recordId: newLead.id,
+            textValue,
+            numberValue,
+            dateValue,
+            booleanValue,
+            jsonValue,
+          },
+        });
+      }
+    }
+
+    // Auto-create company if companyName provided
     if (validated.companyName) {
       const existingCompany = await prisma.company.findFirst({
-        where: { workspaceId, name: validated.companyName },
+        where: { workspaceId, name: validated.companyName.trim() },
       });
       if (!existingCompany) {
         await prisma.company.create({
           data: {
             workspaceId,
-            name: validated.companyName,
+            name: validated.companyName.trim(),
           },
         });
       }
@@ -108,6 +196,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: newLead }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: { message: error.errors[0]?.message || 'Validation error' } },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: { message: error.message || 'Failed to create lead' } },
       { status: 400 }

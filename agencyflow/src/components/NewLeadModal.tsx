@@ -33,6 +33,43 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
   const [error, setError] = useState('');
   const [successToast, setSuccessToast] = useState('');
 
+  // Dynamic CRM Settings & Custom Fields
+  const [availableSources, setAvailableSources] = useState<string[]>([
+    'Website Inbound',
+    'LinkedIn Outreach',
+    'Cold Email',
+    'Client Referral',
+    'Strategic Partner',
+    'Paid Search / Ads',
+  ]);
+  const [customFields, setCustomFields] = useState<any[]>([]);
+  const [customValues, setCustomValues] = useState<Record<string, any>>({});
+
+  // Fetch dynamic lead sources and custom fields when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // 1. Fetch sources
+      fetch('/api/v1/settings/crm-defaults')
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && json.data?.leadSources) {
+            setAvailableSources(json.data.leadSources);
+          }
+        })
+        .catch(() => {});
+
+      // 2. Fetch custom fields for LEAD
+      fetch('/api/v1/settings/custom-fields?entityType=LEAD')
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && json.data) {
+            setCustomFields(json.data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
   // Handle Escape key close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,7 +102,10 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
       const res = await fetch('/api/v1/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          customFields: customValues,
+        }),
       });
 
       const json = await res.json();
@@ -477,13 +517,79 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
                   cursor: 'pointer',
                 }}
               >
-                <option value="Website Inbound">Website Contact Form</option>
-                <option value="LinkedIn Outbound">LinkedIn Outbound</option>
-                <option value="Executive Referral">Executive Referral</option>
-                <option value="Upwork Job Inbound">Upwork Client Inbound</option>
-                <option value="Direct Contact">Direct Contact / Email</option>
+                {availableSources.map((src) => (
+                  <option key={src} value={src}>
+                    {src}
+                  </option>
+                ))}
               </select>
             </div>
+
+            {/* Dynamic Custom Fields Section */}
+            {customFields.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#c4b5fd' }}>
+                  Custom Fields ({customFields.length})
+                </span>
+                {customFields.map((f) => (
+                  <div key={f.id}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.3rem', color: 'var(--on-surface-variant)' }}>
+                      {f.name} {f.isRequired && <span style={{ color: 'var(--error)' }}>*</span>}
+                    </label>
+
+                    {f.fieldType === 'DROPDOWN' && f.options ? (
+                      <select
+                        required={f.isRequired}
+                        value={customValues[f.key] || ''}
+                        onChange={(e) => setCustomValues({ ...customValues, [f.key]: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 'var(--radius-md)', color: '#fff', fontSize: '0.85rem' }}
+                      >
+                        <option value="">Select an option...</option>
+                        {f.options.map((opt: string) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    ) : f.fieldType === 'CHECKBOX' ? (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#fff', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(customValues[f.key])}
+                          onChange={(e) => setCustomValues({ ...customValues, [f.key]: e.target.checked })}
+                          style={{ width: '16px', height: '16px', accentColor: '#8b5cf6' }}
+                        />
+                        {f.placeholder || f.name}
+                      </label>
+                    ) : f.fieldType === 'DATE' ? (
+                      <input
+                        type="date"
+                        required={f.isRequired}
+                        value={customValues[f.key] || ''}
+                        onChange={(e) => setCustomValues({ ...customValues, [f.key]: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 'var(--radius-md)', color: '#fff', fontSize: '0.85rem' }}
+                      />
+                    ) : f.fieldType === 'NUMBER' || f.fieldType === 'CURRENCY' ? (
+                      <input
+                        type="number"
+                        required={f.isRequired}
+                        placeholder={f.placeholder || '0'}
+                        value={customValues[f.key] || ''}
+                        onChange={(e) => setCustomValues({ ...customValues, [f.key]: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 'var(--radius-md)', color: '#fff', fontSize: '0.85rem' }}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        required={f.isRequired}
+                        placeholder={f.placeholder || ''}
+                        value={customValues[f.key] || ''}
+                        onChange={(e) => setCustomValues({ ...customValues, [f.key]: e.target.value })}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', background: 'var(--surface-container-high)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 'var(--radius-md)', color: '#fff', fontSize: '0.85rem' }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div
               style={{

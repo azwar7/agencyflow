@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
 import { getVisibilityFilter } from '@/lib/visibility';
+import { ensureDefaultPipeline } from '@/lib/pipelines';
 
 const createDealSchema = z.object({
   title: z.string().min(1, 'Deal title is required').max(255),
@@ -12,10 +13,11 @@ const createDealSchema = z.object({
     .max(100_000_000, 'Deal value exceeds maximum allowed limit')
     .optional()
     .default(0),
-  stage: z
-    .enum(['DISCOVERY', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'])
-    .optional()
-    .default('DISCOVERY'),
+  stage: z.string().optional().default('DISCOVERY'),
+  stageId: z.string().optional(),
+  pipelineId: z.string().optional(),
+  contactId: z.string().optional().nullable(),
+  companyId: z.string().optional().nullable(),
   expectedCloseDate: z.string().optional().nullable(),
 });
 
@@ -25,9 +27,22 @@ export async function GET(request: Request) {
     const workspaceId = session.workspaceId;
     const visibilityFilter = await getVisibilityFilter(session, 'deal');
 
+    // Ensure default pipeline and stages exist
+    const defaultPipeline = await ensureDefaultPipeline(workspaceId);
+
+    const { searchParams } = new URL(request.url);
+    const requestedPipelineId = searchParams.get('pipelineId') || defaultPipeline.id;
+
+    // Load requested pipeline with its stages
+    const pipeline = await prisma.pipeline.findFirst({
+      where: { id: requestedPipelineId, workspaceId },
+      include: { stages: { orderBy: { order: 'asc' } } },
+    }) || defaultPipeline;
+
     const deals = await prisma.deal.findMany({
       where: {
         workspaceId,
+        pipelineId: pipeline.id,
         ...visibilityFilter,
       },
       orderBy: { createdAt: 'desc' },
@@ -38,27 +53,38 @@ export async function GET(request: Request) {
       },
     });
 
-    const STAGES = [
-      { id: 'DISCOVERY', label: '1. Discovery' },
-      { id: 'PROPOSAL', label: '2. Proposal Sent' },
-      { id: 'NEGOTIATION', label: '3. Negotiation' },
-      { id: 'CLOSED_WON', label: '4. Closed Won' },
-      { id: 'CLOSED_LOST', label: '5. Closed Lost' },
-    ];
-
-    const columns = STAGES.map((stage) => {
-      const stageDeals = deals.filter((d) => d.stage === stage.id);
-      const totalValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
+    const columns = pipeline.stages.map((stage) => {
+      const stageDeals = deals.filter(
+        (d) => d.stageId === stage.id || d.stage === stage.key || d.stage === stage.name
+      );
+      const totalValue = stageDeals.reduce((sum, d) => sum + (d.value || 0), 0);
       return {
         stageId: stage.id,
-        label: stage.label,
+        stageKey: stage.key,
+        label: stage.name,
+        probability: stage.probability,
+        color: stage.color,
+        isWon: stage.isWon,
+        isLost: stage.isLost,
+        requiredFields: stage.requiredFields as string[] | undefined,
         totalValue,
         count: stageDeals.length,
         deals: stageDeals,
       };
     });
 
-    return NextResponse.json({ success: true, data: { columns, totalDeals: deals.length } });
+    return NextResponse.json({
+      success: true,
+      data: {
+        pipeline: {
+          id: pipeline.id,
+          name: pipeline.name,
+          isDefault: pipeline.isDefault,
+        },
+        columns,
+        totalDeals: deals.length,
+      },
+    });
   } catch (error: any) {
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     return NextResponse.json(
@@ -77,13 +103,51 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = createDealSchema.parse(body);
 
+    const defaultPipeline = await ensureDefaultPipeline(workspaceId);
+    const activePipelineId = validated.pipelineId || defaultPipeline.id;
+
+    // Resolve stage
+    const stages = defaultPipeline.stages;
+    let targetStage = stages.find(
+      (s) =>
+        s.id === validated.stageId ||
+        s.key === validated.stage ||
+        s.name.toLowerCase() === validated.stage.toLowerCase()
+    );
+
+    if (!targetStage && stages.length > 0) {
+      targetStage = stages[0];
+    }
+
+    // Check stage-specific required fields
+    if (targetStage?.requiredFields && Array.isArray(targetStage.requiredFields)) {
+      for (const field of targetStage.requiredFields) {
+        if (field === 'value' && (!validated.value || validated.value <= 0)) {
+          return NextResponse.json(
+            { success: false, error: { message: `Stage '${targetStage.name}' requires a deal value greater than 0.` } },
+            { status: 400 }
+          );
+        }
+        if (field === 'expectedCloseDate' && !validated.expectedCloseDate) {
+          return NextResponse.json(
+            { success: false, error: { message: `Stage '${targetStage.name}' requires an expected close date.` } },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const deal = await prisma.deal.create({
       data: {
         workspaceId,
         assignedToId: userId,
+        pipelineId: activePipelineId,
+        stageId: targetStage?.id,
+        stage: targetStage?.key || validated.stage,
         title: validated.title.trim(),
         value: validated.value,
-        stage: validated.stage,
+        contactId: validated.contactId || undefined,
+        companyId: validated.companyId || undefined,
         expectedCloseDate: validated.expectedCloseDate ? new Date(validated.expectedCloseDate) : null,
       },
     });
@@ -95,7 +159,7 @@ export async function POST(request: Request) {
         userId,
         dealId: deal.id,
         type: 'STAGE_CHANGE',
-        content: `Deal created in stage: ${deal.stage} with value $${deal.value.toLocaleString()}`,
+        content: `Deal created in stage: ${targetStage?.name || deal.stage} with value $${deal.value.toLocaleString()}`,
       },
     });
 

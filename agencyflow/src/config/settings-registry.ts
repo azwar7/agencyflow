@@ -47,9 +47,9 @@ export const SETTINGS_NAVIGATION_GROUPS: SettingsCategoryGroup[] = [
     id: 'crm-config',
     label: 'CRM CONFIGURATION',
     tabs: [
-      { id: 'pipeline-stages', label: 'Pipeline & Stages', icon: 'kanban', description: 'Custom deal stages, win probabilities, and pipeline flow', isImplemented: false, roleRequired: 'ADMIN' },
-      { id: 'custom-fields', label: 'Custom Fields', icon: 'file-text', description: 'Define custom properties for leads, companies, and deals', isImplemented: false, roleRequired: 'ADMIN' },
-      { id: 'lead-routing', label: 'Lead Scoring & Routing', icon: 'target', description: 'Automated ICP scoring weights and round-robin assignment', isImplemented: false, roleRequired: 'ADMIN' },
+      { id: 'pipeline-stages', label: 'Pipeline & Stages', icon: 'kanban', description: 'Custom deal stages, win probabilities, and pipeline flow', isImplemented: true, roleRequired: 'ADMIN' },
+      { id: 'custom-fields', label: 'Custom Fields', icon: 'file-text', description: 'Define custom properties for leads, companies, and deals', isImplemented: true, roleRequired: 'ADMIN' },
+      { id: 'lead-routing', label: 'Lead Lifecycle & Defaults', icon: 'target', description: 'Lead sources, duplicate detection, routing rules, and loss attribution', isImplemented: true, roleRequired: 'ADMIN' },
     ],
   },
   {
@@ -355,4 +355,40 @@ export const SETTINGS_REGISTRY: SettingRegistryEntry[] = [
     roleRequired: 'ADMIN',
     isImplemented: true,
   },
+
+  // CRM Configuration
+  {
+    id: 'crm-pipelines',
+    title: 'Deal Pipelines & Stage Management',
+    category: 'CRM Configuration',
+    tabId: 'pipeline-stages',
+    sectionId: 'pipeline-config',
+    description: 'Create pipelines, customize stage names, set win probabilities, and stage entry rules.',
+    keywords: ['pipeline', 'stage', 'probability', 'deals', 'kanban', 'stages', 'reorder'],
+    roleRequired: 'ADMIN',
+    isImplemented: true,
+  },
+  {
+    id: 'crm-custom-fields',
+    title: 'Custom Fields & Schema',
+    category: 'CRM Configuration',
+    tabId: 'custom-fields',
+    sectionId: 'custom-fields-config',
+    description: 'Add custom data attributes to Leads, Contacts, Companies, and Deals.',
+    keywords: ['custom fields', 'fields', 'attributes', 'properties', 'dropdown', 'tags'],
+    roleRequired: 'ADMIN',
+    isImplemented: true,
+  },
+  {
+    id: 'crm-lead-routing',
+    title: 'Lead Sources, Assignment & Loss Reasons',
+    category: 'CRM Configuration',
+    tabId: 'lead-routing',
+    sectionId: 'lead-lifecycle',
+    description: 'Manage acquisition sources, duplicate protection, default owner, and lost reasons.',
+    keywords: ['lead sources', 'duplicate detection', 'assignment', 'loss reasons', 'status'],
+    roleRequired: 'ADMIN',
+    isImplemented: true,
+  },
 ];
+

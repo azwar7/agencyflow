@@ -7,6 +7,9 @@ import { SettingsSearchModal } from '@/components/SettingsSearchModal';
 import { TeamMembersTab } from '@/components/settings/TeamMembersTab';
 import { SecurityAuthTab } from '@/components/settings/SecurityAuthTab';
 import { AuditLogsTab } from '@/components/settings/AuditLogsTab';
+import { PipelineStagesTab } from '@/components/settings/PipelineStagesTab';
+import { CustomFieldsTab } from '@/components/settings/CustomFieldsTab';
+import { LeadRoutingTab } from '@/components/settings/LeadRoutingTab';
 import {
   SETTINGS_NAVIGATION_GROUPS,
   SETTINGS_REGISTRY,
@@ -1567,9 +1570,30 @@ export default function SettingsPage() {
             )}
 
             {/* ------------------------------------------------------------- */}
-            {/* STUBBED TABS: COMING SOON IN PHASE 3 */}
+            {/* TAB: PIPELINE & STAGES */}
             {/* ------------------------------------------------------------- */}
-            {['pipeline-stages', 'custom-fields', 'lead-routing', 'webhooks-api', 'ai-config', 'email-templates', 'data-export', 'subscription-billing'].includes(activeTab) && (
+            {activeTab === 'pipeline-stages' && (
+              <PipelineStagesTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: CUSTOM FIELDS */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'custom-fields' && (
+              <CustomFieldsTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* TAB: LEAD LIFECYCLE & DEFAULTS */}
+            {/* ------------------------------------------------------------- */}
+            {activeTab === 'lead-routing' && (
+              <LeadRoutingTab currentUserRole={user?.role} showToast={showToast} />
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* STUBBED TABS: COMING SOON IN PHASE 4 */}
+            {/* ------------------------------------------------------------- */}
+            {['webhooks-api', 'ai-config', 'email-templates', 'data-export', 'subscription-billing'].includes(activeTab) && (
               <div style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
                   <Sparkles size={24} />
@@ -1579,11 +1603,11 @@ export default function SettingsPage() {
                     {SETTINGS_REGISTRY.find((r) => r.tabId === activeTab)?.title || 'Settings Module'}
                   </h3>
                   <div style={{ display: 'inline-block', fontSize: '0.7rem', color: '#a78bfa', background: 'rgba(139, 92, 246, 0.15)', padding: '2px 10px', borderRadius: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Coming Soon in Phase 3
+                    Coming Soon in Phase 4
                   </div>
                 </div>
                 <p style={{ fontSize: '0.85rem', color: '#94a3b8', maxWidth: '420px', margin: 0 }}>
-                  This module is scheduled for the upcoming automation & system release. The navigation shell is indexed in the global settings registry.
+                  This module is scheduled for the upcoming automation & AI integrations release.
                 </p>
               </div>
             )}
