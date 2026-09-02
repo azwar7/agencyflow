@@ -141,13 +141,13 @@ export async function processN8nLead(
   const initialStatus = normalizedScore >= 70 ? 'QUALIFIED' : 'NEW';
 
   const aiSummary = payload.reason
-    ? `n8n Prospect Qualification (${payload.score !== null ? `Score: ${payload.score}/10` : 'Evaluated'}): ${payload.reason}`
-    : 'Inbound business prospect discovered and qualified via n8n automation.';
+    ? `AI Prospect Qualification (${payload.score !== null ? `Score: ${payload.score}/10` : 'Evaluated'}): ${payload.reason}`
+    : 'Inbound business prospect discovered and qualified via Autonomous AI Lead Engine.';
 
   // Construct contact name and safe email
   const nameParts = companyName.split(' ');
   const firstName = nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : companyName;
-  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '(n8n)';
+  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : 'Lead';
 
   let contactEmail = payload.email;
   if (!contactEmail) {
@@ -155,7 +155,7 @@ export async function processN8nLead(
       contactEmail = `info@${cleanDomain}`;
     } else {
       const sanitizedSlug = companyName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 20);
-      contactEmail = `lead-${sanitizedSlug}-${Date.now()}@n8n.internal`;
+      contactEmail = `lead-${sanitizedSlug}-${Date.now()}@lead.internal`;
     }
   }
 

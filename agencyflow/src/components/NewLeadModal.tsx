@@ -212,7 +212,7 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
             </div>
             <div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
-                {activeTab === 'n8n' ? 'Find Leads with AI (n8n)' : 'Create New Inbound Lead'}
+                {activeTab === 'n8n' ? 'Find Leads with AI' : 'Create New Inbound Lead'}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0 }}>
                 {activeTab === 'n8n'
@@ -290,7 +290,7 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
               transition: 'all 0.15s ease',
             }}
           >
-            <Sparkles size={16} /> ⚡ Find Leads (n8n AI)
+            <Sparkles size={16} /> ⚡ Find Leads with AI
           </button>
         </div>
 
@@ -528,11 +528,11 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
                 <Bot size={18} color="#6ffbbe" />
                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#6ffbbe' }}>
-                  Autonomous n8n Lead Discovery & AI Qualification
+                  Autonomous AI Lead Discovery & Qualification
                 </span>
               </div>
               <p style={{ fontSize: '0.78rem', color: 'var(--on-surface-variant)', margin: 0, lineHeight: 1.4 }}>
-                Pings your n8n workflow to search Google Places, Geoapify & Foursquare, scrape websites, score leads with Gemini AI, and ingest them directly into AgencyFlow.
+                Searches Google Places, maps directories & business web listings, scrapes company data, scores ICP fit with Gemini AI, and ingests leads directly into AgencyFlow.
               </p>
             </div>
 
@@ -678,7 +678,7 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="spin" /> Triggering Workflow...
+                    <Loader2 size={16} className="spin" /> Searching & Scraping Leads...
                   </>
                 ) : (
                   <>
