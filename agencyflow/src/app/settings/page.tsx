@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/AppShell';
 import {
   Building2,
@@ -21,6 +22,7 @@ import {
 type SettingsTab = 'workspace' | 'profile' | 'team' | 'security' | 'sandbox' | 'notifications';
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>('workspace');
   
   // Existing Database Seed state
@@ -28,16 +30,25 @@ export default function SettingsPage() {
   const [seedSuccess, setSeedSuccess] = useState('');
 
   // Form states for Settings
-  const [orgName, setOrgName] = useState('Apex Digital Agency');
-  const [tenantSlug, setTenantSlug] = useState('apex-digital');
+  const [orgName, setOrgName] = useState(user?.agency || 'My Agency');
+  const [tenantSlug, setTenantSlug] = useState(user?.agency ? user.agency.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'my-workspace');
   const [timezone, setTimezone] = useState('EST (UTC-05:00)');
   const [currency, setCurrency] = useState('USD ($)');
   const [savedSuccessMsg, setSavedSuccessMsg] = useState('');
 
   // Profile Form state
-  const [profileName, setProfileName] = useState('Alex Sterling');
-  const [profileEmail, setProfileEmail] = useState('alex@agencyflow.io');
-  const [profileRole] = useState('OWNER');
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [profileRole] = useState(user?.role || 'OWNER');
+
+  useEffect(() => {
+    if (user?.name) setProfileName(user.name);
+    if (user?.email) setProfileEmail(user.email);
+    if (user?.agency) {
+      setOrgName(user.agency);
+      setTenantSlug(user.agency.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+    }
+  }, [user]);
 
   // Notification Toggles State
   const [notifyEmail, setNotifyEmail] = useState(true);
@@ -339,12 +350,12 @@ export default function SettingsPage() {
 
                 <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '0.5rem' }}>
-                    <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: 'var(--primary-container)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.15rem' }}>
-                      AS
+                    <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: 'linear-gradient(135deg, #38bdf8, #2563eb)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.15rem' }}>
+                      {(profileName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'U'}
                     </div>
                     <div>
-                      <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)' }}>Alex Sterling</p>
-                      <span style={{ padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(192, 193, 255, 0.15)', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 800 }}>
+                      <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>{profileName || 'My Account'}</p>
+                      <span style={{ display: 'inline-block', marginTop: '0.25rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(192, 193, 255, 0.15)', color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 800 }}>
                         {profileRole}
                       </span>
                     </div>

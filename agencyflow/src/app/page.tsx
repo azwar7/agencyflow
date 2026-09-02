@@ -184,8 +184,8 @@ export default function LandingPage() {
                       }}
                     >
                       <div style={{ paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                        <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#e2e2e8', margin: 0 }}>{user?.name || 'Alex Sterling'}</p>
-                        <p style={{ fontSize: '0.75rem', color: '#cbc3d7', margin: 0 }}>{user?.email || 'alex@agencyflow.io'}</p>
+                        <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#e2e2e8', margin: 0 }}>{user?.name || 'My Account'}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#cbc3d7', margin: 0 }}>{user?.email || ''}</p>
                         <span
                           style={{
                             display: 'inline-block',

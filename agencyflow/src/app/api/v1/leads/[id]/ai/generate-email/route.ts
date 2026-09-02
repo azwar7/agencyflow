@@ -101,7 +101,7 @@ export async function POST(
       intelligence: intelligenceData,
       tone: validated.tone,
       customInstructions: validated.customInstructions,
-      senderName: existingLead.assignedTo?.fullName || session.fullName || 'Alex Sterling',
+      senderName: existingLead.assignedTo?.fullName || session.fullName || 'Account Representative',
       agencyName: existingLead.workspace?.name || 'AgencyFlow',
     });
 

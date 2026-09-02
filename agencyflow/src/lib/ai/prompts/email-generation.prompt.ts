@@ -27,7 +27,7 @@ export function buildEmailGenerationPrompt(
 ): EmailGenerationPromptResult {
   const tone = options.tone || 'professional';
   const agencyName = options.agencyName || 'AgencyFlow';
-  const senderName = options.senderName || 'Alex Sterling';
+  const senderName = options.senderName || 'Account Representative';
 
   const systemPrompt = `You are a world-class B2B Cold Outreach Copywriter for ${agencyName}.
 You write authentic, concise, highly personalized outreach emails from agency founder/rep (${senderName}) to prospective business decision-makers.

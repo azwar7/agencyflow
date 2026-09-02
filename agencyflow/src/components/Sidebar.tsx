@@ -2,11 +2,24 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import AgencyFlowLogo from '@/components/AgencyFlowLogo';
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const displayName = user?.name || user?.email?.split('@')[0] || 'My Account';
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map((n: string) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'U';
+  const roleLabel = user?.role === 'OWNER' ? 'Agency Owner' : user?.role ? user.role.replace('_', ' ') : 'Workspace Owner';
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
@@ -109,6 +122,8 @@ export function Sidebar() {
       {/* User Profile Footer */}
       <div style={{ padding: '0.85rem 1rem', borderTop: '1px solid rgba(70, 69, 84, 0.2)', flexShrink: 0 }}>
         <div
+          onClick={() => router.push('/settings')}
+          title="Account Settings"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -123,24 +138,24 @@ export function Sidebar() {
               width: '34px',
               height: '34px',
               borderRadius: '50%',
-              background: 'var(--primary)',
+              background: 'linear-gradient(135deg, #38bdf8, #2563eb)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--on-primary)',
-              fontWeight: 700,
+              color: '#fff',
+              fontWeight: 800,
               fontSize: '0.85rem',
               flexShrink: 0,
             }}
           >
-            AS
+            {initials}
           </div>
           <div className="sidebar-label" style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Alex Sterling
+            <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+              {displayName}
             </p>
-            <p style={{ fontSize: '11px', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Agency Owner
+            <p style={{ fontSize: '11px', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: '2px 0 0 0' }}>
+              {roleLabel}
             </p>
           </div>
           <span className="material-symbols-outlined sidebar-label" style={{ color: 'var(--outline)', fontSize: '18px' }}>
