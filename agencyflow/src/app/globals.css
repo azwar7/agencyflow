@@ -142,6 +142,133 @@ button {
   background: rgba(192, 193, 255, 0.4);
 }
 
+/* -------------------------------------------------------------
+   Sidebar 3D Glassmorphism Navigation Styles
+   ------------------------------------------------------------- */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-DEFAULT);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--on-surface-variant);
+  background: transparent;
+  border: 1px solid transparent;
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+  will-change: transform, box-shadow;
+  transition: 
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-nav-item .material-symbols-outlined {
+  font-size: 19px;
+  color: var(--outline);
+  transition: color 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-nav-item .sidebar-label {
+  transition: color 0.2s ease, font-weight 0.2s ease;
+}
+
+/* Hover State - 3D Lift & Glassmorphism */
+.sidebar-nav-item:hover {
+  transform: translateY(-3px) scale(1.01);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.25),
+    0 0 15px rgba(124, 58, 237, 0.12);
+  color: #c4b5fd;
+  z-index: 2;
+}
+
+.sidebar-nav-item:hover .material-symbols-outlined {
+  color: #c4b5fd;
+  filter: drop-shadow(0 0 8px rgba(192, 193, 255, 0.4));
+}
+
+.sidebar-nav-item:hover .sidebar-label {
+  color: #f1edff;
+}
+
+/* Active State - Persistent Premium Highlight */
+.sidebar-nav-item.active {
+  background: rgba(192, 193, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(192, 193, 255, 0.35);
+  box-shadow: 
+    0 4px 16px rgba(124, 58, 237, 0.18),
+    inset 0 0 12px rgba(192, 193, 255, 0.06);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.sidebar-nav-item.active .material-symbols-outlined {
+  color: var(--primary);
+  filter: drop-shadow(0 0 6px rgba(192, 193, 255, 0.35));
+}
+
+.sidebar-nav-item.active .sidebar-label {
+  color: #ffffff;
+}
+
+/* Active Item Hover - Enhanced 3D Lift with active identity preserved */
+.sidebar-nav-item.active:hover {
+  transform: translateY(-3px) scale(1.01);
+  background: rgba(192, 193, 255, 0.18);
+  border-color: rgba(192, 193, 255, 0.5);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(124, 58, 237, 0.25),
+    inset 0 0 14px rgba(192, 193, 255, 0.1);
+  color: #ffffff;
+}
+
+/* User Profile Footer Card Hover */
+.sidebar-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: 
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sidebar-profile-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.25),
+    0 0 15px rgba(124, 58, 237, 0.12);
+}
+
+@media (max-width: 1024px) {
+  .sidebar-nav-item {
+    justify-content: center;
+    padding: 0.6rem 0.5rem;
+  }
+}
+
 .app-main {
   padding-left: 260px;
   width: 100%;

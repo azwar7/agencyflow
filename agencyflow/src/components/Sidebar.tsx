@@ -70,20 +70,9 @@ export function Sidebar() {
             <Link
               key={item.path}
               href={item.path}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.5rem 0.85rem',
-                borderRadius: 'var(--radius-DEFAULT)',
-                fontSize: '0.85rem',
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
-                background: isActive ? 'rgba(192, 193, 255, 0.1)' : 'transparent',
-                transition: 'all 0.15s ease',
-              }}
+              className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+              <span className="material-symbols-outlined">
                 {item.icon}
               </span>
               <span className="sidebar-label">{item.label}</span>
@@ -104,20 +93,9 @@ export function Sidebar() {
             <Link
               key={item.path}
               href={item.path}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.5rem 0.85rem',
-                borderRadius: 'var(--radius-DEFAULT)',
-                fontSize: '0.85rem',
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'var(--primary)' : 'var(--on-surface-variant)',
-                background: isActive ? 'rgba(192, 193, 255, 0.1)' : 'transparent',
-                transition: 'all 0.15s ease',
-              }}
+              className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+              <span className="material-symbols-outlined">
                 {item.icon}
               </span>
               <span className="sidebar-label">{item.label}</span>
@@ -131,14 +109,7 @@ export function Sidebar() {
         <div
           onClick={() => router.push('/settings')}
           title="Account Settings"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.35rem',
-            borderRadius: 'var(--radius-md)',
-            cursor: 'pointer',
-          }}
+          className="sidebar-profile-card"
         >
           <div
             style={{
