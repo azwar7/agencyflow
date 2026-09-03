@@ -5,6 +5,7 @@ import { getAuthSession } from '@/lib/auth-session';
 
 const sendOutreachSchema = z.object({
   outreachId: z.string().min(1, 'outreachId is required'),
+  forceSend: z.boolean().optional().default(true),
 });
 
 export async function POST(
@@ -95,42 +96,9 @@ export async function POST(
       );
     }
 
-    // B. Sending Hours and Working Days
-    const now = new Date();
-    const currentDay = now.getDay();
-    const allowedDays = (workspace?.outreachSendingDays as number[]) || [1, 2, 3, 4, 5];
-
-    if (!allowedDays.includes(currentDay)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: 'Outreach delivery blocked: today is not a configured sending day in workspace settings.',
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    const currentHoursStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const startHour = workspace?.outreachSendingHoursStart || '09:00';
-    const endHour = workspace?.outreachSendingHoursEnd || '18:00';
-
-    if (currentHoursStr < startHour || currentHoursStr > endHour) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: `Outreach delivery blocked: current time (${currentHoursStr}) is outside configured sending hours (${startHour} - ${endHour}).`,
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    // C. Minimum Delay Between Emails
-    const delaySeconds = workspace?.outreachDelayBetweenEmails ?? 30;
-    if (delaySeconds > 0) {
+    // B. Delay Between Dispatches (Spam Prevention)
+    const delaySeconds = workspace?.outreachDelayBetweenEmails ?? 10;
+    if (delaySeconds > 0 && !validated.forceSend) {
       const lastSent = await prisma.outreachEmail.findFirst({
         where: {
           workspaceId: session.workspaceId,
@@ -166,10 +134,9 @@ export async function POST(
       : outreach.body;
 
     const webhookUrl =
-      process.env.N8N_OUTREACH_WEBHOOK_URL ||
       process.env.N8N_WEBHOOK_OUTREACH_URL ||
-      process.env.N8N_WEBHOOK_URL ||
-      '';
+      process.env.N8N_OUTREACH_WEBHOOK_URL ||
+      'https://suri69.app.n8n.cloud/webhook/send-outreach';
 
     const baseUrl =
       process.env.NEXTAUTH_URL ||
