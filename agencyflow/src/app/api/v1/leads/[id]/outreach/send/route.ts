@@ -167,6 +167,7 @@ export async function POST(
 
     const webhookUrl =
       process.env.N8N_OUTREACH_WEBHOOK_URL ||
+      process.env.N8N_WEBHOOK_OUTREACH_URL ||
       process.env.N8N_WEBHOOK_URL ||
       '';
 
