@@ -372,6 +372,7 @@ export default function LeadsPage() {
       const res = await fetch(`/api/v1/leads/${leadId}`, { method: 'DELETE' });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error?.message || json.error || 'Failed to delete lead');
+      window.dispatchEvent(new Event('agencyflow-refresh'));
     } catch (err: any) {
       alert(`Failed to delete lead: ${err.message}`);
       setLeads(previousLeads);

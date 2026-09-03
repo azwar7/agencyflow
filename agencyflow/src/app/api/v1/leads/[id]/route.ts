@@ -117,14 +117,62 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
     }
 
-    // Cascade delete activities and tasks associated with this lead
-    await prisma.$transaction([
-      prisma.activity.deleteMany({ where: { leadId: id } }),
-      prisma.task.deleteMany({ where: { leadId: id } }),
-      prisma.lead.delete({ where: { id } }),
-    ]);
+    const companyName = existingLead.companyName?.trim();
 
-    return NextResponse.json({ success: true, message: 'Lead deleted successfully' });
+    // Perform atomic hard delete of Lead and associated records
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete associated outreach emails, activities, tasks, and AI analyses
+      await tx.outreachEmail.deleteMany({ where: { leadId: id } });
+      await tx.activity.deleteMany({ where: { leadId: id } });
+      await tx.task.deleteMany({ where: { leadId: id } });
+      await tx.leadAiAnalysis.deleteMany({ where: { leadId: id } });
+
+      // 2. Delete the lead itself from the database
+      await tx.lead.delete({ where: { id } });
+
+      // 3. If lead had an associated company, check if it should also be removed from Clients section
+      if (companyName) {
+        // Check if other leads in this workspace share this company name
+        const otherLeadsCount = await tx.lead.count({
+          where: {
+            workspaceId: session.workspaceId,
+            id: { not: id },
+            companyName: { equals: companyName, mode: 'insensitive' },
+          },
+        });
+
+        // If no other leads exist, find the Company in this workspace
+        if (otherLeadsCount === 0) {
+          const company = await tx.company.findFirst({
+            where: {
+              workspaceId: session.workspaceId,
+              name: { equals: companyName, mode: 'insensitive' },
+            },
+            include: {
+              deals: { select: { id: true } },
+              projects: { select: { id: true } },
+              invoices: { select: { id: true } },
+            },
+          });
+
+          // Only delete company from Clients if it has no active deals, projects, or invoices
+          if (
+            company &&
+            company.deals.length === 0 &&
+            company.projects.length === 0 &&
+            company.invoices.length === 0
+          ) {
+            await tx.contact.deleteMany({ where: { companyId: company.id } });
+            await tx.company.delete({ where: { id: company.id } });
+          }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Lead and associated client records permanently deleted from database',
+    });
   } catch (error: any) {
     const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
     const isForbidden = error.message?.includes('Forbidden');

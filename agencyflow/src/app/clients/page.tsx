@@ -163,9 +163,16 @@ export default function ClientsOverviewPage() {
     if (!deleteConfirmClient) return;
 
     try {
-      await fetch(`/api/v1/clients?id=${deleteConfirmClient.id}`, { method: 'DELETE' });
-    } catch (err) {
+      const res = await fetch(`/api/v1/clients?id=${deleteConfirmClient.id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || json.error || 'Failed to delete client');
+      }
+      window.dispatchEvent(new Event('agencyflow-refresh'));
+    } catch (err: any) {
       console.error('Failed to delete client:', err);
+      alert(`Could not delete client: ${err.message}`);
+      return;
     }
 
     setClients((prev) => prev.filter((c) => c.id !== deleteConfirmClient.id));

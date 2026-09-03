@@ -104,3 +104,102 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await getAuthSession(req);
+    const workspaceId = session.workspaceId;
+    const userId = session.userId;
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Client ID is required' } },
+        { status: 400 }
+      );
+    }
+
+    // Verify company exists and belongs strictly to authenticated workspace
+    const company = await prisma.company.findFirst({
+      where: { id, workspaceId },
+      include: {
+        contacts: true,
+        projects: { select: { id: true } },
+      },
+    });
+
+    if (!company) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Client organization not found in this workspace' } },
+        { status: 404 }
+      );
+    }
+
+    // Atomic Hard Delete of Company and related records from database
+    await prisma.$transaction(async (tx) => {
+      const projectIds = company.projects.map((p) => p.id);
+
+      // 1. Delete deliverables linked to this company's projects
+      if (projectIds.length > 0) {
+        await tx.deliverable.deleteMany({
+          where: { projectId: { in: projectIds }, workspaceId },
+        });
+      }
+
+      // 2. Delete projects, invoices, proposals, deals, contacts
+      await tx.project.deleteMany({ where: { companyId: id, workspaceId } });
+      await tx.invoice.deleteMany({ where: { companyId: id, workspaceId } });
+      await tx.proposal.deleteMany({ where: { companyId: id, workspaceId } });
+      await tx.deal.deleteMany({ where: { companyId: id, workspaceId } });
+      await tx.contact.deleteMany({ where: { companyId: id, workspaceId } });
+
+      // 3. Also cascade delete any Leads sharing this exact company name
+      const matchingLeads = await tx.lead.findMany({
+        where: {
+          workspaceId,
+          companyName: { equals: company.name, mode: 'insensitive' },
+        },
+        select: { id: true },
+      });
+
+      const leadIds = matchingLeads.map((l) => l.id);
+      if (leadIds.length > 0) {
+        await tx.outreachEmail.deleteMany({ where: { leadId: { in: leadIds }, workspaceId } });
+        await tx.activity.deleteMany({ where: { leadId: { in: leadIds }, workspaceId } });
+        await tx.task.deleteMany({ where: { leadId: { in: leadIds }, workspaceId } });
+        await tx.leadAiAnalysis.deleteMany({ where: { leadId: { in: leadIds }, workspaceId } });
+        await tx.lead.deleteMany({ where: { id: { in: leadIds }, workspaceId } });
+      }
+
+      // 4. Delete the company record itself
+      await tx.company.delete({ where: { id, workspaceId } });
+
+      // 5. Log audit activity
+      await tx.activity.create({
+        data: {
+          workspaceId,
+          userId,
+          type: 'NOTE',
+          content: `Permanently removed client organization: "${company.name}" and all associated records.`,
+        },
+      });
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Client "${company.name}" permanently deleted from database.`,
+    });
+  } catch (error: any) {
+    const isUnauthorized = error.message?.includes('Unauthorized') || error.message?.includes('session');
+    const isForbidden = error.message?.includes('Forbidden');
+    const status = isUnauthorized ? 401 : isForbidden ? 403 : 500;
+
+    return NextResponse.json(
+      { success: false, error: { message: error.message || 'Failed to delete client' } },
+      { status }
+    );
+  }
+}
+
