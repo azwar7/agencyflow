@@ -66,7 +66,7 @@ export async function authenticateN8nRequest(
     );
   }
 
-  // 2. Resolve target workspace (Header overrides -> Payload overrides -> Env default -> Primary workspace)
+  // 2. Resolve target workspace strictly per-tenant (Header overrides -> Payload overrides)
   const headerWorkspaceId = request.headers.get('x-workspace-id')?.trim();
   const headerWorkspaceSlug = request.headers.get('x-workspace-slug')?.trim();
   const rawTargetWorkspaceId = headerWorkspaceId || payload?.workspaceId;
@@ -74,7 +74,13 @@ export async function authenticateN8nRequest(
     ? rawTargetWorkspaceId.trim().replace(/^=+/, '').replace(/^["']|["']$/g, '').trim()
     : undefined;
   const targetWorkspaceSlug = headerWorkspaceSlug || payload?.workspaceSlug;
-  const defaultEnvWorkspaceId = process.env.N8N_DEFAULT_WORKSPACE_ID?.trim();
+
+  if (!targetWorkspaceId && !targetWorkspaceSlug) {
+    throw new N8nAuthenticationError(
+      'Multi-tenant routing error: Missing target workspace identifier. Please include "workspaceId" in the n8n payload body or "x-workspace-id" in headers so leads are routed to the specific CRM workspace.',
+      400
+    );
+  }
 
   let workspace = null;
 
@@ -100,24 +106,11 @@ export async function authenticateN8nRequest(
         404
       );
     }
-  } else if (defaultEnvWorkspaceId) {
-    workspace = await prisma.workspace.findUnique({
-      where: { id: defaultEnvWorkspaceId },
-      select: { id: true, name: true },
-    });
-  }
-
-  // If still not resolved, fallback to the primary (first created) workspace
-  if (!workspace) {
-    workspace = await prisma.workspace.findFirst({
-      orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true },
-    });
   }
 
   if (!workspace) {
     throw new N8nAuthenticationError(
-      'No active workspace found in database to assign incoming n8n lead.',
+      'Could not resolve a valid target workspace for incoming n8n lead.',
       404
     );
   }
