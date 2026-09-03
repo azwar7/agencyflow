@@ -530,7 +530,7 @@ export default function AnalyticsPage() {
 
                   <div style={{ padding: '0.85rem', borderRadius: '0.5rem', background: 'rgba(0, 165, 114, 0.15)', border: '1px solid rgba(0, 165, 114, 0.3)' }}>
                     <span style={{ fontSize: '0.7rem', color: 'var(--secondary)', fontWeight: 700, textTransform: 'uppercase' }}>PROJECTED GROWTH RATE</span>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--secondary)', marginTop: '0.15rem' }}>+18.4% YoY</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--secondary)', marginTop: '0.15rem' }}>{kpis.revenueGrowth || '0%'}</div>
                   </div>
                 </div>
               </div>
@@ -596,21 +596,21 @@ export default function AnalyticsPage() {
                   <div style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'var(--surface-container-high)' }}>
                     <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700, textTransform: 'uppercase' }}>OVERALL CONVERSION</div>
                     <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--secondary)', marginTop: '0.1rem' }}>
-                      {pipelineInsights?.overallConversion || '12%'}
+                      {pipelineInsights?.overallConversion || '0%'}
                     </div>
                   </div>
 
                   <div style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'var(--surface-container-high)' }}>
                     <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700, textTransform: 'uppercase' }}>LARGEST DROPOFF STAGE</div>
                     <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--tertiary)', marginTop: '0.1rem' }}>
-                      {pipelineInsights?.largestDropoff || 'Qualified → Proposal'}
+                      {pipelineInsights?.largestDropoff || 'No Dropoff'}
                     </div>
                   </div>
 
                   <div style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'var(--surface-container-high)' }}>
                     <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700, textTransform: 'uppercase' }}>AVERAGE TIME TO CLOSE</div>
                     <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)', marginTop: '0.1rem' }}>
-                      {pipelineInsights?.avgTimeToClose || '18 days'}
+                      {pipelineInsights?.avgTimeToClose || 'N/A'}
                     </div>
                   </div>
                 </div>
@@ -632,33 +632,41 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {topClients.map((client: any) => (
-                    <div
-                      key={client.name}
-                      onClick={() => router.push('/clients')}
-                      style={{
-                        padding: '0.75rem 1rem',
-                        borderRadius: '0.5rem',
-                        background: 'var(--surface-container-high)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        border: '1px solid rgba(255,255,255,0.04)',
-                        transition: 'transform 0.2s ease',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 700, color: 'var(--on-surface)', fontSize: '0.875rem' }}>{client.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Status: {client.status}</div>
-                      </div>
-
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--secondary)', fontSize: '0.95rem' }}>{client.retainerFormatted}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)' }}>Annual Contract</div>
-                      </div>
+                  {!topClients || topClients.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--on-surface-variant)' }}>
+                      <Building2 size={28} style={{ opacity: 0.35, margin: '0 auto 0.5rem' }} />
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, margin: '0 0 0.25rem' }}>No Clients Tracked</p>
+                      <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: 0 }}>Add client organizations or convert leads to see performance.</p>
                     </div>
-                  ))}
+                  ) : (
+                    topClients.map((client: any) => (
+                      <div
+                        key={client.id || client.name}
+                        onClick={() => router.push('/clients')}
+                        style={{
+                          padding: '0.75rem 1rem',
+                          borderRadius: '0.5rem',
+                          background: 'var(--surface-container-high)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          border: '1px solid rgba(255,255,255,0.04)',
+                          transition: 'transform 0.2s ease',
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--on-surface)', fontSize: '0.875rem' }}>{client.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Status: {client.status}</div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontWeight: 800, color: 'var(--secondary)', fontSize: '0.95rem' }}>{client.retainerFormatted}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)' }}>{client.contractType || 'Prospect'}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -676,22 +684,22 @@ export default function AnalyticsPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div onClick={() => router.push('/projects')} style={{ padding: '0.85rem', borderRadius: '0.5rem', background: 'var(--surface-container-high)', cursor: 'pointer' }}>
                     <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>ACTIVE PROJECTS</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--on-surface)', marginTop: '0.2rem' }}>{projectMetrics?.activeProjectsCount || 4}</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--on-surface)', marginTop: '0.2rem' }}>{projectMetrics?.activeProjectsCount ?? 0}</div>
                   </div>
 
                   <div onClick={() => router.push('/projects')} style={{ padding: '0.85rem', borderRadius: '0.5rem', background: 'var(--surface-container-high)', cursor: 'pointer' }}>
                     <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>PROJECTS ON TRACK</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--secondary)', marginTop: '0.2rem' }}>{projectMetrics?.projectsOnTrack || 3}</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--secondary)', marginTop: '0.2rem' }}>{projectMetrics?.projectsOnTrack ?? 0}</div>
                   </div>
 
                   <div onClick={() => router.push('/projects')} style={{ padding: '0.85rem', borderRadius: '0.5rem', background: 'var(--surface-container-high)', cursor: 'pointer' }}>
                     <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>PROJECTS AT RISK</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--tertiary)', marginTop: '0.2rem' }}>{projectMetrics?.projectsAtRisk || 1}</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--tertiary)', marginTop: '0.2rem' }}>{projectMetrics?.projectsAtRisk ?? 0}</div>
                   </div>
 
                   <div onClick={() => router.push('/tasks')} style={{ padding: '0.85rem', borderRadius: '0.5rem', background: 'var(--surface-container-high)', cursor: 'pointer' }}>
                     <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-variant)', fontWeight: 700 }}>OVERDUE TASKS</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--tertiary)', marginTop: '0.2rem' }}>{projectMetrics?.overdueTasksCount || 1}</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--tertiary)', marginTop: '0.2rem' }}>{projectMetrics?.overdueTasksCount ?? 0}</div>
                   </div>
                 </div>
               </div>
