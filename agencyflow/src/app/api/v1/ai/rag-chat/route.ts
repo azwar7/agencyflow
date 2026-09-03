@@ -167,7 +167,7 @@ Instructions:
 5. If the user asks about clients (e.g. Mohmand, Apex, Elevate, Vanguard), cross-reference their leads, projects, and invoices.`;
 
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
