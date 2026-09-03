@@ -61,7 +61,11 @@ export const N8nLeadPayloadSchema = z.object({
     .string()
     .nullable()
     .optional()
-    .transform((val) => (val && val.trim().length > 0 ? val.trim() : null)),
+    .transform((val) => {
+      if (!val) return null;
+      const cleaned = val.trim().replace(/^=+/, '').replace(/^["']|["']$/g, '').trim();
+      return cleaned.length > 0 ? cleaned : null;
+    }),
   workspaceSlug: z
     .string()
     .nullable()

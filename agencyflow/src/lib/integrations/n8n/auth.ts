@@ -69,7 +69,10 @@ export async function authenticateN8nRequest(
   // 2. Resolve target workspace (Header overrides -> Payload overrides -> Env default -> Primary workspace)
   const headerWorkspaceId = request.headers.get('x-workspace-id')?.trim();
   const headerWorkspaceSlug = request.headers.get('x-workspace-slug')?.trim();
-  const targetWorkspaceId = headerWorkspaceId || payload?.workspaceId;
+  const rawTargetWorkspaceId = headerWorkspaceId || payload?.workspaceId;
+  const targetWorkspaceId = rawTargetWorkspaceId
+    ? rawTargetWorkspaceId.trim().replace(/^=+/, '').replace(/^["']|["']$/g, '').trim()
+    : undefined;
   const targetWorkspaceSlug = headerWorkspaceSlug || payload?.workspaceSlug;
   const defaultEnvWorkspaceId = process.env.N8N_DEFAULT_WORKSPACE_ID?.trim();
 
