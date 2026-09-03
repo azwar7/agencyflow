@@ -51,6 +51,21 @@ export async function POST(
       );
     }
 
+    // Guard: Prevent sending the same email multiple times
+    if (outreach.status === 'SENT') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: `This outreach email has already been sent to ${lead.email} on ${
+              outreach.sentAt ? new Date(outreach.sentAt).toLocaleString() : 'previously'
+            }. Please draft a new follow-up to send another message.`,
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     // -------------------------------------------------------------
     // 2. VALIDATE OUTREACH CONSTRAINTS & SENDING LIMITS
     // -------------------------------------------------------------
@@ -185,25 +200,70 @@ export async function POST(
       timestamp: new Date().toISOString(),
     };
 
-    // Dispatch to n8n Webhook asynchronously if configured
-    let dispatchedToN8n = false;
-    if (webhookUrl) {
-      try {
-        const n8nRes = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Agencyflow-Auth': process.env.N8N_INTEGRATION_SECRET || '',
-            'Authorization': `Bearer ${process.env.N8N_INTEGRATION_SECRET || ''}`,
+    // 3. Dispatch to n8n Webhook and strictly verify delivery
+    if (!webhookUrl) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: 'No n8n Outreach Webhook URL configured. Please set N8N_OUTREACH_WEBHOOK_URL or N8N_WEBHOOK_URL in environment.',
           },
-          body: JSON.stringify(dispatchPayload),
+        },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const n8nRes = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Agencyflow-Auth': process.env.N8N_INTEGRATION_SECRET || '',
+          'Authorization': `Bearer ${process.env.N8N_INTEGRATION_SECRET || ''}`,
+        },
+        body: JSON.stringify(dispatchPayload),
+      });
+
+      if (!n8nRes.ok && n8nRes.status !== 200 && n8nRes.status !== 201) {
+        const errorText = await n8nRes.text().catch(() => '');
+        const failureReason =
+          n8nRes.status === 404
+            ? 'n8n outreach workflow is not active or published. Please make sure the workflow is published and active in n8n.'
+            : `n8n workflow rejected the request (HTTP ${n8nRes.status}): ${errorText || 'Check n8n execution log.'}`;
+
+        await prisma.outreachEmail.update({
+          where: { id: outreach.id },
+          data: {
+            status: 'FAILED',
+            failureReason,
+          },
         });
-        if (n8nRes.ok || n8nRes.status === 200 || n8nRes.status === 201) {
-          dispatchedToN8n = true;
-        }
-      } catch (err: any) {
-        console.warn('[Outreach Send] Note: n8n webhook unreachable, proceeding with CRM state progression:', err.message);
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: { message: failureReason },
+          },
+          { status: 502 }
+        );
       }
+    } catch (err: any) {
+      const failureReason = `Could not connect to n8n outreach webhook: ${err.message}. Please verify n8n is running and reachable.`;
+      await prisma.outreachEmail.update({
+        where: { id: outreach.id },
+        data: {
+          status: 'FAILED',
+          failureReason,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: { message: failureReason },
+        },
+        { status: 502 }
+      );
     }
 
     // 4. Update OutreachEmail to SENT, progress Lead to OUTREACH_SENT, and log timeline Activity
@@ -239,7 +299,7 @@ export async function POST(
       data: {
         outreach: updatedOutreach,
         lead: updatedLead,
-        deliveryChannel: dispatchedToN8n ? 'n8n_webhook' : 'smtp_relay',
+        deliveryChannel: 'n8n_webhook',
         sentToday: sentToday + 1,
         dailyLimit,
       },

@@ -342,6 +342,9 @@ export default function LeadsPage() {
       openLeadDrawer(selectedLead.id);
     } catch (err: any) {
       setFeedbackMsg({ type: 'error', text: err.message || 'Failed to send outreach email' });
+      if (selectedLead?.id) {
+        openLeadDrawer(selectedLead.id);
+      }
     } finally {
       setSendingEmail(false);
     }
@@ -1185,6 +1188,58 @@ export default function LeadsPage() {
                     <div className="skeleton-pulse" style={{ height: '220px', borderRadius: 'var(--radius-md)' }} />
                   ) : emailBody || emailSubject ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--surface-container-high)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      
+                      {/* Delivery Status Banner */}
+                      {currentOutreach?.status === 'SENT' && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.65rem 0.85rem',
+                            background: 'rgba(78, 222, 163, 0.1)',
+                            border: '1px solid rgba(78, 222, 163, 0.3)',
+                            borderRadius: '6px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4edea3', fontSize: '0.825rem', fontWeight: 600 }}>
+                            <CheckCircle2 size={16} />
+                            <span>Outreach Delivered via n8n</span>
+                            {currentOutreach.sentAt && (
+                              <span style={{ opacity: 0.75, fontWeight: 400, fontSize: '0.75rem' }}>
+                                • {new Date(currentOutreach.sentAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '0.7rem', background: 'rgba(78, 222, 163, 0.2)', color: '#4edea3', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 700 }}>
+                            DELIVERED
+                          </span>
+                        </div>
+                      )}
+
+                      {currentOutreach?.status === 'FAILED' && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '0.5rem',
+                            padding: '0.65rem 0.85rem',
+                            background: 'rgba(239, 68, 68, 0.12)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '6px',
+                            color: '#f87171',
+                            fontSize: '0.825rem',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <div>
+                            <span style={{ fontWeight: 700 }}>Delivery Failed: </span>
+                            <span>{currentOutreach.failureReason || 'n8n workflow did not process this email.'}</span>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Subject Line */}
                       <div>
                         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '0.3rem' }}>
@@ -1194,13 +1249,14 @@ export default function LeadsPage() {
                           type="text"
                           value={emailSubject}
                           onChange={(e) => setEmailSubject(e.target.value)}
+                          readOnly={currentOutreach?.status === 'SENT'}
                           style={{
                             width: '100%',
                             padding: '0.5rem 0.75rem',
                             background: 'var(--surface-container-lowest)',
                             border: '1px solid rgba(255, 255, 255, 0.12)',
                             borderRadius: '6px',
-                            color: '#fff',
+                            color: currentOutreach?.status === 'SENT' ? '#a1a1aa' : '#fff',
                             fontSize: '0.875rem',
                             fontWeight: 600,
                             outline: 'none',
@@ -1217,13 +1273,14 @@ export default function LeadsPage() {
                           rows={8}
                           value={emailBody}
                           onChange={(e) => setEmailBody(e.target.value)}
+                          readOnly={currentOutreach?.status === 'SENT'}
                           style={{
                             width: '100%',
                             padding: '0.75rem',
                             background: 'var(--surface-container-lowest)',
                             border: '1px solid rgba(255, 255, 255, 0.12)',
                             borderRadius: '6px',
-                            color: '#e2e2e8',
+                            color: currentOutreach?.status === 'SENT' ? '#a1a1aa' : '#e2e2e8',
                             fontSize: '0.85rem',
                             lineHeight: 1.6,
                             outline: 'none',
@@ -1253,28 +1310,74 @@ export default function LeadsPage() {
                           {copied ? 'Copied to Clipboard!' : 'Copy Email'}
                         </button>
 
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button
-                            onClick={handleApproveAndSend}
-                            disabled={sendingEmail}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              borderRadius: '6px',
-                              background: '#38bdf8',
-                              color: '#082f49',
-                              border: 'none',
-                              fontSize: '0.85rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.4rem',
-                              boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)',
-                            }}
-                          >
-                            {sendingEmail ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
-                            {sendingEmail ? 'Dispatching via n8n...' : 'Approve & Send via n8n 🚀'}
-                          </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          {currentOutreach?.status === 'SENT' ? (
+                            <>
+                              <button
+                                disabled
+                                style={{
+                                  padding: '0.5rem 0.9rem',
+                                  borderRadius: '6px',
+                                  background: 'rgba(78, 222, 163, 0.12)',
+                                  color: '#4edea3',
+                                  border: '1px solid rgba(78, 222, 163, 0.3)',
+                                  fontSize: '0.825rem',
+                                  fontWeight: 600,
+                                  cursor: 'not-allowed',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                }}
+                              >
+                                <Check size={14} /> Email Sent
+                              </button>
+                              <button
+                                onClick={handleGenerateEmail}
+                                disabled={generatingEmail}
+                                style={{
+                                  padding: '0.5rem 0.9rem',
+                                  borderRadius: '6px',
+                                  background: 'var(--surface-container-highest)',
+                                  color: '#fff',
+                                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                                  fontSize: '0.825rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                }}
+                              >
+                                <Sparkles size={14} color="#38bdf8" /> Draft Follow-up
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={handleApproveAndSend}
+                              disabled={sendingEmail}
+                              style={{
+                                padding: '0.5rem 1rem',
+                                borderRadius: '6px',
+                                background: currentOutreach?.status === 'FAILED' ? '#f87171' : '#38bdf8',
+                                color: currentOutreach?.status === 'FAILED' ? '#450a0a' : '#082f49',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                cursor: sendingEmail ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                boxShadow: currentOutreach?.status === 'FAILED' ? '0 0 20px rgba(248, 113, 113, 0.3)' : '0 0 20px rgba(56, 189, 248, 0.3)',
+                              }}
+                            >
+                              {sendingEmail ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                              {sendingEmail
+                                ? 'Dispatching via n8n...'
+                                : currentOutreach?.status === 'FAILED'
+                                ? 'Retry Send via n8n 🚀'
+                                : 'Approve & Send via n8n 🚀'}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
