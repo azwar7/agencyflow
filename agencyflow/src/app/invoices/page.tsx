@@ -138,7 +138,7 @@ export default function InvoicesPage() {
 
   // Send Payment Reminder via n8n / Email
   const handleSendReminder = (id: string, clientName: string) => {
-    setFeedbackMsg({ type: 'success', text: `✉️ Payment reminder dispatched for ${clientName} (${id}) via n8n!` });
+    setFeedbackMsg({ type: 'success', text: `✉️ Payment reminder dispatched for ${clientName} (${id})!` });
     setTimeout(() => setFeedbackMsg(null), 4000);
   };
 

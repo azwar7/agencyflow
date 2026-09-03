@@ -337,7 +337,7 @@ export default function LeadsPage() {
 
       setCurrentOutreach(sendJson.data.outreach);
       setSelectedLead((prev: any) => ({ ...prev, status: 'OUTREACH_SENT' }));
-      setFeedbackMsg({ type: 'success', text: '🚀 Email approved & sent via n8n! Lead moved to Outreach Sent stage.' });
+      setFeedbackMsg({ type: 'success', text: '🚀 Email approved & sent! Lead moved to Outreach Sent stage.' });
       fetchLeads();
       openLeadDrawer(selectedLead.id);
     } catch (err: any) {
@@ -1205,7 +1205,7 @@ export default function LeadsPage() {
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4edea3', fontSize: '0.825rem', fontWeight: 600 }}>
                             <CheckCircle2 size={16} />
-                            <span>Outreach Delivered via n8n</span>
+                            <span>Delivered</span>
                             {currentOutreach.sentAt && (
                               <span style={{ opacity: 0.75, fontWeight: 400, fontSize: '0.75rem' }}>
                                 • {new Date(currentOutreach.sentAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
@@ -1236,7 +1236,7 @@ export default function LeadsPage() {
                           <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
                           <div>
                             <span style={{ fontWeight: 700 }}>Delivery Failed: </span>
-                            <span>{currentOutreach.failureReason || 'n8n workflow did not process this email.'}</span>
+                            <span>{currentOutreach.failureReason || 'Delivery workflow could not process this email.'}</span>
                           </div>
                         </div>
                       )}
@@ -1373,10 +1373,10 @@ export default function LeadsPage() {
                             >
                               {sendingEmail ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
                               {sendingEmail
-                                ? 'Dispatching via n8n...'
+                                ? 'Dispatching email...'
                                 : currentOutreach?.status === 'FAILED'
-                                ? 'Retry Send via n8n 🚀'
-                                : 'Approve & Send via n8n 🚀'}
+                                ? 'Retry Send 🚀'
+                                : 'Approve & Send 🚀'}
                             </button>
                           )}
                         </div>
