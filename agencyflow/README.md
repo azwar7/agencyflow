@@ -4,9 +4,15 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?style=for-the-badge&logo=vercel)](https://agencyflow-crm-beta.vercel.app)
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon_Serverless-4169E1?style=for-the-badge&logo=postgresql)](https://neon.tech/)
 [![n8n](https://img.shields.io/badge/n8n-Workflow_Automation-EA4B71?style=for-the-badge&logo=n8n)](https://n8n.io/)
+
+---
+
+> **🌐 Live Production Application**: [**https://agencyflow-crm-beta.vercel.app**](https://agencyflow-crm-beta.vercel.app)  
+> *Production deployment hosted on Vercel with global Edge network delivery and serverless API execution.*
 
 ---
 
@@ -95,6 +101,7 @@ graph TD
 | **Automation Engine** | [n8n](https://n8n.io/) Cloud / Self-Hosted Workflow Engine |
 | **AI / Machine Learning** | Google Gemini API, Hugging Face Inference API, Anthropic Claude, OpenAI |
 | **Places Data APIs** | Geoapify Places API, Google Places API |
+| **Deployment & Hosting** | [Vercel](https://vercel.com/) (Global Edge Network, Serverless Functions, Continuous Deployment) |
 
 ---
 
