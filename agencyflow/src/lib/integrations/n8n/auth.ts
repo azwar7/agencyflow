@@ -17,13 +17,9 @@ export class N8nAuthenticationError extends Error {
 }
 
 /**
- * Extracts and verifies the n8n integration secret from incoming request headers.
- * Resolves the target workspace securely while maintaining multi-tenant boundaries.
+ * Verifies the shared integration secret from headers.
  */
-export async function authenticateN8nRequest(
-  request: Request,
-  payload?: Partial<N8nLeadPayload>
-): Promise<N8nAuthContext> {
+export function verifyN8nSecret(request: Request): void {
   const rawConfigured =
     process.env.N8N_INTEGRATION_SECRET ||
     process.env['Agencyflow-Auth'] ||
@@ -40,7 +36,7 @@ export async function authenticateN8nRequest(
     );
   }
 
-  // 1. Extract Bearer token from Authorization, x-n8n-secret, or Agencyflow-Auth header
+  // Extract token from Authorization, x-n8n-secret, or Agencyflow-Auth header
   const authHeader = request.headers.get('authorization') || '';
   const xSecretHeader = request.headers.get('x-n8n-secret') || '';
   const agencyflowAuthHeader = request.headers.get('agencyflow-auth') || '';
@@ -65,6 +61,17 @@ export async function authenticateN8nRequest(
       401
     );
   }
+}
+
+/**
+ * Extracts and verifies the n8n integration secret from incoming request headers.
+ * Resolves the target workspace securely while maintaining multi-tenant boundaries.
+ */
+export async function authenticateN8nRequest(
+  request: Request,
+  payload?: Partial<N8nLeadPayload>
+): Promise<N8nAuthContext> {
+  verifyN8nSecret(request);
 
   // 2. Resolve target workspace strictly per-tenant (Header overrides -> Payload overrides)
   const headerWorkspaceId = request.headers.get('x-workspace-id')?.trim();

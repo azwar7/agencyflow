@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { authenticateN8nRequest, N8nAuthenticationError } from '@/lib/integrations/n8n/auth';
+import { verifyN8nSecret, N8nAuthenticationError } from '@/lib/integrations/n8n/auth';
 
 const callbackSchema = z.object({
   outreachId: z.string().min(1, 'outreachId is required'),
@@ -16,20 +16,19 @@ export async function POST(request: Request) {
     const validated = callbackSchema.parse(body);
 
     // Authenticate server-to-server request via secret header
-    const authContext = await authenticateN8nRequest(request);
+    verifyN8nSecret(request);
 
-    // Verify outreach exists within authenticated workspace
-    const outreach = await prisma.outreachEmail.findFirst({
+    // Verify outreach exists in database
+    const outreach = await prisma.outreachEmail.findUnique({
       where: {
         id: validated.outreachId,
-        workspaceId: authContext.workspaceId,
       },
       include: { lead: true },
     });
 
     if (!outreach) {
       return NextResponse.json(
-        { success: false, error: { message: 'Outreach record not found in workspace.' } },
+        { success: false, error: { message: 'Outreach record not found.' } },
         { status: 404 }
       );
     }
@@ -45,15 +44,21 @@ export async function POST(request: Request) {
     });
 
     if (validated.status === 'FAILED') {
-      await prisma.activity.create({
-        data: {
-          workspaceId: authContext.workspaceId,
-          userId: authContext.defaultUserId,
-          leadId: outreach.leadId,
-          type: 'NOTE',
-          content: `⚠️ Outreach Delivery Failed: ${validated.failureReason || 'Email delivery failed at email gateway.'}`,
-        },
+      const activeUser = await prisma.user.findFirst({
+        where: { workspaceId: outreach.workspaceId },
+        select: { id: true },
       });
+      if (activeUser) {
+        await prisma.activity.create({
+          data: {
+            workspaceId: outreach.workspaceId,
+            userId: activeUser.id,
+            leadId: outreach.leadId,
+            type: 'NOTE',
+            content: `⚠️ Outreach Delivery Failed: ${validated.failureReason || 'Email delivery failed at email gateway.'}`,
+          },
+        });
+      }
     }
 
     return NextResponse.json({
