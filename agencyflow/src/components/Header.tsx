@@ -13,7 +13,7 @@
  *          Account / Profile Avatar [ Material Symbol: person ]
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -47,7 +47,63 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(3);
+
+  // Popover References for Click-Outside Detection
+  const notificationRef = useRef<HTMLDivElement | null>(null);
+  const accountRef = useRef<HTMLDivElement | null>(null);
+
+  // Real Multi-Tenant Workspace Notifications State
+  const [realNotifications, setRealNotifications] = useState<any[]>([]);
+  const [readIds, setReadIds] = useState<string[]>([]);
+
+  // Load read notifications from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('agencyflow_read_notifications');
+      if (stored) setReadIds(JSON.parse(stored));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Fetch real workspace-scoped notifications
+  const fetchRealNotifications = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/notifications');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success && json.data?.notifications) {
+        setRealNotifications(json.data.notifications);
+      }
+    } catch {
+      // ignore network errors in header poll
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRealNotifications();
+    const interval = setInterval(fetchRealNotifications, 25000); // 25s background poll
+    const handleRefresh = () => fetchRealNotifications();
+    window.addEventListener('agencyflow-refresh', handleRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('agencyflow-refresh', handleRefresh);
+    };
+  }, [fetchRealNotifications]);
+
+  // Click-Outside Listener to Close Notification and Account Popovers
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setIsAccountOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Keyboard shortcut Cmd+K listener
   useEffect(() => {
@@ -60,6 +116,34 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const unreadCount = realNotifications.filter((n) => !readIds.includes(n.id)).length;
+
+  const markAllRead = () => {
+    const allIds = realNotifications.map((n) => n.id);
+    setReadIds(allIds);
+    try {
+      localStorage.setItem('agencyflow_read_notifications', JSON.stringify(allIds));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleNotificationClick = (n: any) => {
+    if (!readIds.includes(n.id)) {
+      const updated = [...readIds, n.id];
+      setReadIds(updated);
+      try {
+        localStorage.setItem('agencyflow_read_notifications', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    }
+    setIsNotificationsOpen(false);
+    if (n.path) {
+      router.push(n.path);
+    }
+  };
 
   // Search Index
   const searchResults = [
@@ -75,12 +159,6 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
       item.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const notifications = [
-    { id: 1, title: 'Proposal Signed!', desc: 'Rachel Green signed Elevate Creative SOW.', time: '10 mins ago' },
-    { id: 2, title: 'New Inbound Lead', desc: 'Marcus Vance submitted contact form.', time: '1 hour ago' },
-    { id: 3, title: 'High Priority Task Due', desc: 'Prepare architecture deck for TechFlow.', time: '3 hours ago' },
-  ];
 
   const handleLogout = (e?: React.MouseEvent) => {
     if (e) {
@@ -172,12 +250,12 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
           </button>
 
           {/* 2. Notifications (bell) Control & Popover */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div ref={notificationRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <button
               onClick={() => setIsNotificationsOpen((prev) => !prev)}
               style={{
-                color: 'var(--on-surface-variant)',
-                background: 'none',
+                color: isNotificationsOpen ? 'var(--primary)' : 'var(--on-surface-variant)',
+                background: isNotificationsOpen ? 'rgba(192, 193, 255, 0.1)' : 'none',
                 border: 'none',
                 cursor: 'pointer',
                 display: 'flex',
@@ -186,7 +264,7 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
                 padding: '0.35rem',
                 borderRadius: '50%',
                 position: 'relative',
-                transition: 'color 0.2s',
+                transition: 'all 0.2s',
               }}
               title="Notifications"
               aria-label="Notifications"
@@ -194,19 +272,28 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
               <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>
                 notifications
               </span>
-              {unreadNotifications > 0 && (
+              {unreadCount > 0 && (
                 <span
                   style={{
                     position: 'absolute',
                     top: '2px',
                     right: '2px',
-                    width: '8px',
-                    height: '8px',
+                    minWidth: '16px',
+                    height: '16px',
+                    padding: '0 3px',
                     background: 'var(--error)',
-                    borderRadius: '50%',
+                    color: '#fff',
+                    borderRadius: '9999px',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     border: '2px solid var(--bg-background)',
                   }}
-                />
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
             </button>
 
@@ -218,12 +305,13 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
                   position: 'absolute',
                   top: '135%',
                   right: 0,
-                  width: '340px',
+                  width: '380px',
+                  maxWidth: '90vw',
                   background: '#1c1f2a',
                   borderRadius: '0.85rem',
                   padding: '1rem',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  boxShadow: '0 15px 35px rgba(0,0,0,0.5)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow: '0 20px 45px rgba(0,0,0,0.6)',
                   zIndex: 50,
                 }}
               >
@@ -237,12 +325,28 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
                     borderBottom: '1px solid rgba(255,255,255,0.08)',
                   }}
                 >
-                  <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
-                    Notifications
-                  </h4>
-                  {unreadNotifications > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
+                      Notifications
+                    </h4>
+                    {unreadCount > 0 && (
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          background: 'rgba(56, 189, 248, 0.15)',
+                          color: '#38bdf8',
+                          padding: '0.1rem 0.45rem',
+                          borderRadius: '9999px',
+                        }}
+                      >
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
                     <button
-                      onClick={() => setUnreadNotifications(0)}
+                      onClick={markAllRead}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -250,6 +354,8 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
                         fontSize: '0.75rem',
                         fontWeight: 600,
                         cursor: 'pointer',
+                        padding: '0.2rem 0.4rem',
+                        borderRadius: '4px',
                       }}
                     >
                       Mark all read
@@ -257,34 +363,99 @@ export function Header({ onOpenNewLead, onOpenNewDeal, activeRole, onRoleChange 
                   )}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      style={{
-                        padding: '0.65rem',
-                        borderRadius: '0.5rem',
-                        background: 'var(--surface-container-high)',
-                        border: '1px solid rgba(255,255,255,0.04)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.2rem',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface)' }}>{n.title}</span>
-                        <span style={{ fontSize: '10px', color: 'var(--on-surface-variant)' }}>{n.time}</span>
-                      </div>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', margin: 0 }}>{n.desc}</p>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    maxHeight: '380px',
+                    overflowY: 'auto',
+                    paddingRight: '0.25rem',
+                  }}
+                >
+                  {realNotifications.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--on-surface-variant)' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '32px', opacity: 0.35, marginBottom: '0.4rem', display: 'block' }}>
+                        notifications_off
+                      </span>
+                      <p style={{ fontSize: '0.825rem', fontWeight: 600, margin: '0 0 0.2rem 0' }}>No notifications yet</p>
+                      <p style={{ fontSize: '0.72rem', opacity: 0.7, margin: 0 }}>
+                        Real workspace events (leads, sent emails, pending tasks, deadlines) will appear here.
+                      </p>
                     </div>
-                  ))}
+                  ) : (
+                    realNotifications.map((n) => {
+                      const isUnread = !readIds.includes(n.id);
+                      return (
+                        <div
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          style={{
+                            padding: '0.65rem',
+                            borderRadius: '0.5rem',
+                            background: isUnread ? 'rgba(255, 255, 255, 0.05)' : 'var(--surface-container-high)',
+                            border: isUnread ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid rgba(255,255,255,0.04)',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '0.65rem',
+                            cursor: 'pointer',
+                            transition: 'background 0.15s ease',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              background: `${n.color}22`,
+                              color: n.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              marginTop: '2px',
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                              {n.icon}
+                            </span>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {n.title}
+                              </span>
+                              <span style={{ fontSize: '10px', color: 'var(--on-surface-variant)', flexShrink: 0 }}>
+                                {n.timeAgo}
+                              </span>
+                            </div>
+                            <p style={{ fontSize: '0.74rem', color: 'var(--on-surface-variant)', margin: '0.15rem 0 0 0', lineHeight: 1.35 }}>
+                              {n.desc}
+                            </p>
+                          </div>
+                          {isUnread && (
+                            <span
+                              style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                background: '#38bdf8',
+                                flexShrink: 0,
+                                marginTop: '6px',
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
           </div>
 
           {/* 3. Account / Profile Avatar Control */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div ref={accountRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <div
               onClick={() => setIsAccountOpen((prev) => !prev)}
               style={{
