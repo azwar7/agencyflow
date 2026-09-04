@@ -567,7 +567,6 @@ export default function LeadsPage() {
           <div className="kanban-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', overflowX: 'auto', paddingBottom: '1rem' }}>
             {stages.map((stg) => {
               const stageLeads = leads.filter((l) => l.status === stg.id || (stg.id === 'CONVERTED' && l.status === 'CLOSED_WON') || (stg.id === 'CLOSED_LOST' && l.status === 'UNQUALIFIED'));
-              const totalVal = stageLeads.reduce((acc, l) => acc + (l.leadScore > 80 ? 28000 : 18500), 0);
               const isOverThisStage = dragOverStageId === stg.id;
 
               return (
@@ -588,7 +587,7 @@ export default function LeadsPage() {
                   }}
                 >
                   {/* Stage Header */}
-                  <div style={{ paddingBottom: '0.6rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ paddingBottom: '0.6rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: stg.dotColor, flexShrink: 0 }} />
@@ -599,10 +598,6 @@ export default function LeadsPage() {
                       <span style={{ padding: '0.1rem 0.45rem', borderRadius: '9999px', background: 'var(--surface-container-high)', fontSize: '10px', fontWeight: 700, color: 'var(--on-surface-variant)', flexShrink: 0 }}>
                         {stageLeads.length}
                       </span>
-                    </div>
-
-                    <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', fontWeight: 600, paddingLeft: '1rem' }}>
-                      ${totalVal > 0 ? totalVal.toLocaleString() : '0'}
                     </div>
                   </div>
 
@@ -783,10 +778,12 @@ export default function LeadsPage() {
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.4rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
-                                ${l.leadScore > 80 ? '28,000' : '18,500'}
+                              <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                <Clock size={11} style={{ opacity: 0.6 }} />
+                                {l.createdAt ? new Date(l.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Recent'}
                               </span>
                               <div
+                                title={l.assignedTo?.fullName ? `Assigned to ${l.assignedTo.fullName}` : 'Assigned to AR'}
                                 style={{
                                   width: '22px',
                                   height: '22px',
