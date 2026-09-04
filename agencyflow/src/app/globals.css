@@ -307,24 +307,95 @@ button {
   box-sizing: border-box;
 }
 
+/* -------------------------------------------------------------
+   Interactive Hover Design System (3-Tier Architecture)
+   ------------------------------------------------------------- */
+
+/* Level 1 – Buttons, Pills, Badges & Small Interactive Elements */
+.hover-level-1 {
+  will-change: transform, box-shadow, filter;
+  transition: 
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    filter 0.2s ease;
+}
+
+.hover-level-1:hover {
+  transform: translateY(-1px) scale(1.02);
+  filter: brightness(1.1);
+  box-shadow: 
+    0 4px 14px rgba(0, 0, 0, 0.25),
+    0 0 16px rgba(192, 193, 255, 0.3);
+}
+
+.hover-level-1:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* Level 2 – Interactive Cards (KPIs, Lead Cards, Tasks, Projects) */
+.hover-level-2 {
+  position: relative;
+  will-change: transform, box-shadow, background, border-color;
+  transition: 
+    transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.24s ease,
+    border-color 0.24s ease,
+    box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-level-2:hover {
+  transform: translateY(-5px) scale(1.01);
+  background: rgba(36, 40, 54, 0.88) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(192, 193, 255, 0.38) !important;
+  box-shadow: 
+    0 14px 32px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(124, 58, 237, 0.18),
+    0 0 10px rgba(56, 189, 248, 0.12) !important;
+  z-index: 2;
+}
+
+/* Level 3 – Large Containers, Columns & Structural Sections */
+.hover-level-3 {
+  will-change: transform, background, border-color, box-shadow;
+  transition: 
+    transform 0.25s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.hover-level-3:hover {
+  transform: translateY(-2px);
+  background: rgba(28, 33, 46, 0.65) !important;
+  border-color: rgba(192, 193, 255, 0.24) !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.28),
+    0 0 15px rgba(124, 58, 237, 0.08) !important;
+}
+
 /* Cards & Surfaces */
 .glass-card {
   background: rgba(28, 31, 42, 0.7);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(144, 143, 160, 0.15);
   border-radius: var(--radius-lg);
   padding: var(--spacing-stack-md);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, transform 0.22s ease;
   width: 100%;
   box-sizing: border-box;
 }
 
 .glass-card:hover {
-  border-color: rgba(192, 193, 255, 0.3);
+  border-color: rgba(192, 193, 255, 0.25);
 }
 
-/* KPI Cards */
+/* KPI Cards (Inherits Level 2 3D Lift & Ambient Glow) */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -333,9 +404,10 @@ button {
 }
 
 .kpi-card {
-  background: rgba(28, 31, 42, 0.6);
+  background: rgba(28, 31, 42, 0.65);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(144, 143, 160, 0.15);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(144, 143, 160, 0.16);
   border-radius: var(--radius-md);
   padding: 1.25rem;
   display: flex;
@@ -343,6 +415,24 @@ button {
   position: relative;
   overflow: hidden;
   min-width: 0;
+  cursor: pointer;
+  will-change: transform, box-shadow, border-color, background;
+  transition: 
+    transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.24s ease,
+    border-color 0.24s ease,
+    box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px) scale(1.01);
+  background: rgba(36, 40, 54, 0.85);
+  border-color: rgba(192, 193, 255, 0.38);
+  box-shadow: 
+    0 14px 32px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(124, 58, 237, 0.18),
+    0 0 10px rgba(56, 189, 248, 0.12);
+  z-index: 2;
 }
 
 .kpi-metric {
@@ -354,7 +444,7 @@ button {
   margin-top: 0.5rem;
 }
 
-/* Buttons */
+/* Buttons (Inherits Level 1 Micro Interaction) */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -364,9 +454,23 @@ button {
   border-radius: var(--radius-DEFAULT);
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.15s ease;
   cursor: pointer;
   white-space: nowrap;
+  will-change: transform, box-shadow, filter;
+  transition: 
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    filter 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.99);
 }
 
 .btn-primary {
@@ -377,7 +481,10 @@ button {
 }
 
 .btn-primary:hover {
-  box-shadow: 0 0 25px rgba(192, 193, 255, 0.45);
+  filter: brightness(1.1);
+  box-shadow: 
+    0 4px 18px rgba(0, 0, 0, 0.3),
+    0 0 25px rgba(192, 193, 255, 0.5);
 }
 
 .btn-secondary {
@@ -388,6 +495,8 @@ button {
 
 .btn-secondary:hover {
   background: var(--surface-container-highest);
+  border-color: rgba(192, 193, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* 5-Column Desktop Grid for Pipeline */
@@ -399,34 +508,63 @@ button {
   box-sizing: border-box;
 }
 
+/* Pipeline Stage Columns (Inherits Level 3 Subtle Container Interaction) */
 .kanban-col {
   background: rgba(23, 27, 38, 0.4);
   border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   padding: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   min-height: 200px;
-  min-width: 0; /* Ensures child shrinks proportionately */
+  min-width: 0;
   width: 100%;
   box-sizing: border-box;
+  will-change: transform, background, border-color, box-shadow;
+  transition: 
+    transform 0.25s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
+.kanban-col:hover {
+  transform: translateY(-2px);
+  background: rgba(28, 33, 46, 0.6);
+  border-color: rgba(192, 193, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Pipeline Cards (Inherits Level 2 Floating Glass Card Interaction) */
 .kanban-card {
   background: rgba(28, 31, 42, 0.8);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 0.75rem;
   border-radius: var(--radius-DEFAULT);
   border: 1px solid rgba(144, 143, 160, 0.15);
-  transition: all 0.2s ease;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  position: relative;
+  will-change: transform, box-shadow, border-color, background;
+  transition: 
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .kanban-card:hover {
-  box-shadow: 0 0 15px rgba(192, 193, 255, 0.15);
-  border-color: rgba(192, 193, 255, 0.3);
+  transform: translateY(-4px) scale(1.01);
+  background: rgba(36, 40, 54, 0.9);
+  border-color: rgba(192, 193, 255, 0.35);
+  box-shadow: 
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(124, 58, 237, 0.16),
+    0 0 8px rgba(56, 189, 248, 0.12);
+  z-index: 2;
 }
 
 /* Drawer Backdrop & Content */

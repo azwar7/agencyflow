@@ -136,17 +136,17 @@ export default function DashboardPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <button onClick={() => router.push('/projects')} className="btn btn-secondary" style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem' }}>
+            <button onClick={() => router.push('/projects')} className="btn btn-secondary hover-level-1" style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem' }}>
               + New Project
             </button>
 
-            <button onClick={() => router.push('/proposals')} className="btn btn-secondary" style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem' }}>
+            <button onClick={() => router.push('/proposals')} className="btn btn-secondary hover-level-1" style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem' }}>
               Create Proposal
             </button>
 
             <button
               onClick={() => router.push('/leads')}
-              className="btn btn-primary"
+              className="btn btn-primary hover-level-1"
               style={{
                 padding: '0.45rem 0.9rem',
                 fontSize: '0.8rem',
@@ -161,11 +161,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 2. Real KPI Summary Cards */}
+        {/* 2. Real KPI Summary Cards (Level 2 Floating Glassmorphism Interaction) */}
         <div className="kpi-grid">
           {/* Card 1: Pipeline Value */}
           <div
-            className="kpi-card"
+            className="kpi-card hover-level-2"
             onClick={() => router.push('/pipeline')}
             style={{ cursor: 'pointer' }}
             title="View Pipeline"
@@ -183,7 +183,7 @@ export default function DashboardPage() {
 
           {/* Card 2: Active Projects */}
           <div
-            className="kpi-card"
+            className="kpi-card hover-level-2"
             onClick={() => router.push('/projects')}
             style={{ cursor: 'pointer' }}
             title="View Projects"
@@ -208,7 +208,7 @@ export default function DashboardPage() {
 
           {/* Card 3: Outstanding Invoices */}
           <div
-            className="kpi-card"
+            className="kpi-card hover-level-2"
             onClick={() => router.push('/invoices')}
             style={{ cursor: 'pointer' }}
             title="View Invoices"
@@ -233,7 +233,7 @@ export default function DashboardPage() {
 
           {/* Card 4: Monthly Revenue */}
           <div
-            className="kpi-card"
+            className="kpi-card hover-level-2"
             onClick={() => router.push('/invoices')}
             style={{ cursor: 'pointer' }}
             title="View Billing"
@@ -253,7 +253,7 @@ export default function DashboardPage() {
 
           {/* Card 5: Conversion Win Rate */}
           <div
-            className="kpi-card"
+            className="kpi-card hover-level-2"
             onClick={() => router.push('/pipeline')}
             style={{ cursor: 'pointer' }}
             title="View Conversion"
@@ -285,8 +285,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="kanban-row" style={{ minHeight: '140px' }}>
-            {/* Col 1: New Leads */}
-            <div className="kanban-col">
+            {/* Col 1: New Leads (Level 3 Subtle Container Interaction) */}
+            <div className="kanban-col hover-level-3">
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface-variant)', marginBottom: '0.4rem' }}>
                 <span>New Leads</span>
                 <span style={{ background: 'var(--surface-container)', padding: '0.1rem 0.5rem', borderRadius: '9999px', fontSize: '11px' }}>
@@ -302,7 +302,7 @@ export default function DashboardPage() {
                 pipeline.newLeads.slice(0, 2).map((lead: any) => (
                   <div
                     key={lead.id}
-                    className="kanban-card"
+                    className="kanban-card hover-level-2"
                     onClick={() => router.push('/leads')}
                     style={{ cursor: 'pointer', padding: '0.75rem', marginBottom: '0.5rem' }}
                   >
@@ -322,8 +322,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Col 2: Qualified */}
-            <div className="kanban-col">
+            {/* Col 2: Qualified (Level 3 Subtle Container Interaction) */}
+            <div className="kanban-col hover-level-3">
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface-variant)', marginBottom: '0.4rem' }}>
                 <span>Qualified</span>
                 <span style={{ background: 'var(--surface-container)', padding: '0.1rem 0.5rem', borderRadius: '9999px', fontSize: '11px' }}>
@@ -339,7 +339,7 @@ export default function DashboardPage() {
                 pipeline.qualifiedLeads.slice(0, 2).map((lead: any) => (
                   <div
                     key={lead.id}
-                    className="kanban-card"
+                    className="kanban-card hover-level-2"
                     onClick={() => router.push('/leads')}
                     style={{ cursor: 'pointer', padding: '0.75rem', marginBottom: '0.5rem' }}
                   >
@@ -359,8 +359,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Col 3: Proposal Stage */}
-            <div className="kanban-col">
+            {/* Col 3: Proposal Stage (Level 3 Subtle Container Interaction) */}
+            <div className="kanban-col hover-level-3">
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface-variant)', marginBottom: '0.4rem' }}>
                 <span>Proposal Sent</span>
                 <span style={{ background: 'var(--surface-container)', padding: '0.1rem 0.5rem', borderRadius: '9999px', fontSize: '11px' }}>
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                 pipeline.proposalDeals.slice(0, 2).map((deal: any) => (
                   <div
                     key={deal.id}
-                    className="kanban-card"
+                    className="kanban-card hover-level-2"
                     onClick={() => router.push('/pipeline')}
                     style={{ cursor: 'pointer', padding: '0.75rem', marginBottom: '0.5rem' }}
                   >
@@ -389,8 +389,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Col 4: Negotiation */}
-            <div className="kanban-col">
+            {/* Col 4: Negotiation (Level 3 Subtle Container Interaction) */}
+            <div className="kanban-col hover-level-3">
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--on-surface-variant)', marginBottom: '0.4rem' }}>
                 <span>Negotiation</span>
                 <span style={{ background: 'var(--surface-container)', padding: '0.1rem 0.5rem', borderRadius: '9999px', fontSize: '11px' }}>
@@ -406,7 +406,7 @@ export default function DashboardPage() {
                 pipeline.negotiationDeals.slice(0, 2).map((deal: any) => (
                   <div
                     key={deal.id}
-                    className="kanban-card"
+                    className="kanban-card hover-level-2"
                     onClick={() => router.push('/pipeline')}
                     style={{ cursor: 'pointer', padding: '0.75rem', marginBottom: '0.5rem' }}
                   >
@@ -419,9 +419,9 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Col 5: Closed Won */}
+            {/* Col 5: Closed Won (Level 3 Subtle Container Interaction) */}
             <div
-              className="kanban-col"
+              className="kanban-col hover-level-3"
               onClick={() => router.push('/pipeline')}
               style={{
                 alignItems: 'center',
@@ -443,7 +443,7 @@ export default function DashboardPage() {
         {/* 4. Middle Grid: Urgent Tasks & Real Recent Projects */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
           {/* Urgent Tasks */}
-          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="glass-card hover-level-3" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
                 Urgent Tasks ({urgentTasksList.length})
@@ -460,7 +460,7 @@ export default function DashboardPage() {
               {urgentTasksList.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--on-surface-variant)', fontSize: '0.85rem' }}>
                   <p style={{ margin: '0 0 0.75rem 0' }}>No pending tasks in this workspace.</p>
-                  <button onClick={() => router.push('/tasks')} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>
+                  <button onClick={() => router.push('/tasks')} className="btn btn-primary hover-level-1" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>
                     + Create First Task
                   </button>
                 </div>
@@ -468,16 +468,17 @@ export default function DashboardPage() {
                 urgentTasksList.map((task: any) => (
                   <div
                     key={task.id}
+                    className="hover-level-2"
                     onClick={() => router.push('/tasks')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.75rem',
-                      padding: '0.6rem 0.75rem',
+                      padding: '0.65rem 0.85rem',
                       borderRadius: '8px',
                       background: 'var(--surface-container-high)',
                       cursor: 'pointer',
-                      border: '1px solid rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.06)',
                     }}
                   >
                     <div
@@ -511,7 +512,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Real Recent Projects Table */}
-          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="glass-card hover-level-3" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
                 Recent Projects ({projectsList.length})
@@ -528,7 +529,7 @@ export default function DashboardPage() {
               {projectsList.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--on-surface-variant)', fontSize: '0.85rem' }}>
                   <p style={{ margin: '0 0 0.75rem 0' }}>No active projects recorded yet.</p>
-                  <button onClick={() => router.push('/projects')} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>
+                  <button onClick={() => router.push('/projects')} className="btn btn-primary hover-level-1" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>
                     + Create First Project
                   </button>
                 </div>
@@ -536,15 +537,16 @@ export default function DashboardPage() {
                 projectsList.map((p: any) => (
                   <div
                     key={p.id}
+                    className="hover-level-2"
                     onClick={() => router.push('/projects')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '0.6rem 0.75rem',
+                      padding: '0.65rem 0.85rem',
                       borderRadius: '8px',
                       background: 'var(--surface-container-high)',
-                      border: '1px solid rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.06)',
                       cursor: 'pointer',
                     }}
                   >
