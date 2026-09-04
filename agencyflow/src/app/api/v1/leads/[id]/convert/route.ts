@@ -5,7 +5,7 @@ import { getAuthSession } from '@/lib/auth-session';
 
 const convertSchema = z.object({
   dealTitle: z.string().min(1, 'Deal title is required').max(255).optional().default('New Agency Service Deal'),
-  dealValue: z.coerce.number().min(0, 'Deal value cannot be negative').max(100_000_000, 'Deal value exceeds limit').optional().default(25000),
+  dealValue: z.coerce.number().min(0, 'Deal value cannot be negative').max(100_000_000, 'Deal value exceeds limit').optional().default(0),
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -57,28 +57,43 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         throw new Error('Lead has already been converted.');
       }
 
-      // 2. Company
+      // 2. Company (reuse existing to prevent duplicate accounts)
       let company = null;
       if (lead.companyName) {
-        company = await tx.company.create({
-          data: {
-            workspaceId,
-            name: lead.companyName,
-          },
+        company = await tx.company.findFirst({
+          where: { workspaceId, name: lead.companyName.trim() },
         });
+        if (!company) {
+          company = await tx.company.create({
+            data: {
+              workspaceId,
+              name: lead.companyName.trim(),
+            },
+          });
+        }
       }
 
-      // 3. Contact
-      const contact = await tx.contact.create({
-        data: {
-          workspaceId,
-          companyId: company ? company.id : null,
-          firstName: lead.firstName,
-          lastName: lead.lastName,
-          email: lead.email,
-          phone: lead.phone,
-        },
+      // 3. Contact (reuse existing to prevent duplicate contacts)
+      let contact = await tx.contact.findFirst({
+        where: { workspaceId, email: lead.email },
       });
+      if (!contact) {
+        contact = await tx.contact.create({
+          data: {
+            workspaceId,
+            companyId: company ? company.id : null,
+            firstName: lead.firstName,
+            lastName: lead.lastName,
+            email: lead.email,
+            phone: lead.phone,
+          },
+        });
+      } else if (company && !contact.companyId) {
+        contact = await tx.contact.update({
+          where: { id: contact.id },
+          data: { companyId: company.id },
+        });
+      }
 
       // 4. Deal
       const deal = await tx.deal.create({

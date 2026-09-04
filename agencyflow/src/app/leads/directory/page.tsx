@@ -104,6 +104,13 @@ export default function LeadsDirectoryPage() {
 
   const handleConvertLead = async () => {
     if (!selectedLead) return;
+    const valueInput = prompt(
+      `Convert "${selectedLead.companyName || selectedLead.firstName}" to an Active Deal.\nEnter estimated deal value in USD (e.g. 5000, or 0 if unknown):`,
+      '0'
+    );
+    if (valueInput === null) return; // User cancelled
+    const dealValue = Math.max(0, parseFloat(valueInput.replace(/[^0-9.]/g, '')) || 0);
+
     setConverting(true);
     try {
       const res = await fetch(`/api/v1/leads/${selectedLead.id}/convert`, {
@@ -111,17 +118,21 @@ export default function LeadsDirectoryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           dealTitle: `${selectedLead.companyName || selectedLead.firstName} Contract`,
-          dealValue: '45000',
+          dealValue,
         }),
       });
       const json = await res.json();
       if (json.success) {
         closeDrawer();
         fetchLeads();
-        alert(`Lead successfully converted to Active Deal!`);
+        window.dispatchEvent(new Event('agencyflow-refresh'));
+        alert(`Lead successfully converted to Active Deal${dealValue > 0 ? ` with value $${dealValue.toLocaleString()}` : ''}!`);
+      } else {
+        alert(json.error?.message || 'Failed to convert lead');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || 'Error converting lead');
     } finally {
       setConverting(false);
     }

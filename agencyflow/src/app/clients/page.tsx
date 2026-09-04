@@ -71,7 +71,7 @@ export default function ClientsOverviewPage() {
     contactName: '',
     contactEmail: '',
     contactPhone: '',
-    retainer: '12500',
+    retainer: '0',
     status: 'Active' as 'Active' | 'At Risk' | 'Inactive',
   });
 
@@ -125,7 +125,7 @@ export default function ClientsOverviewPage() {
     } catch (err) {
       console.error('Client creation error:', err);
     } finally {
-      const retVal = Number(formData.retainer) || 10000;
+      const retVal = Number(formData.retainer) || 0;
       const newC: ClientItem = {
         id: `c-${Date.now()}`,
         name: formData.name,
@@ -135,10 +135,10 @@ export default function ClientsOverviewPage() {
         email: formData.contactEmail || `contact@${formData.name.toLowerCase().replace(/\s+/g, '')}.com`,
         phone: formData.contactPhone || '+1 (555) 000-0000',
         retainerValue: retVal,
-        retainerFormatted: `$${retVal.toLocaleString()}/mo`,
+        retainerFormatted: retVal > 0 ? `$${retVal.toLocaleString()}/mo` : '$0',
         status: formData.status,
-        projectsCount: 1,
-        projects: [{ title: `${formData.name} Client Onboarding`, stage: 'IN_PROGRESS', value: retVal * 2, progress: 25 }],
+        projectsCount: 0,
+        projects: [],
         lastActivity: 'Just now',
         createdAt: new Date().toISOString().split('T')[0],
       };
@@ -152,7 +152,7 @@ export default function ClientsOverviewPage() {
         contactName: '',
         contactEmail: '',
         contactPhone: '',
-        retainer: '12500',
+        retainer: '0',
         status: 'Active',
       });
       setSubmitting(false);
