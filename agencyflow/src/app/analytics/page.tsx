@@ -395,87 +395,180 @@ export default function AnalyticsPage() {
 
                 {/* SVG Chart Container */}
                 <div style={{ width: '100%', height: '240px', position: 'relative', marginTop: '0.5rem' }}>
-                  <svg style={{ width: '100%', height: '200px' }} viewBox="0 0 1000 200" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#c0c1ff" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="#c0c1ff" stopOpacity="0.0" />
-                      </linearGradient>
-                      <linearGradient id="foreGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#c0c1ff" stopOpacity="0.1" />
-                        <stop offset="100%" stopColor="#c0c1ff" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
+                  {(() => {
+                    const maxRevenueValue = Math.max(
+                      ...monthlyData.map((m: any) => Math.max(m.actual || 0, m.forecast || 0)),
+                      0
+                    );
+                    const hasRevenueData = maxRevenueValue > 0;
+                    const chartCeiling = hasRevenueData ? maxRevenueValue * 1.15 : 10000;
 
-                    {/* Grid lines */}
-                    <g stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" strokeWidth="1">
-                      <line x1="0" y1="40" x2="1000" y2="40" />
-                      <line x1="0" y1="90" x2="1000" y2="90" />
-                      <line x1="0" y1="140" x2="1000" y2="140" />
-                    </g>
+                    // Coordinate helper: maps revenue value to SVG Y-axis (baseline = 170, top = 30)
+                    const getYCoord = (val: number | null) => {
+                      if (val === null) return 170;
+                      if (!hasRevenueData || val <= 0) return 170;
+                      const clamped = Math.min(val, chartCeiling);
+                      return 170 - (clamped / chartCeiling) * 135;
+                    };
 
-                    {/* Actuals Series */}
-                    {showActuals && (
-                      <>
-                        <path
-                          d="M 0,160 C 50,140 80,120 125,110 S 200,130 250,95 S 300,70 375,80 S 450,120 500,105 S 550,60 625,50 L 625,180 L 0,180 Z"
-                          fill="url(#areaGrad)"
-                        />
-                        <path
-                          d="M 0,160 C 50,140 80,120 125,110 S 200,130 250,95 S 300,70 375,80 S 450,120 500,105 S 550,60 625,50"
-                          fill="none"
-                          stroke="var(--primary)"
-                          strokeWidth="3"
-                          style={{ filter: 'drop-shadow(0 0 8px rgba(192,193,255,0.4))' }}
-                        />
-                      </>
-                    )}
+                    // Compute (x, y) coordinates for all 12 months
+                    interface MonthCoordItem {
+                      x: number;
+                      y: number;
+                      actualY: number;
+                      forecastY: number;
+                      isForecastOnly: boolean;
+                      raw: any;
+                    }
 
-                    {/* Forecast Series */}
-                    {showForecast && (
-                      <>
-                        <path
-                          d="M 625,50 C 700,45 750,80 875,40 S 950,25 1000,30 L 1000,180 L 625,180 Z"
-                          fill="url(#foreGrad)"
-                        />
-                        <path
-                          d="M 625,50 C 700,45 750,80 875,40 S 950,25 1000,30"
-                          fill="none"
-                          stroke="var(--primary)"
-                          strokeDasharray="6 6"
-                          strokeWidth="2.5"
-                          opacity="0.75"
-                        />
-                      </>
-                    )}
-
-                    {/* Month Data Point Nodes */}
-                    {monthlyData.map((m: any, i: number) => {
-                      const cx = 41.6 + i * 83.3;
+                    const monthCoords: MonthCoordItem[] = monthlyData.map((m: any, i: number) => {
+                      const x = 41.6 + i * 83.33;
                       const isForecastOnly = m.actual === null;
-                      return (
-                        <g key={m.month} onMouseEnter={() => setActiveHoverMonth(i)} style={{ cursor: 'pointer' }}>
-                          <circle
-                            cx={cx}
-                            cy={isForecastOnly ? 35 : 120 - (m.actual / 105420) * 70}
-                            r={activeHoverMonth === i ? 6 : 4}
-                            fill={isForecastOnly ? 'transparent' : 'var(--primary)'}
-                            stroke="var(--primary)"
-                            strokeWidth="2"
-                          />
-                        </g>
-                      );
-                    })}
+                      const val = isForecastOnly ? m.forecast : m.actual;
+                      const y = getYCoord(val);
+                      const actualY = getYCoord(m.actual);
+                      const forecastY = getYCoord(m.forecast);
+                      return { x, y, actualY, forecastY, isForecastOnly, raw: m };
+                    });
 
-                    {/* X-Axis Labels */}
-                    <g fill="var(--on-surface-variant)" fontSize="11" fontWeight="600">
-                      {monthlyData.map((m: any, i: number) => (
-                        <text key={m.month} x={41.6 + i * 83.3} y="195" textAnchor="middle">
-                          {m.month}
-                        </text>
-                      ))}
-                    </g>
-                  </svg>
+                    // Helper to build smooth cubic bezier curve
+                    const buildSvgPath = (points: Array<{ x: number; y: number }>) => {
+                      if (points.length === 0) return '';
+                      if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
+                      let path = `M ${points[0].x},${points[0].y}`;
+                      for (let i = 0; i < points.length - 1; i++) {
+                        const p0 = points[i];
+                        const p1 = points[i + 1];
+                        const cpX = (p0.x + p1.x) / 2;
+                        path += ` C ${cpX},${p0.y} ${cpX},${p1.y} ${p1.x},${p1.y}`;
+                      }
+                      return path;
+                    };
+
+                    // Separate Actuals and Forecast point sets
+                    const actualPoints = monthCoords.filter((p: MonthCoordItem) => !p.isForecastOnly).map((p: MonthCoordItem) => ({ x: p.x, y: p.actualY }));
+                    const actualLinePath = buildSvgPath(actualPoints);
+                    const actualAreaPath = actualPoints.length > 0
+                      ? `${actualLinePath} L ${actualPoints[actualPoints.length - 1].x},170 L ${actualPoints[0].x},170 Z`
+                      : '';
+
+                    // Forecast connects from the last actual point through the end of the year
+                    const lastActualPoint = actualPoints.length > 0 ? actualPoints[actualPoints.length - 1] : null;
+                    const forecastPoints = [
+                      ...(lastActualPoint ? [lastActualPoint] : []),
+                      ...monthCoords.filter((p: MonthCoordItem) => p.isForecastOnly).map((p: MonthCoordItem) => ({ x: p.x, y: p.forecastY })),
+                    ];
+                    const forecastLinePath = buildSvgPath(forecastPoints);
+                    const forecastAreaPath = forecastPoints.length > 0
+                      ? `${forecastLinePath} L ${forecastPoints[forecastPoints.length - 1].x},170 L ${forecastPoints[0].x},170 Z`
+                      : '';
+
+                    return (
+                      <>
+                        <svg style={{ width: '100%', height: '200px' }} viewBox="0 0 1000 200" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#c0c1ff" stopOpacity="0.3" />
+                              <stop offset="100%" stopColor="#c0c1ff" stopOpacity="0.0" />
+                            </linearGradient>
+                            <linearGradient id="foreGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#c0c1ff" stopOpacity="0.1" />
+                              <stop offset="100%" stopColor="#c0c1ff" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Grid lines */}
+                          <g stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" strokeWidth="1">
+                            <line x1="0" y1="35" x2="1000" y2="35" />
+                            <line x1="0" y1="80" x2="1000" y2="80" />
+                            <line x1="0" y1="125" x2="1000" y2="125" />
+                            <line x1="0" y1="170" x2="1000" y2="170" />
+                          </g>
+
+                          {/* Actuals Series */}
+                          {showActuals && actualLinePath && (
+                            <>
+                              {hasRevenueData && <path d={actualAreaPath} fill="url(#areaGrad)" />}
+                              <path
+                                d={actualLinePath}
+                                fill="none"
+                                stroke="var(--primary)"
+                                strokeWidth="3"
+                                style={{ filter: 'drop-shadow(0 0 8px rgba(192,193,255,0.4))' }}
+                              />
+                            </>
+                          )}
+
+                          {/* Forecast Series */}
+                          {showForecast && forecastLinePath && (
+                            <>
+                              {hasRevenueData && <path d={forecastAreaPath} fill="url(#foreGrad)" />}
+                              <path
+                                d={forecastLinePath}
+                                fill="none"
+                                stroke="var(--primary)"
+                                strokeDasharray="6 6"
+                                strokeWidth="2.5"
+                                opacity="0.75"
+                              />
+                            </>
+                          )}
+
+                          {/* Month Data Point Nodes */}
+                          {monthCoords.map((coord: MonthCoordItem, i: number) => {
+                            return (
+                              <g key={coord.raw.month} onMouseEnter={() => setActiveHoverMonth(i)} style={{ cursor: 'pointer' }}>
+                                <circle
+                                  cx={coord.x}
+                                  cy={coord.y}
+                                  r={activeHoverMonth === i ? 6 : 4}
+                                  fill={coord.isForecastOnly ? 'transparent' : 'var(--primary)'}
+                                  stroke="var(--primary)"
+                                  strokeWidth="2"
+                                />
+                              </g>
+                            );
+                          })}
+
+                          {/* X-Axis Labels */}
+                          <g fill="var(--on-surface-variant)" fontSize="11" fontWeight="600">
+                            {monthCoords.map((coord: MonthCoordItem) => (
+                              <text key={coord.raw.month} x={coord.x} y="195" textAnchor="middle">
+                                {coord.raw.month}
+                              </text>
+                            ))}
+                          </g>
+                        </svg>
+
+                        {/* Zero-state hint when there's no revenue yet */}
+                        {!hasRevenueData && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '38%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              padding: '0.4rem 0.9rem',
+                              borderRadius: '20px',
+                              background: 'rgba(20, 23, 34, 0.85)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              color: 'var(--on-surface-variant)',
+                              fontSize: '0.78rem',
+                              fontWeight: 500,
+                              pointerEvents: 'none',
+                              backdropFilter: 'blur(6px)',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                            }}
+                          >
+                            <span>No revenue recorded yet ($0 baseline)</span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {/* Active Hover Month Detailed Tooltip */}
                   {activeHoverMonth !== null && monthlyData[activeHoverMonth] && (
@@ -498,10 +591,10 @@ export default function AnalyticsPage() {
                         {monthlyData[activeHoverMonth].month} Revenue Overview
                       </div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--on-surface)' }}>
-                        Actual: <strong>{monthlyData[activeHoverMonth].actual ? `$${monthlyData[activeHoverMonth].actual.toLocaleString()}` : 'Pending'}</strong>
+                        Actual: <strong>{monthlyData[activeHoverMonth].actual !== null ? `$${(monthlyData[activeHoverMonth].actual || 0).toLocaleString()}` : 'Pending'}</strong>
                       </div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>
-                        Forecast: <strong>${monthlyData[activeHoverMonth].forecast.toLocaleString()}</strong>
+                        Forecast: <strong>${(monthlyData[activeHoverMonth].forecast || 0).toLocaleString()}</strong>
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--secondary)', marginTop: '0.2rem', fontWeight: 700 }}>
                         Variance: {monthlyData[activeHoverMonth].variance}
