@@ -240,7 +240,7 @@ export default function ClientsOverviewPage() {
             </button>
 
             <Link
-              href="/clients/portal"
+              href={clients.length > 0 ? `/clients/portal?clientId=${clients[0].id}` : '/clients/portal'}
               className="btn btn-secondary hover-level-1"
               style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.65rem 1.15rem' }}
             >
@@ -629,7 +629,7 @@ export default function ClientsOverviewPage() {
                         <td style={{ padding: '1.1rem 1.25rem', textAlign: 'right', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
                             <Link
-                              href="/clients/portal"
+                              href={`/clients/portal?clientId=${c.id}`}
                               className="btn btn-secondary"
                               style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                             >
@@ -682,7 +682,7 @@ export default function ClientsOverviewPage() {
                                 <Briefcase size={14} color="var(--primary)" /> View Client Workspace
                               </button>
                               <Link
-                                href="/clients/portal"
+                                href={`/clients/portal?clientId=${c.id}`}
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: 'none', border: 'none', color: 'var(--on-surface)', fontSize: '0.8rem', borderRadius: '4px', cursor: 'pointer', textAlign: 'left', width: '100%', textDecoration: 'none' }}
                               >
                                 <Eye size={14} color="var(--secondary)" /> Open Client Portal
@@ -1095,7 +1095,7 @@ export default function ClientsOverviewPage() {
               >
                 Delete
               </button>
-              <Link href="/clients/portal" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Link href={`/clients/portal?clientId=${selectedClient.id}`} className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                 Open Client Portal <ExternalLink size={16} />
               </Link>
             </div>

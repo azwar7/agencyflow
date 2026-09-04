@@ -24,9 +24,10 @@ export function middleware(request: NextRequest) {
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const hasSessionCookie = Boolean(sessionToken && sessionToken.trim().length > 0);
 
-  const isProtectedRoute = PROTECTED_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
+  const isProtectedRoute =
+    PROTECTED_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    ) && !pathname.startsWith('/clients/portal');
 
   // 1. Unauthenticated user trying to access protected workspace page
   if (isProtectedRoute && !hasSessionCookie) {
