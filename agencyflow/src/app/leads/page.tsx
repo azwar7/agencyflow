@@ -27,10 +27,12 @@ import {
   Lightbulb,
   GripVertical,
 } from 'lucide-react';
+import { getCachedData, setCachedData } from '@/lib/client-cache';
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedData<any[]>('/api/v1/leads');
+  const [leads, setLeads] = useState<any[]>(cached || []);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [filterTab, setFilterTab] = useState<'all' | 'my'>('all');
@@ -79,7 +81,9 @@ export default function LeadsPage() {
   }, []);
 
   const fetchLeads = async () => {
-    setLoading(true);
+    if (!cached && (!leads || leads.length === 0)) {
+      setLoading(true);
+    }
     setError('');
     try {
       const query = new URLSearchParams();
@@ -89,8 +93,11 @@ export default function LeadsPage() {
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to fetch leads');
       setLeads(json.data);
+      if (!sourceFilter) {
+        setCachedData('/api/v1/leads', json.data);
+      }
     } catch (err: any) {
-      setError(err.message || 'Error loading leads');
+      if (!leads || leads.length === 0) setError(err.message || 'Error loading leads');
     } finally {
       setLoading(false);
     }

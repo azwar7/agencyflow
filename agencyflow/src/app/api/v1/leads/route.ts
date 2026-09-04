@@ -24,6 +24,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
     const source = searchParams.get('source') || '';
+    const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 100, 1), 200);
 
     const visibilityFilter = await getVisibilityFilter(session, 'lead');
 
@@ -44,9 +45,21 @@ export async function GET(request: Request) {
             }
           : {}),
       },
+      take: limit,
       orderBy: { createdAt: 'desc' },
-      include: {
-        assignedTo: { select: { fullName: true, avatarUrl: true } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        companyName: true,
+        status: true,
+        leadScore: true,
+        source: true,
+        aiSummary: true,
+        createdAt: true,
+        assignedTo: { select: { id: true, fullName: true, avatarUrl: true } },
       },
     });
 

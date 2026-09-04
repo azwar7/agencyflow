@@ -27,17 +27,20 @@ export async function GET(request: Request) {
     const workspaceId = session.workspaceId;
     const visibilityFilter = await getVisibilityFilter(session, 'deal');
 
+    const { searchParams } = new URL(request.url);
+    const customPipelineId = searchParams.get('pipelineId');
+
     // Ensure default pipeline and stages exist
     const defaultPipeline = await ensureDefaultPipeline(workspaceId);
 
-    const { searchParams } = new URL(request.url);
-    const requestedPipelineId = searchParams.get('pipelineId') || defaultPipeline.id;
-
-    // Load requested pipeline with its stages
-    const pipeline = await prisma.pipeline.findFirst({
-      where: { id: requestedPipelineId, workspaceId },
-      include: { stages: { orderBy: { order: 'asc' } } },
-    }) || defaultPipeline;
+    // Only query again if a specific non-default pipeline was explicitly requested
+    const pipeline =
+      customPipelineId && customPipelineId !== defaultPipeline.id
+        ? (await prisma.pipeline.findFirst({
+            where: { id: customPipelineId, workspaceId },
+            include: { stages: { orderBy: { order: 'asc' } } },
+          })) || defaultPipeline
+        : defaultPipeline;
 
     const deals = await prisma.deal.findMany({
       where: {
@@ -46,10 +49,18 @@ export async function GET(request: Request) {
         ...visibilityFilter,
       },
       orderBy: { createdAt: 'desc' },
-      include: {
-        company: { select: { name: true } },
-        contact: { select: { firstName: true, lastName: true } },
-        assignedTo: { select: { fullName: true, avatarUrl: true } },
+      select: {
+        id: true,
+        title: true,
+        value: true,
+        stage: true,
+        stageId: true,
+        lossReason: true,
+        expectedCloseDate: true,
+        createdAt: true,
+        company: { select: { id: true, name: true } },
+        contact: { select: { id: true, firstName: true, lastName: true } },
+        assignedTo: { select: { id: true, fullName: true, avatarUrl: true } },
       },
     });
 

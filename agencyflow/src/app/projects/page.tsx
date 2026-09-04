@@ -31,6 +31,7 @@ import {
   Activity,
   Zap,
 } from 'lucide-react';
+import { getCachedData, setCachedData } from '@/lib/client-cache';
 
 interface ProjectItem {
   id: string;
@@ -52,8 +53,9 @@ interface ProjectItem {
 
 export default function ProjectsOverviewPage() {
   const router = useRouter();
-  const [projects, setProjects] = useState<ProjectItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedData<ProjectItem[]>('/api/v1/projects');
+  const [projects, setProjects] = useState<ProjectItem[]>(cached || []);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
 
   // Filters & View State
@@ -90,18 +92,21 @@ export default function ProjectsOverviewPage() {
   }, []);
 
   const fetchProjects = async () => {
-    setLoading(true);
+    if (!cached && (!projects || projects.length === 0)) {
+      setLoading(true);
+    }
     setError('');
     try {
       const res = await fetch('/api/v1/projects');
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setProjects(json.data);
+        setCachedData('/api/v1/projects', json.data);
       } else {
         setProjects([]);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load projects');
+      if (!projects || projects.length === 0) setError(err.message || 'Failed to load projects');
     } finally {
       setLoading(false);
     }

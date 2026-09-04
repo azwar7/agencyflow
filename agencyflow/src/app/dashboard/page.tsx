@@ -18,13 +18,15 @@ import {
   DollarSign,
   Zap,
 } from 'lucide-react';
+import { getCachedData, setCachedData, prefetchUrl } from '@/lib/client-cache';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedData<any>('/api/v1/dashboard');
+  const [data, setData] = useState<any>(cached);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
 
@@ -34,10 +36,11 @@ export default function DashboardPage() {
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+        setCachedData('/api/v1/dashboard', json.data);
       }
     } catch (err: any) {
       console.error('Failed to fetch dashboard:', err);
-      setError('Unable to load dashboard data.');
+      if (!data) setError('Unable to load dashboard data.');
     } finally {
       setLoading(false);
     }
@@ -45,6 +48,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboard();
+
+    // High-probability prefetching: prefetch Leads and Pipeline during idle moments
+    prefetchUrl('/api/v1/leads');
+    prefetchUrl('/api/v1/deals');
 
     const handleRefresh = () => fetchDashboard();
     window.addEventListener('agencyflow-refresh', handleRefresh);

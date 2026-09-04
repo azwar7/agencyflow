@@ -7,11 +7,7 @@ export async function GET(request: Request) {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
 
-    const [workspace, deals, leads, projects, invoices, urgentTasks, recentActivities] = await Promise.all([
-      prisma.workspace.findUnique({
-        where: { id: workspaceId },
-        select: { name: true, persona: true },
-      }),
+    const [deals, leads, projects, invoices, urgentTasks, recentActivities] = await Promise.all([
       prisma.deal.findMany({
         where: { workspaceId },
         select: {
@@ -22,7 +18,6 @@ export async function GET(request: Request) {
           createdAt: true,
           company: { select: { name: true } },
           contact: { select: { firstName: true, lastName: true } },
-          assignedTo: { select: { fullName: true } },
         },
       }),
       prisma.lead.findMany({
@@ -31,13 +26,10 @@ export async function GET(request: Request) {
           id: true,
           firstName: true,
           lastName: true,
-          email: true,
-          phone: true,
           companyName: true,
           status: true,
           leadScore: true,
           createdAt: true,
-          assignedTo: { select: { fullName: true } },
         },
       }),
       prisma.project.findMany({
@@ -91,10 +83,6 @@ export async function GET(request: Request) {
       }),
     ]);
 
-    if (!workspace) {
-      return NextResponse.json({ success: false, error: 'No workspace found.' }, { status: 404 });
-    }
-
     // Calculations based strictly on real database values
     const activeDeals = deals.filter((d) => d.stage !== 'CLOSED_WON' && d.stage !== 'CLOSED_LOST');
     const closedWonDeals = deals.filter((d) => d.stage === 'CLOSED_WON');
@@ -126,8 +114,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: {
-        workspaceName: workspace.name,
-        persona: workspace.persona,
+        workspaceName: session.agencyName,
+        persona: session.persona || 'AGENCY',
         metrics: {
           totalPipelineValue,
           activeDealsCount: activeDeals.length,

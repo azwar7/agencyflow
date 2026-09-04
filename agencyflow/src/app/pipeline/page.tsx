@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { EmptyState } from '@/components/EmptyState';
 import { DollarSign, Clock, AlertTriangle, CheckCircle, XCircle, Briefcase } from 'lucide-react';
+import { getCachedData, setCachedData } from '@/lib/client-cache';
 
 export default function PipelinePage() {
-  const [pipelineData, setPipelineData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedData<any>('/api/v1/deals');
+  const [pipelineData, setPipelineData] = useState<any>(cached);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
 
   // Loss Reason Dialog State
@@ -16,15 +18,18 @@ export default function PipelinePage() {
   const [updatingStage, setUpdatingStage] = useState(false);
 
   const fetchPipeline = async () => {
-    setLoading(true);
+    if (!cached && !pipelineData) {
+      setLoading(true);
+    }
     setError('');
     try {
       const res = await fetch('/api/v1/deals');
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to load pipeline');
       setPipelineData(json.data);
+      setCachedData('/api/v1/deals', json.data);
     } catch (err: any) {
-      setError(err.message || 'Error loading pipeline');
+      if (!pipelineData) setError(err.message || 'Error loading pipeline');
     } finally {
       setLoading(false);
     }

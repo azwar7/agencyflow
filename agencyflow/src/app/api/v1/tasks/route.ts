@@ -14,8 +14,15 @@ export async function GET(request: Request) {
         workspaceId,
         ...visibilityFilter,
       },
+      take: 100,
       orderBy: { dueDate: 'asc' },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        dueDate: true,
+        priority: true,
+        status: true,
+        createdAt: true,
         assignedTo: { select: { id: true, fullName: true, email: true } },
         lead: { select: { id: true, firstName: true, lastName: true, companyName: true } },
         deal: { select: { id: true, title: true, value: true } },

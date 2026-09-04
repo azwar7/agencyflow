@@ -28,6 +28,7 @@ import {
   DollarSign,
   ExternalLink,
 } from 'lucide-react';
+import { getCachedData, setCachedData } from '@/lib/client-cache';
 
 interface ClientItem {
   id: string;
@@ -49,8 +50,9 @@ interface ClientItem {
 export default function ClientsOverviewPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [clients, setClients] = useState<ClientItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedData<ClientItem[]>('/api/v1/clients');
+  const [clients, setClients] = useState<ClientItem[]>(cached || []);
+  const [loading, setLoading] = useState(!cached);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [retainerFilter, setRetainerFilter] = useState('ALL');
@@ -77,17 +79,20 @@ export default function ClientsOverviewPage() {
 
   const fetchClients = async () => {
     try {
-      setLoading(true);
+      if (!cached && (!clients || clients.length === 0)) {
+        setLoading(true);
+      }
       const res = await fetch('/api/v1/clients');
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setClients(json.data);
+        setCachedData('/api/v1/clients', json.data);
       } else {
         setClients([]);
       }
     } catch (err: any) {
       console.error(err);
-      setClients([]);
+      if (!clients || clients.length === 0) setClients([]);
     } finally {
       setLoading(false);
     }

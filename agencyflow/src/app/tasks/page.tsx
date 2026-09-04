@@ -31,6 +31,7 @@ import {
   GripVertical,
   RefreshCw,
 } from 'lucide-react';
+import { getCachedData, setCachedData } from '@/lib/client-cache';
 
 interface TaskItem {
   id: string;
@@ -47,8 +48,9 @@ interface TaskItem {
 }
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedData<TaskItem[]>('/api/v1/tasks');
+  const [tasks, setTasks] = useState<TaskItem[]>(cached || []);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
 
   // View & Filter States
@@ -86,7 +88,9 @@ export default function TasksPage() {
   }, []);
 
   const fetchTasks = async () => {
-    setLoading(true);
+    if (!cached && (!tasks || tasks.length === 0)) {
+      setLoading(true);
+    }
     setError('');
     try {
       const res = await fetch('/api/v1/tasks');
@@ -113,6 +117,7 @@ export default function TasksPage() {
           };
         });
         setTasks(enriched);
+        setCachedData('/api/v1/tasks', enriched);
       } else {
         setTasks([]);
       }

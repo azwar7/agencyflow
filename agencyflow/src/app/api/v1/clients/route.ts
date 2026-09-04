@@ -9,15 +9,37 @@ export async function GET(request: Request) {
 
     const companies = await prisma.company.findMany({
       where: { workspaceId },
-      include: {
-        contacts: true,
-        deals: {
-          include: {
-            assignedTo: { select: { fullName: true } },
+      select: {
+        id: true,
+        name: true,
+        domain: true,
+        industry: true,
+        createdAt: true,
+        contacts: {
+          take: 1,
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
           },
         },
-        projects: true,
-        invoices: true,
+        deals: {
+          select: {
+            id: true,
+            value: true,
+            stage: true,
+          },
+        },
+        projects: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            budget: true,
+            progress: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

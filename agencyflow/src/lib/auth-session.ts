@@ -58,6 +58,31 @@ export async function createSession(userId: string): Promise<{ rawToken: string;
   return { rawToken, expiresAt };
 }
 
+interface CachedSessionItem {
+  data: SessionData;
+  expiresAt: number;
+}
+
+// Global in-memory cache with 60s TTL to eliminate redundant remote DB lookups on parallel/subsequent requests
+const globalSessionCache = global as unknown as {
+  _agencyflow_session_cache?: Map<string, CachedSessionItem>;
+};
+if (!globalSessionCache._agencyflow_session_cache) {
+  globalSessionCache._agencyflow_session_cache = new Map<string, CachedSessionItem>();
+}
+const sessionCache = globalSessionCache._agencyflow_session_cache;
+
+/**
+ * Invalidates cached session data for a specific token or clears all cached sessions.
+ */
+export function invalidateSessionCache(tokenHash?: string) {
+  if (tokenHash) {
+    sessionCache.delete(tokenHash);
+  } else {
+    sessionCache.clear();
+  }
+}
+
 /**
  * Resolves the authenticated user & workspace from the database-backed session token.
  * Strictly derives the workspace from session -> user -> workspace (zero client trust).
@@ -90,6 +115,12 @@ export async function getAuthSession(request?: Request): Promise<SessionData> {
 
   const tokenHash = hashToken(sessionToken);
 
+  // Fast path: Check in-memory session cache
+  const cached = sessionCache.get(tokenHash);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
   // Look up session in database with User and Workspace
   const session = await prisma.session.findUnique({
     where: { tokenHash },
@@ -103,11 +134,13 @@ export async function getAuthSession(request?: Request): Promise<SessionData> {
   });
 
   if (!session) {
+    sessionCache.delete(tokenHash);
     throw new Error('Unauthorized: Invalid session. Please log in.');
   }
 
   // Verify expiration
   if (session.expiresAt < new Date()) {
+    sessionCache.delete(tokenHash);
     // Asynchronously delete expired session
     prisma.session.delete({ where: { id: session.id } }).catch(() => {});
     throw new Error('Unauthorized: Session expired. Please log in again.');
@@ -115,10 +148,11 @@ export async function getAuthSession(request?: Request): Promise<SessionData> {
 
   const user = session.user;
   if (!user || !user.workspace) {
+    sessionCache.delete(tokenHash);
     throw new Error('Unauthorized: User or associated workspace not found.');
   }
 
-  return {
+  const sessionData: SessionData = {
     sessionId: session.id,
     userId: user.id,
     workspaceId: user.workspace.id,
@@ -128,6 +162,14 @@ export async function getAuthSession(request?: Request): Promise<SessionData> {
     agencyName: user.workspace.name,
     persona: user.workspace.persona || 'AGENCY',
   };
+
+  // Cache in-memory for 60 seconds (or session expiration, whichever is earlier)
+  sessionCache.set(tokenHash, {
+    data: sessionData,
+    expiresAt: Math.min(Date.now() + 60_000, session.expiresAt.getTime()),
+  });
+
+  return sessionData;
 }
 
 /**
@@ -142,6 +184,11 @@ export async function deleteSession(request?: Request): Promise<void> {
     if (match) {
       sessionToken = decodeURIComponent(match[1].trim().replace(/^"|"$/g, ''));
     }
+  }
+
+  if (sessionToken) {
+    const tokenHash = hashToken(sessionToken);
+    invalidateSessionCache(tokenHash);
   }
 
   if (!sessionToken) {
