@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { AppShell } from '@/components/AppShell';
 import { UIStateCard } from '@/components/UIStateCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -729,6 +730,31 @@ export default function LeadsPage() {
                                       <ExternalLink size={14} color="#c0c1ff" /> View Details
                                     </button>
 
+                                    <Link
+                                      href={`/clients/portal?clientId=${l.id}`}
+                                      target="_blank"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(null);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '8px 10px',
+                                        borderRadius: '6px',
+                                        color: '#c4b5fd',
+                                        fontSize: '12px',
+                                        textDecoration: 'none',
+                                        background: 'transparent',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        width: '100%',
+                                      }}
+                                    >
+                                      <Sparkles size={14} color="#a78bfa" /> Client Portal
+                                    </Link>
+
                                     <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '2px 0' }} />
 
                                     <button
@@ -867,6 +893,15 @@ export default function LeadsPage() {
                         >
                           View Details
                         </button>
+                        <Link
+                          href={`/clients/portal?clientId=${l.id}`}
+                          target="_blank"
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#c4b5fd' }}
+                          title="Open Client Portal"
+                        >
+                          <ExternalLink size={12} /> Portal
+                        </Link>
                         <button
                           onClick={() => handleDeleteLead(l.id, l.companyName || `${l.firstName} ${l.lastName}`)}
                           title="Remove Lead"
@@ -912,9 +947,31 @@ export default function LeadsPage() {
                   {selectedLead.firstName} {selectedLead.lastName} • {selectedLead.email} • {selectedLead.phone || 'No phone'}
                 </p>
               </div>
-              <button onClick={() => setSelectedLead(null)} style={{ color: 'var(--on-surface-variant)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                <X size={20} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Link
+                  href={`/clients/portal?clientId=${selectedLead.id}`}
+                  target="_blank"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '6px',
+                    background: 'rgba(139, 92, 246, 0.15)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    color: '#c4b5fd',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                  }}
+                  title="Open Client Portal for this lead"
+                >
+                  <ExternalLink size={13} /> Client Portal
+                </Link>
+                <button onClick={() => setSelectedLead(null)} style={{ color: 'var(--on-surface-variant)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Tab Controller */}

@@ -5,11 +5,11 @@ import { getAuthSession } from '@/lib/auth-session';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const requestedClientId = searchParams.get('clientId')?.trim();
+    const requestedId = searchParams.get('clientId')?.trim() || searchParams.get('leadId')?.trim();
 
     let workspaceId: string | null = null;
     let userFullName: string = 'Agency Lead';
-    let allCompanies: Array<{ id: string; name: string; contacts: Array<{ firstName: string; lastName: string }> }> = [];
+    let allWorkspaceClients: Array<{ id: string; name: string; contactName: string; type: 'COMPANY' | 'LEAD' }> = [];
 
     // Attempt to resolve internal CRM user session
     try {
@@ -20,351 +20,517 @@ export async function GET(request: Request) {
       // Unauthenticated external client viewing direct portal link
     }
 
-    // 1. If CRM session is active, fetch all companies in this workspace (for Client Switcher)
+    // 1. Fetch all companies and leads in workspace (for Client Switcher)
     if (workspaceId) {
-      allCompanies = await prisma.company.findMany({
-        where: { workspaceId },
-        select: {
-          id: true,
-          name: true,
-          contacts: {
-            take: 1,
-            select: {
-              firstName: true,
-              lastName: true,
+      const [companies, leads] = await Promise.all([
+        prisma.company.findMany({
+          where: { workspaceId },
+          select: {
+            id: true,
+            name: true,
+            contacts: {
+              take: 1,
+              select: { firstName: true, lastName: true },
             },
           },
-        },
-        orderBy: { name: 'asc' },
-      });
+          orderBy: { name: 'asc' },
+        }),
+        prisma.lead.findMany({
+          where: { workspaceId },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            companyName: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      ]);
+
+      const companyItems = companies.map((c) => ({
+        id: c.id,
+        name: c.name,
+        contactName: c.contacts[0] ? `${c.contacts[0].firstName} ${c.contacts[0].lastName}` : 'Primary Contact',
+        type: 'COMPANY' as const,
+      }));
+
+      const leadItems = leads.map((l) => ({
+        id: l.id,
+        name: l.companyName || `${l.firstName} ${l.lastName}`,
+        contactName: `${l.firstName} ${l.lastName}`,
+        type: 'LEAD' as const,
+      }));
+
+      // Merge and deduplicate by name
+      allWorkspaceClients = [...companyItems];
+      for (const li of leadItems) {
+        if (!allWorkspaceClients.some((ci) => ci.name.toLowerCase() === li.name.toLowerCase())) {
+          allWorkspaceClients.push(li);
+        }
+      }
     }
 
-    // 2. Resolve target company
-    let targetCompanyId = requestedClientId;
-    if (!targetCompanyId && allCompanies.length > 0) {
-      targetCompanyId = allCompanies[0].id;
+    // 2. Resolve target ID (fallback to first workspace company/lead if none provided)
+    let targetId = requestedId;
+    if (!targetId && allWorkspaceClients.length > 0) {
+      targetId = allWorkspaceClients[0].id;
     }
 
-    if (!targetCompanyId) {
+    if (!targetId) {
       return NextResponse.json(
         {
           success: false,
-          error: { message: 'No client specified or no client accounts exist in this workspace.' },
+          error: { message: 'No client or lead account specified.' },
         },
         { status: 404 }
       );
     }
 
-    // 3. Fetch full details for the target company with workspace isolation
-    const company = await prisma.company.findFirst({
-      where: workspaceId
-        ? { id: targetCompanyId, workspaceId }
-        : { id: targetCompanyId },
+    // 3. Resolve target entity: Check Company first, then Lead
+    let targetCompany = await prisma.company.findFirst({
+      where: workspaceId ? { id: targetId, workspaceId } : { id: targetId },
       include: {
-        contacts: {
-          orderBy: { createdAt: 'asc' },
-        },
-        projects: {
-          include: {
-            deliverables: true,
-          },
-          orderBy: { createdAt: 'desc' },
-        },
-        invoices: {
-          orderBy: { createdAt: 'desc' },
-        },
-        deals: {
-          orderBy: { createdAt: 'desc' },
-        },
+        contacts: { orderBy: { createdAt: 'asc' } },
+        deals: { orderBy: { createdAt: 'desc' } },
       },
     });
 
-    if (!company) {
+    let targetLead: any = null;
+
+    if (!targetCompany) {
+      // Look up in Lead table
+      targetLead = await prisma.lead.findFirst({
+        where: workspaceId ? { id: targetId, workspaceId } : { id: targetId },
+        include: {
+          tasks: { orderBy: { dueDate: 'asc' } },
+          activities: {
+            include: { user: true },
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+
+      if (targetLead && targetLead.companyName) {
+        // Find if a company already exists for this lead's companyName
+        targetCompany = await prisma.company.findFirst({
+          where: workspaceId
+            ? { name: targetLead.companyName, workspaceId }
+            : { name: targetLead.companyName },
+          include: {
+            contacts: { orderBy: { createdAt: 'asc' } },
+            deals: { orderBy: { createdAt: 'desc' } },
+          },
+        });
+      }
+    } else {
+      // Find if there is a matching Lead by company name
+      targetLead = await prisma.lead.findFirst({
+        where: workspaceId
+          ? { companyName: targetCompany.name, workspaceId }
+          : { companyName: targetCompany.name },
+        include: {
+          tasks: { orderBy: { dueDate: 'asc' } },
+          activities: {
+            include: { user: true },
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+    }
+
+    if (!targetCompany && !targetLead) {
       return NextResponse.json(
         {
           success: false,
-          error: { message: 'Client account not found in this workspace.' },
+          error: { message: 'Client or lead account not found in this workspace.' },
         },
         { status: 404 }
       );
     }
 
-    // 4. Resolve Primary Contact
-    const contact = company.contacts[0] || {
-      firstName: company.name.split(' ')[0] || 'Client',
-      lastName: company.name.split(' ').slice(1).join(' ') || 'Contact',
-      email: `contact@${company.domain || 'client.com'}`,
-      phone: null,
-      title: 'Client Executive',
+    // 4. Resolve client identity details
+    const clientName =
+      targetCompany?.name ||
+      targetLead?.companyName ||
+      (targetLead ? `${targetLead.firstName} ${targetLead.lastName}` : 'Client Account');
+
+    const clientId = targetCompany?.id || targetLead?.id;
+
+    // Resolve primary contact
+    let contactFullName = '';
+    let contactFirstName = '';
+    let contactLastName = '';
+    let contactEmail = '';
+    let contactPhone = '';
+    let contactTitle = 'Client Representative';
+    let contactInitials = '';
+
+    if (targetCompany?.contacts && targetCompany.contacts.length > 0) {
+      const c = targetCompany.contacts[0];
+      contactFirstName = c.firstName || '';
+      contactLastName = c.lastName || '';
+      contactFullName = `${c.firstName} ${c.lastName}`.trim();
+      contactEmail = c.email || '';
+      contactPhone = c.phone || '';
+      contactTitle = c.title || 'Client Executive';
+      contactInitials = `${c.firstName?.[0] || ''}${c.lastName?.[0] || ''}`.toUpperCase();
+    } else if (targetLead) {
+      contactFirstName = targetLead.firstName || '';
+      contactLastName = targetLead.lastName || '';
+      contactFullName = `${targetLead.firstName} ${targetLead.lastName}`.trim();
+      contactEmail = targetLead.email || '';
+      contactPhone = targetLead.phone || '';
+      contactTitle = targetLead.companyName ? 'Company Representative' : 'Lead Contact';
+      contactInitials = `${targetLead.firstName?.[0] || ''}${targetLead.lastName?.[0] || ''}`.toUpperCase();
+    } else {
+      contactFullName = clientName;
+      contactFirstName = clientName.split(' ')[0] || 'Client';
+      contactLastName = clientName.split(' ').slice(1).join(' ') || 'Contact';
+      contactEmail = `contact@${targetCompany?.domain || 'client.com'}`;
+      contactInitials = clientName.slice(0, 2).toUpperCase();
+    }
+
+    if (!contactInitials) contactInitials = clientName.slice(0, 2).toUpperCase();
+
+    // 5. Gather all alias names for database lookups
+    const nameFilters = [
+      clientName,
+      targetCompany?.name,
+      targetLead?.companyName,
+      targetLead ? `${targetLead.firstName} ${targetLead.lastName}` : null,
+    ].filter(Boolean) as string[];
+
+    // 6. Real Projects & Milestones from Database
+    const projects = await prisma.project.findMany({
+      where: {
+        OR: [
+          ...(targetCompany?.id ? [{ companyId: targetCompany.id }] : []),
+          { clientName: { in: nameFilters } },
+        ],
+      },
+      include: {
+        deliverables: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    let projectPayload: {
+      title: string;
+      day: number;
+      totalDays: number;
+      elapsedPercent: number;
+      targetDate: string;
+      sprintTitle: string;
+    } | null = null;
+
+    let milestonesPayload: Array<{
+      tag: string;
+      title: string;
+      status: 'COMPLETED' | 'ACTIVE' | 'LOCKED';
+      date: string;
+      metric: string;
+    }> = [];
+
+    if (projects.length > 0) {
+      const p = projects[0];
+      const createdDate = new Date(p.createdAt);
+      const dueDate = p.dueDate ? new Date(p.dueDate) : null;
+      const now = new Date();
+
+      let totalDays = 30;
+      if (dueDate && dueDate > createdDate) {
+        totalDays = Math.max(1, Math.round((dueDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)));
+      }
+      const elapsedDays = Math.max(1, Math.min(totalDays, Math.round((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))));
+      const elapsedPercent = p.progress > 0 ? p.progress : Math.min(100, Math.round((elapsedDays / totalDays) * 100));
+
+      projectPayload = {
+        title: p.title,
+        day: elapsedDays,
+        totalDays,
+        elapsedPercent,
+        targetDate: dueDate ? dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Flexible',
+        sprintTitle: `${p.status || 'Active Sprint'} • ${p.progress}% Progress`,
+      };
+
+      if (p.deliverables.length > 0) {
+        milestonesPayload = p.deliverables.map((d, idx) => {
+          const sUpper = d.status.toUpperCase();
+          let status: 'COMPLETED' | 'ACTIVE' | 'LOCKED' = 'LOCKED';
+          if (sUpper.includes('APPROVED') || sUpper.includes('COMPLETED')) {
+            status = 'COMPLETED';
+          } else if (sUpper.includes('PENDING') || sUpper.includes('REVIEW') || sUpper.includes('PROGRESS')) {
+            status = 'ACTIVE';
+          }
+
+          const dDate = d.dueDate
+            ? new Date(d.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : d.sentDate
+            ? new Date(d.sentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : 'Scheduled';
+
+          return {
+            tag: `MILESTONE 0${idx + 1}`,
+            title: d.title,
+            status,
+            date: dDate,
+            metric: `${d.version || 'v1.0'} • ${(d.fileType || 'PDF').toUpperCase()}`,
+          };
+        });
+      } else {
+        milestonesPayload = [
+          {
+            tag: 'MILESTONE 01',
+            title: p.title,
+            status: 'ACTIVE',
+            date: dueDate ? dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'In Progress',
+            metric: `${p.progress}% Completed`,
+          },
+        ];
+      }
+    }
+
+    // 7. Real Invoices from Database
+    const dbInvoices = await prisma.invoice.findMany({
+      where: {
+        OR: [
+          ...(targetCompany?.id ? [{ companyId: targetCompany.id }] : []),
+          { client: { in: nameFilters } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const invoicesPayload = dbInvoices.map((inv) => {
+      const isPaid = inv.status.toUpperCase() === 'PAID';
+      const isOverdue = inv.status.toUpperCase() === 'OVERDUE';
+      return {
+        id: inv.id,
+        number: inv.number,
+        description: `${clientName} Invoiced Services`,
+        amount: inv.amount,
+        status: (isPaid ? 'PAID' : isOverdue ? 'OVERDUE' : 'OUTSTANDING') as 'OUTSTANDING' | 'PAID' | 'OVERDUE',
+        dueDate: inv.dueDate
+          ? new Date(inv.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'Due upon receipt',
+      };
+    });
+
+    const outstandingInvoices = invoicesPayload.filter((i) => i.status !== 'PAID');
+    const totalDueAmount = outstandingInvoices.reduce((sum, i) => sum + i.amount, 0);
+    const earliestDueDate = outstandingInvoices[0]?.dueDate;
+
+    // 8. Real Actions Required from Database (Deliverables pending client review, or tasks)
+    let actionRequiredPayload: {
+      id: string;
+      title: string;
+      specTitle: string;
+      submittedMeta: string;
+      document: {
+        id: string;
+        name: string;
+        size: string;
+        updated: string;
+        type: string;
+        description: string;
+      };
+    } | null = null;
+
+    // Check deliverables pending review
+    const pendingDeliverable = projects
+      .flatMap((p) => p.deliverables)
+      .find((d) => d.status.toUpperCase().includes('PENDING') || d.status.toUpperCase().includes('REVIEW'));
+
+    if (pendingDeliverable) {
+      actionRequiredPayload = {
+        id: pendingDeliverable.id,
+        title: '1 Deliverable Requires Your Sign-off',
+        specTitle: pendingDeliverable.title,
+        submittedMeta: `Submitted ${new Date(pendingDeliverable.sentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} by ${userFullName}`,
+        document: {
+          id: pendingDeliverable.id,
+          name: pendingDeliverable.fileName || `${pendingDeliverable.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`,
+          size: '2.4 MB',
+          updated: new Date(pendingDeliverable.sentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          type: pendingDeliverable.fileType || 'pdf',
+          description: `Deliverable document for ${clientName}. Client review and approval required.`,
+        },
+      };
+    } else if (targetLead?.tasks && targetLead.tasks.length > 0) {
+      const pendingTask = targetLead.tasks.find((t: any) => t.status === 'PENDING');
+      if (pendingTask) {
+        actionRequiredPayload = {
+          id: pendingTask.id,
+          title: 'Action Item Pending',
+          specTitle: pendingTask.title,
+          submittedMeta: `Due ${new Date(pendingTask.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • Priority: ${pendingTask.priority}`,
+          document: {
+            id: pendingTask.id,
+            name: `${pendingTask.title.slice(0, 32).replace(/[^a-zA-Z0-9_-]/g, '_')}.task`,
+            size: `${pendingTask.priority} Priority`,
+            updated: new Date(pendingTask.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            type: 'doc',
+            description: `Scheduled action item for ${clientName}.`,
+          },
+        };
+      }
+    }
+
+    // 9. Real Files & Shared Resources from Database
+    const dbFiles = await prisma.fileRecord.findMany({
+      where: {
+        client: { in: nameFilters },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Also include deliverable attachments from real projects
+    const deliverableFiles = projects
+      .flatMap((p) => p.deliverables)
+      .filter((d) => d.fileName)
+      .map((d) => ({
+        id: `deliv-file-${d.id}`,
+        name: d.fileName as string,
+        category: 'specs' as const,
+        size: '2.5 MB',
+        updated: new Date(d.sentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        type: (d.fileType?.toLowerCase() === 'zip' ? 'zip' : d.fileType?.toLowerCase() === 'doc' ? 'doc' : 'pdf') as 'pdf' | 'zip' | 'doc',
+        description: `Project deliverable: ${d.title}`,
+      }));
+
+    // Map database files
+    const fileRecordsMapped = dbFiles.map((f) => {
+      const typeLower = f.type.toLowerCase();
+      const normType: 'pdf' | 'zip' | 'doc' = typeLower.includes('zip') || typeLower.includes('archive')
+        ? 'zip'
+        : typeLower.includes('doc') || typeLower.includes('txt')
+        ? 'doc'
+        : 'pdf';
+
+      const catLower = f.category.toLowerCase();
+      const normCategory: 'specs' | 'assets' | 'contracts' = catLower.includes('contract') || catLower.includes('agreement')
+        ? 'contracts'
+        : catLower.includes('asset') || catLower.includes('brand') || catLower.includes('image')
+        ? 'assets'
+        : 'specs';
+
+      return {
+        id: f.id,
+        name: f.name,
+        category: normCategory,
+        size: f.size || '1.2 MB',
+        updated: new Date(f.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        type: normType,
+        description: `Uploaded document for ${clientName}.`,
+      };
+    });
+
+    const allVaultFiles = [...deliverableFiles, ...fileRecordsMapped];
+    const resourcesPayload = allVaultFiles.slice(0, 6);
+
+    // 10. Real Activities from Database
+    const dealIds = targetCompany?.deals?.map((d) => d.id) || [];
+    const dbActivities = await prisma.activity.findMany({
+      where: {
+        OR: [
+          ...(targetLead?.id ? [{ leadId: targetLead.id }] : []),
+          ...(dealIds.length > 0 ? [{ dealId: { in: dealIds } }] : []),
+        ],
+      },
+      include: {
+        user: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+    });
+
+    const activitiesPayload = dbActivities.map((act) => {
+      const timeAgo = formatTimeAgo(new Date(act.createdAt));
+      let actionPhrase = 'logged note for';
+      let avatarClass = 'activity-avatar-purple';
+
+      if (act.type === 'EMAIL') {
+        actionPhrase = 'dispatched email to';
+        avatarClass = 'activity-avatar-cyan';
+      } else if (act.type === 'CALL') {
+        actionPhrase = 'completed call regarding';
+        avatarClass = 'activity-avatar-slate';
+      } else if (act.type === 'MEETING') {
+        actionPhrase = 'conducted meeting with';
+        avatarClass = 'activity-avatar-purple';
+      } else if (act.type === 'STAGE_CHANGE') {
+        actionPhrase = 'updated deal stage for';
+        avatarClass = 'activity-avatar-cyan';
+      }
+
+      const userName = act.user?.fullName || userFullName || 'Agency Team';
+      const userInitials = act.user?.fullName
+        ? act.user.fullName
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase()
+        : 'AT';
+
+      return {
+        id: act.id,
+        avatar: userInitials,
+        avatarClass,
+        userName,
+        actionPhrase,
+        objectTitle: clientName,
+        supportingText: act.content.length > 120 ? `${act.content.slice(0, 120)}...` : act.content,
+        time: timeAgo,
+      };
+    });
+
+    // 11. Real Summary Stats
+    const openTasksCount = (targetLead?.tasks?.filter((t: any) => t.status === 'PENDING').length || 0) +
+      (pendingDeliverable ? 1 : 0);
+
+    const summaryStats = {
+      activeOpen: openTasksCount,
+      activeSub: openTasksCount > 0 ? `${openTasksCount} action items pending` : 'No active items pending',
+      unreadCount: 0,
+      unreadSub: 'All messages caught up',
+      vaultFilesCount: allVaultFiles.length,
+      vaultSub: allVaultFiles.length > 0 ? `${allVaultFiles.length} files in vault` : 'No files uploaded yet',
+      dueAmount: totalDueAmount,
+      dueFormatted: totalDueAmount > 0 ? `$${totalDueAmount.toLocaleString()}` : '$0.00',
+      dueDateText: totalDueAmount > 0 ? (earliestDueDate ? `Due ${earliestDueDate}` : 'Outstanding') : 'All settled ✓',
     };
 
-    const contactFullName = `${contact.firstName} ${contact.lastName}`.trim();
-    const contactInitials =
-      contact.firstName && contact.lastName
-        ? `${contact.firstName[0]}${contact.lastName[0]}`.toUpperCase()
-        : company.name.substring(0, 2).toUpperCase();
-
-    // 5. Total Retainer / Monthly Deal Value
-    const totalRetainerValue = company.deals.reduce((sum, d) => sum + (d.value || 0), 0);
-    const displayRetainer = totalRetainerValue > 0 ? totalRetainerValue : 12500;
-
-    // 6. Resolve Active Project & Milestone Data
-    const activeProject = company.projects[0] || null;
-    const projectTitle = activeProject?.title || `${company.name} Digital Portal & Growth Sprint`;
-
-    // 7. Resolve Deliverables & Action Required
-    const rawDeliverable = activeProject?.deliverables.find(
-      (d) => d.status.includes('PENDING') || d.status.includes('REVIEW')
-    );
-
-    const pendingDeliverable = {
-      id: rawDeliverable?.id || `deliv-${company.id}`,
-      title: rawDeliverable?.title || `${company.name} v2.4 Architecture Spec & API Contracts`,
-      fileName: rawDeliverable?.fileName || `${company.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_spec_v2.4.pdf`,
-      fileSize: '4.2 MB',
-      submittedBy: `${userFullName} (Senior Producer)`,
-      submittedAt: rawDeliverable?.sentDate
-        ? new Date(rawDeliverable.sentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        : '4 hours ago',
-    };
-
-    // 8. Resolve Invoices
-    const invoices =
-      company.invoices.length > 0
-        ? company.invoices.map((inv) => ({
-            id: inv.id,
-            number: inv.number || `INV-${company.id.slice(0, 4).toUpperCase()}`,
-            description: `${company.name} Retainer Milestone`,
-            amount: inv.amount,
-            status: inv.status as 'OUTSTANDING' | 'PAID' | 'OVERDUE',
-            dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Due Oct 30, 2024',
-          }))
-        : [
-            {
-              id: `inv-1-${company.id}`,
-              number: 'Invoice #1043',
-              description: 'Architecture Milestone',
-              amount: displayRetainer,
-              status: 'OUTSTANDING',
-              dueDate: 'Due Oct 30, 2024',
-            },
-            {
-              id: `inv-2-${company.id}`,
-              number: 'Invoice #1042',
-              description: 'Sprint Deposit & Discovery',
-              amount: displayRetainer,
-              status: 'PAID',
-              dueDate: 'Paid Sep 30, 2024 • Stripe Receipt',
-            },
-          ];
-
-    // 9. Client Tailored Resources & Vault Files
-    const sanitizedSlug = company.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const resources = [
-      {
-        id: `res-1-${company.id}`,
-        name: `${sanitizedSlug}_Master_Agreement.pdf`,
-        category: 'contracts',
-        size: '2.4 MB',
-        updated: 'Updated Today',
-        type: 'pdf',
-        description: `Official Master Services Agreement & Statement of Work executed with ${company.name}.`,
-      },
-      {
-        id: `res-2-${company.id}`,
-        name: `${sanitizedSlug}_Brand_Assets.zip`,
-        category: 'assets',
-        size: '145 MB',
-        updated: 'Oct 12',
-        type: 'zip',
-        description: `High-res vector logos, typography package, design tokens, and UI guidelines for ${company.name}.`,
-      },
-      {
-        id: `res-3-${company.id}`,
-        name: `${sanitizedSlug}_Q3_Growth_Strategy.doc`,
-        category: 'specs',
-        size: '1.1 MB',
-        updated: 'Sep 28',
-        type: 'doc',
-        description: `Phase 2 Architecture roadmap and digital growth specification for ${company.name}.`,
-      },
-    ];
-
-    const allVaultFiles = [
-      ...resources,
-      {
-        id: `res-4-${company.id}`,
-        name: `${sanitizedSlug}_Architecture_Spec_v2.4.pdf`,
-        category: 'specs',
-        size: '4.2 MB',
-        updated: 'Updated Today',
-        type: 'pdf',
-        description: `Comprehensive API contract, database schema diagrams, and caching specifications.`,
-      },
-      {
-        id: `res-5-${company.id}`,
-        name: 'Design_Tokens_v2.json',
-        category: 'assets',
-        size: '18 KB',
-        updated: 'Oct 04',
-        type: 'doc',
-        description: `Exported CSS variables, color palettes, and typography tokens.`,
-      },
-      {
-        id: `res-6-${company.id}`,
-        name: 'API_Contract_Schema.yaml',
-        category: 'specs',
-        size: '340 KB',
-        updated: 'Oct 03',
-        type: 'doc',
-        description: `OpenAPI 3.1 Swagger specification for client authentication and webhook payloads.`,
-      },
-      {
-        id: `res-7-${company.id}`,
-        name: 'Security_Audit_Report.pdf',
-        category: 'contracts',
-        size: '3.8 MB',
-        updated: 'Sep 20',
-        type: 'pdf',
-        description: `Third-party security validation and vulnerability scan sign-off for ${company.name}.`,
-      },
-      {
-        id: `res-8-${company.id}`,
-        name: `${sanitizedSlug}_Retainer_Signed.pdf`,
-        category: 'contracts',
-        size: '1.9 MB',
-        updated: 'Aug 15',
-        type: 'pdf',
-        description: `Continuous delivery retainer contract signed by ${contactFullName}.`,
-      },
-    ];
-
-    // 10. Client Activities
-    const activities = [
-      {
-        id: `act-1-${company.id}`,
-        avatar: userFullName ? userFullName.slice(0, 2).toUpperCase() : 'AL',
-        avatarClass: 'activity-avatar-purple',
-        userName: userFullName,
-        actionPhrase: 'uploaded',
-        objectTitle: `${company.name} Frontend Design System v2.1`,
-        supportingText: 'Includes Figma sync tokens & responsive UI components',
-        time: '2h ago',
-      },
-      {
-        id: `act-2-${company.id}`,
-        avatar: contactInitials,
-        avatarClass: 'activity-avatar-cyan',
-        userName: `${contactFullName} (${contact.firstName})`,
-        actionPhrase: 'approved',
-        objectTitle: 'Brand Guidelines & Token Palette',
-        supportingText: 'Phase 1 deliverable accepted without modifications.',
-        time: 'Yesterday',
-      },
-      {
-        id: `act-3-${company.id}`,
-        avatar: 'MC',
-        avatarClass: 'activity-avatar-slate',
-        userName: 'Marcus Chen',
-        actionPhrase: 'pushed',
-        objectTitle: `${company.name} Staging Environment Build #142`,
-        supportingText: 'Cloud portal preview deployed to staging pipeline.',
-        time: '2 days ago',
-      },
-    ];
-
-    // 11. Return fully dynamic client portal data
+    // 12. Return Real Database Payload
     return NextResponse.json({
       success: true,
       data: {
         client: {
-          id: company.id,
-          name: company.name,
-          domain: company.domain || '',
-          industry: company.industry || 'Business Services',
+          id: clientId,
+          name: clientName,
+          domain: targetCompany?.domain || '',
+          industry: targetCompany?.industry || 'Business Services',
           primaryContact: {
             fullName: contactFullName,
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            email: contact.email,
-            phone: contact.phone || '+1 (555) 234-5678',
-            title: contact.title || 'Client Executive',
+            firstName: contactFirstName,
+            lastName: contactLastName,
+            email: contactEmail,
+            phone: contactPhone || '—',
+            title: contactTitle,
             initials: contactInitials,
           },
         },
-        project: {
-          title: projectTitle,
-          day: 42,
-          totalDays: 90,
-          elapsedPercent: 46,
-          targetDate: 'Nov 28',
-          sprintTitle: 'Sprint 2 of 4 Active',
-        },
-        milestones: [
-          {
-            tag: 'MILESTONE 01',
-            title: '1. Discovery',
-            status: 'COMPLETED',
-            date: 'Completed Sep 15',
-            metric: '6/6 Deliverables',
-          },
-          {
-            tag: 'MILESTONE 02',
-            title: '2. Architecture',
-            status: 'COMPLETED',
-            date: 'Completed Oct 04',
-            metric: '8/8 Deliverables',
-          },
-          {
-            tag: 'IN PROGRESS • 68%',
-            title: '3. Frontend Build',
-            status: 'ACTIVE',
-            date: 'Est. Complete in 12 days',
-            metric: '11/16 Modules Ready',
-          },
-          {
-            tag: 'MILESTONE 04',
-            title: '4. QA & Launch',
-            status: 'LOCKED',
-            date: 'Scheduled for Nov 14',
-            metric: '0/12 Validations',
-          },
-        ],
-        actionRequired: {
-          title: '1 Deliverable Requires Your Sign-off',
-          specTitle: pendingDeliverable.title,
-          submittedMeta: `Submitted ${pendingDeliverable.submittedAt} by ${pendingDeliverable.submittedBy}`,
-          document: {
-            id: pendingDeliverable.id,
-            name: pendingDeliverable.fileName,
-            size: pendingDeliverable.fileSize,
-            updated: 'Updated Today',
-            type: 'pdf',
-            description: `Production specification and contract documentation prepared specifically for ${company.name}.`,
-          },
-        },
-        summaryStats: {
-          activeOpen: 8,
-          activeSub: '3 due this sprint',
-          unreadCount: 3,
-          unreadSub: `From ${userFullName}`,
-          vaultFilesCount: allVaultFiles.length,
-          vaultSub: '2 updated today',
-          dueAmount: invoices.find((i) => i.status === 'OUTSTANDING')?.amount || displayRetainer,
-          dueFormatted: `$${((invoices.find((i) => i.status === 'OUTSTANDING')?.amount || displayRetainer) / 1000).toFixed(1)}k`,
-          dueDateText: 'Due Oct 30',
-        },
-        resources,
+        project: projectPayload,
+        milestones: milestonesPayload,
+        actionRequired: actionRequiredPayload,
+        summaryStats,
+        resources: resourcesPayload,
         allVaultFiles,
-        invoices,
-        activities,
-        allWorkspaceClients: allCompanies.map((c) => ({
-          id: c.id,
-          name: c.name,
-          contactName: c.contacts[0]
-            ? `${c.contacts[0].firstName} ${c.contacts[0].lastName}`
-            : 'Primary Contact',
-        })),
+        invoices: invoicesPayload,
+        activities: activitiesPayload,
+        allWorkspaceClients,
       },
     });
   } catch (error: any) {
@@ -374,4 +540,17 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function formatTimeAgo(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  if (diffMinutes < 1) return 'Just now';
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }

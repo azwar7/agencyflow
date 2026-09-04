@@ -27,7 +27,8 @@ import {
   ChevronDown,
   Building2,
   AlertCircle,
-  RefreshCw,
+  Clock,
+  UserCheck,
 } from 'lucide-react';
 import './portal.css';
 
@@ -100,13 +101,15 @@ interface WorkspaceClientSummary {
   id: string;
   name: string;
   contactName: string;
+  type?: 'COMPANY' | 'LEAD';
 }
 
 interface PortalPayload {
   client: ClientData;
-  project: ProjectData;
+  project: ProjectData | null;
   milestones: MilestoneItem[];
   actionRequired: {
+    id: string;
     title: string;
     specTitle: string;
     submittedMeta: string;
@@ -118,7 +121,7 @@ interface PortalPayload {
       type: string;
       description: string;
     };
-  };
+  } | null;
   summaryStats: {
     activeOpen: number;
     activeSub: string;
@@ -140,7 +143,7 @@ interface PortalPayload {
 function ClientPortalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clientId = searchParams.get('clientId');
+  const clientId = searchParams.get('clientId') || searchParams.get('leadId');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -237,7 +240,7 @@ function ClientPortalContent() {
             Loading Client Portal...
           </div>
           <p style={{ fontSize: '0.8rem', color: 'var(--portal-text-muted)' }}>
-            Retrieving workspace documents, milestones, and deliverables.
+            Retrieving real-time workspace records, milestones, and deliverables.
           </p>
         </div>
       </div>
@@ -264,10 +267,10 @@ function ClientPortalContent() {
             <AlertCircle size={24} />
           </div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.5rem' }}>
-            Client Account Not Found
+            Account Not Found
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--portal-text-secondary)', marginBottom: '1.5rem' }}>
-            {error || 'The requested client portal could not be found or you do not have permission to view it.'}
+            {error || 'The requested client or lead portal could not be found in this workspace.'}
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
             <Link
@@ -282,10 +285,10 @@ function ClientPortalContent() {
                 textDecoration: 'none',
               }}
             >
-              Return to Clients
+              Clients Section
             </Link>
-            <button
-              onClick={() => router.push('/clients/portal')}
+            <Link
+              href="/leads"
               style={{
                 padding: '0.55rem 1.15rem',
                 borderRadius: '8px',
@@ -293,12 +296,11 @@ function ClientPortalContent() {
                 color: '#ffffff',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
+                textDecoration: 'none',
               }}
             >
-              Load Default Client
-            </button>
+              Leads Section
+            </Link>
           </div>
         </div>
       </div>
@@ -350,12 +352,12 @@ function ClientPortalContent() {
                     fontWeight: 600,
                     padding: '0.15rem 0.55rem',
                     borderRadius: '4px',
-                    background: 'rgba(139, 92, 246, 0.15)',
-                    color: '#c4b5fd',
-                    border: '1px solid rgba(139, 92, 246, 0.25)',
+                    background: project ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+                    color: project ? '#c4b5fd' : 'var(--portal-text-secondary)',
+                    border: project ? '1px solid rgba(139, 92, 246, 0.25)' : '1px solid rgba(255, 255, 255, 0.1)',
                   }}
                 >
-                  {project.sprintTitle}
+                  {project ? project.sprintTitle : 'Client Account'}
                 </span>
 
                 {/* Quick Client Switcher Dropdown */}
@@ -377,7 +379,7 @@ function ClientPortalContent() {
                         cursor: 'pointer',
                         transition: 'all 0.16s ease',
                       }}
-                      title="Switch client account"
+                      title="Switch account view"
                     >
                       <Building2 size={12} /> Switch Client <ChevronDown size={12} />
                     </button>
@@ -388,7 +390,9 @@ function ClientPortalContent() {
                           position: 'absolute',
                           top: '120%',
                           left: 0,
-                          width: '240px',
+                          width: '260px',
+                          maxHeight: '340px',
+                          overflowY: 'auto',
                           background: '#161928',
                           border: '1px solid rgba(255, 255, 255, 0.12)',
                           borderRadius: '10px',
@@ -398,7 +402,7 @@ function ClientPortalContent() {
                         }}
                       >
                         <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--portal-text-muted)', textTransform: 'uppercase', padding: '0.35rem 0.6rem', letterSpacing: '0.05em' }}>
-                          Your Workspace Clients ({allWorkspaceClients.length})
+                          Workspace Accounts ({allWorkspaceClients.length})
                         </div>
                         {allWorkspaceClients.map((c) => (
                           <button
@@ -423,9 +427,10 @@ function ClientPortalContent() {
                               justifyContent: 'space-between',
                             }}
                           >
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {c.name}
-                            </span>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <div>{c.name}</div>
+                              <div style={{ fontSize: '0.68rem', color: 'var(--portal-text-muted)' }}>{c.contactName}</div>
+                            </div>
                             {c.id === client.id && <Check size={14} color="#a78bfa" />}
                           </button>
                         ))}
@@ -435,7 +440,7 @@ function ClientPortalContent() {
                 )}
               </div>
               <p style={{ fontSize: '0.72rem', color: 'var(--portal-text-muted)', margin: '0.1rem 0 0' }}>
-                Viewing active client portal for <strong style={{ color: '#ffffff' }}>{client.primaryContact.fullName}</strong> ({client.primaryContact.title})
+                Active portal for <strong style={{ color: '#ffffff' }}>{client.primaryContact.fullName}</strong> ({client.primaryContact.title})
               </p>
             </div>
           </div>
@@ -458,7 +463,27 @@ function ClientPortalContent() {
               }}
               className="hover-level-1"
             >
-              <ArrowLeft size={14} /> Return to Clients
+              <ArrowLeft size={14} /> Back to Clients
+            </Link>
+
+            <Link
+              href="/leads"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.42rem 0.85rem',
+                borderRadius: '7px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: 'var(--portal-text-secondary)',
+                fontSize: '0.76rem',
+                fontWeight: 600,
+                transition: 'all 0.16s ease',
+              }}
+              className="hover-level-1"
+            >
+              <UserCheck size={14} /> Back to Leads
             </Link>
 
             <div
@@ -505,44 +530,80 @@ function ClientPortalContent() {
             <div className="project-overview-content">
               <div>
                 <div className="project-eyebrow">
-                  <Sparkles size={13} color="#a78bfa" /> PROJECT OVERVIEW • {client.name}
+                  <Sparkles size={13} color="#a78bfa" /> PROJECT STATUS • {client.name}
                 </div>
-                <h1 className="project-title">Welcome back, {client.primaryContact.firstName}.</h1>
+                <h1 className="project-title">
+                  Welcome{client.primaryContact.firstName ? `, ${client.primaryContact.firstName}` : ''}.
+                </h1>
                 <p className="project-subtitle">
-                  Here is the real-time status of your {project.title} sprint pipeline.
+                  {project
+                    ? `Live status and milestone tracking for ${project.title}.`
+                    : `Account onboarding & project workspace for ${client.name}.`}
                 </p>
               </div>
 
               <div className="project-metric-box">
-                <div className="project-day-value">Day {project.day}</div>
-                <div className="project-day-label">of {project.totalDays} Day Sprint</div>
+                {project ? (
+                  <>
+                    <div className="project-day-value">Day {project.day}</div>
+                    <div className="project-day-label">of {project.totalDays} Day Sprint</div>
 
-                {/* Progress bar */}
-                <div
-                  style={{
-                    width: '100%',
-                    height: '4px',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    borderRadius: '9999px',
-                    margin: '0.65rem 0 0.35rem',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '100%',
-                      width: `${project.elapsedPercent}%`,
-                      background: 'linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%)',
-                      boxShadow: '0 0 10px rgba(168, 85, 247, 0.6)',
-                    }}
-                  />
-                </div>
+                    {/* Progress bar */}
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '4px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '9999px',
+                        margin: '0.65rem 0 0.35rem',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${project.elapsedPercent}%`,
+                          background: 'linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%)',
+                          boxShadow: '0 0 10px rgba(168, 85, 247, 0.6)',
+                        }}
+                      />
+                    </div>
 
-                <div className="project-meta-row">
-                  <span style={{ color: '#c4b5fd', fontWeight: 600 }}>{project.elapsedPercent}% Elapsed</span>
-                  <span style={{ opacity: 0.35 }}>•</span>
-                  <span>Target: {project.targetDate}</span>
-                </div>
+                    <div className="project-meta-row">
+                      <span style={{ color: '#c4b5fd', fontWeight: 600 }}>{project.elapsedPercent}% Progress</span>
+                      <span style={{ opacity: 0.35 }}>•</span>
+                      <span>Target: {project.targetDate}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="project-day-value" style={{ fontSize: '1.25rem' }}>Sprint Setup</div>
+                    <div className="project-day-label">Discovery & Intake Phase</div>
+
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '4px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '9999px',
+                        margin: '0.65rem 0 0.35rem',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          width: '0%',
+                          background: 'linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%)',
+                        }}
+                      />
+                    </div>
+
+                    <div className="project-meta-row">
+                      <span style={{ color: 'var(--portal-text-muted)', fontWeight: 500 }}>No active sprint underway</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -570,77 +631,116 @@ function ClientPortalContent() {
                 <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
                   Milestone Progress
                 </h2>
-                <span className="milestone-badge">{project.sprintTitle}</span>
+                <span className="milestone-badge">
+                  {project ? project.sprintTitle : 'Milestones'}
+                </span>
               </div>
 
-              <button
-                className="milestone-link hover-level-1"
-                onClick={() => setShowRoadmapModal(true)}
+              {milestones.length > 0 && (
+                <button
+                  className="milestone-link hover-level-1"
+                  onClick={() => setShowRoadmapModal(true)}
+                >
+                  View Milestone Roadmap <ArrowRight size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Stepper Timeline or Empty State */}
+            {milestones.length > 0 ? (
+              <div className="milestone-stepper">
+                <div className="milestone-track-bg" />
+                <div className="milestone-track-progress" />
+
+                {milestones.map((m, idx) => {
+                  const isCompleted = m.status === 'COMPLETED';
+                  const isActive = m.status === 'ACTIVE';
+
+                  return (
+                    <div key={idx} className="milestone-step-item" style={{ opacity: m.status === 'LOCKED' ? 0.55 : 1 }}>
+                      <div
+                        className={`milestone-node ${
+                          isCompleted
+                            ? 'milestone-node-completed'
+                            : isActive
+                            ? 'milestone-node-active'
+                            : 'milestone-node-locked'
+                        }`}
+                      >
+                        {isCompleted ? (
+                          <Check size={20} strokeWidth={2.5} />
+                        ) : isActive ? (
+                          <div
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              background: '#c084fc',
+                              boxShadow: '0 0 8px #c084fc',
+                            }}
+                          />
+                        ) : (
+                          <Lock size={16} />
+                        )}
+                      </div>
+
+                      <div className="milestone-step-tag" style={{ color: isActive ? '#c084fc' : undefined }}>
+                        {m.tag}
+                      </div>
+                      <div className="milestone-step-name" style={{ color: isActive ? '#ffffff' : undefined }}>
+                        {m.title}
+                      </div>
+                      <div className="milestone-step-date">{m.date}</div>
+                      <div
+                        className="milestone-step-metric"
+                        style={
+                          isCompleted
+                            ? { background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.2)' }
+                            : !isActive
+                            ? { color: 'var(--portal-text-muted)', borderColor: 'rgba(255, 255, 255, 0.08)' }
+                            : undefined
+                        }
+                      >
+                        {m.metric}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: '2.5rem 1.5rem',
+                  textAlign: 'center',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  borderRadius: '10px',
+                  border: '1px dashed rgba(255, 255, 255, 0.08)',
+                  margin: '0.75rem 0',
+                }}
               >
-                View Milestone Roadmap <ArrowRight size={14} />
-              </button>
-            </div>
-
-            {/* Stepper Timeline */}
-            <div className="milestone-stepper">
-              <div className="milestone-track-bg" />
-              <div className="milestone-track-progress" />
-
-              {milestones.map((m, idx) => {
-                const isCompleted = m.status === 'COMPLETED';
-                const isActive = m.status === 'ACTIVE';
-
-                return (
-                  <div key={idx} className="milestone-step-item" style={{ opacity: m.status === 'LOCKED' ? 0.55 : 1 }}>
-                    <div
-                      className={`milestone-node ${
-                        isCompleted
-                          ? 'milestone-node-completed'
-                          : isActive
-                          ? 'milestone-node-active'
-                          : 'milestone-node-locked'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <Check size={20} strokeWidth={2.5} />
-                      ) : isActive ? (
-                        <div
-                          style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '50%',
-                            background: '#c084fc',
-                            boxShadow: '0 0 8px #c084fc',
-                          }}
-                        />
-                      ) : (
-                        <Lock size={16} />
-                      )}
-                    </div>
-
-                    <div className="milestone-step-tag" style={{ color: isActive ? '#c084fc' : undefined }}>
-                      {m.tag}
-                    </div>
-                    <div className="milestone-step-name" style={{ color: isActive ? '#ffffff' : undefined }}>
-                      {m.title}
-                    </div>
-                    <div className="milestone-step-date">{m.date}</div>
-                    <div
-                      className="milestone-step-metric"
-                      style={
-                        isCompleted
-                          ? { background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.2)' }
-                          : !isActive
-                          ? { color: 'var(--portal-text-muted)', borderColor: 'rgba(255, 255, 255, 0.08)' }
-                          : undefined
-                      }
-                    >
-                      {m.metric}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    color: '#c4b5fd',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 0.75rem',
+                  }}
+                >
+                  <Flag size={20} />
+                </div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.25rem' }}>
+                  No Active Sprints or Milestones Scheduled
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--portal-text-muted)', margin: 0, maxWidth: '440px', marginInline: 'auto' }}>
+                  Deliverable milestones and sprint timelines will appear here once projects are configured in AgencyFlow for {client.name}.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* =========================================================
@@ -654,9 +754,25 @@ function ClientPortalContent() {
               {/* Action Required Panel */}
               <div className="portal-panel action-required-card portal-card-interactive">
                 <div className="action-header-row">
-                  <span className="action-pill-amber">Action Required</span>
-                  <span className="action-pending-badge">
-                    {signedOff ? 'Approved' : '1 Item Pending'}
+                  <span
+                    className={actionRequired && !signedOff ? 'action-pill-amber' : 'action-pill-amber'}
+                    style={
+                      !actionRequired || signedOff
+                        ? { background: 'rgba(16, 185, 129, 0.12)', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.25)' }
+                        : undefined
+                    }
+                  >
+                    {!actionRequired || signedOff ? '✓ All Clear' : 'Action Required'}
+                  </span>
+                  <span
+                    className="action-pending-badge"
+                    style={
+                      !actionRequired || signedOff
+                        ? { background: 'rgba(16, 185, 129, 0.12)', color: '#34d399' }
+                        : undefined
+                    }
+                  >
+                    {!actionRequired || signedOff ? '0 Pending' : '1 Item Pending'}
                   </span>
                 </div>
 
@@ -693,8 +809,18 @@ function ClientPortalContent() {
                     <p style={{ fontSize: '0.75rem', color: '#a7f3d0', margin: 0 }}>
                       Signed off by {client.primaryContact.fullName} on {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}. The team has received your confirmation.
                     </p>
+                    <button
+                      className="btn-secondary-link"
+                      style={{ marginTop: '0.75rem' }}
+                      onClick={() => {
+                        setSignedOff(false);
+                        showToast('Deliverable status reverted to pending review.');
+                      }}
+                    >
+                      Undo Sign-off
+                    </button>
                   </div>
-                ) : (
+                ) : actionRequired ? (
                   <>
                     <h3 className="action-main-title">{actionRequired.title}</h3>
                     <div className="action-spec-title">{actionRequired.specTitle}</div>
@@ -710,7 +836,7 @@ function ClientPortalContent() {
                           category: 'specs',
                           size: actionRequired.document.size,
                           updated: actionRequired.document.updated,
-                          type: 'pdf',
+                          type: (actionRequired.document.type === 'zip' ? 'zip' : actionRequired.document.type === 'doc' ? 'doc' : 'pdf'),
                           description: actionRequired.document.description,
                         })
                       }
@@ -744,19 +870,30 @@ function ClientPortalContent() {
                       Request Changes or Clarification
                     </button>
                   </>
-                )}
-
-                {signedOff && (
-                  <button
-                    className="btn-secondary-link"
-                    style={{ marginTop: '0.5rem' }}
-                    onClick={() => {
-                      setSignedOff(false);
-                      showToast('Deliverable status reverted to pending review.');
-                    }}
-                  >
-                    Undo Sign-off
-                  </button>
+                ) : (
+                  <div style={{ padding: '1.25rem 0.5rem', textAlign: 'center' }}>
+                    <div
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#34d399',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 0.6rem',
+                      }}
+                    >
+                      <CheckCircle2 size={22} />
+                    </div>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.2rem' }}>
+                      All Caught Up
+                    </div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--portal-text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                      No deliverables or actions currently require sign-off for {client.name}.
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -765,7 +902,7 @@ function ClientPortalContent() {
                 {/* Card 1: ACTIVE */}
                 <div
                   className="portal-stat-card hover-level-2"
-                  onClick={() => showToast(`Active Tasks: ${summaryStats.activeOpen} open for ${client.name}`)}
+                  onClick={() => showToast(`Active Items: ${summaryStats.activeOpen} open for ${client.name}`)}
                 >
                   <div className="stat-card-top">
                     <span className="stat-card-eyebrow" style={{ color: '#a78bfa' }}>
@@ -803,7 +940,10 @@ function ClientPortalContent() {
                 {/* Card 3: VAULT */}
                 <div
                   className="portal-stat-card hover-level-2"
-                  onClick={() => setShowVaultModal(true)}
+                  onClick={() => {
+                    if (allVaultFiles.length > 0) setShowVaultModal(true);
+                    else showToast(`No documents uploaded in vault for ${client.name}.`);
+                  }}
                 >
                   <div className="stat-card-top">
                     <span className="stat-card-eyebrow" style={{ color: '#cbd5e1' }}>
@@ -824,7 +964,7 @@ function ClientPortalContent() {
                   className="portal-stat-card hover-level-2"
                   onClick={() => {
                     if (!isTargetInvoicePaid && outstandingInvoice) setShowPayModal(true);
-                    else showToast(`All retainers for ${client.name} are settled.`);
+                    else showToast(`All billing for ${client.name} is settled.`);
                   }}
                 >
                   <div className="stat-card-top">
@@ -836,7 +976,10 @@ function ClientPortalContent() {
                     </div>
                   </div>
                   <div>
-                    <div className="stat-card-value" style={{ color: isTargetInvoicePaid ? '#10b981' : '#ffffff' }}>
+                    <div
+                      className="stat-card-value"
+                      style={{ color: summaryStats.dueAmount === 0 || isTargetInvoicePaid ? '#10b981' : '#fbbf24' }}
+                    >
                       {isTargetInvoicePaid ? '$0.00' : summaryStats.dueFormatted}
                     </div>
                     <div className="stat-card-sub">
@@ -860,78 +1003,102 @@ function ClientPortalContent() {
                   </div>
 
                   {/* Filter / Navigation Options */}
-                  <div className="resources-filter-tabs">
-                    {(['all', 'specs', 'assets', 'contracts'] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        className={`filter-tab-btn ${activeResourceTab === tab ? 'active' : ''}`}
-                        onClick={() => setActiveResourceTab(tab)}
-                      >
-                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                      </button>
-                    ))}
+                  {allVaultFiles.length > 0 && (
+                    <div className="resources-filter-tabs">
+                      {(['all', 'specs', 'assets', 'contracts'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          className={`filter-tab-btn ${activeResourceTab === tab ? 'active' : ''}`}
+                          onClick={() => setActiveResourceTab(tab)}
+                        >
+                          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {allVaultFiles.length > 0 && (
+                    <button
+                      className="milestone-link hover-level-1"
+                      onClick={() => setShowVaultModal(true)}
+                    >
+                      View All <ArrowRight size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Document Cards or Empty State */}
+                {filteredResources.length > 0 ? (
+                  <div className="resources-grid">
+                    {filteredResources.map((doc) => {
+                      const isPdf = doc.type === 'pdf';
+                      const isZip = doc.type === 'zip';
+                      return (
+                        <div
+                          key={doc.id}
+                          className="resource-card hover-level-2"
+                          onClick={() => setPreviewDocModal(doc)}
+                        >
+                          <div className="resource-card-top">
+                            <div
+                              className={`resource-type-icon ${
+                                isPdf
+                                  ? 'resource-icon-pdf'
+                                  : isZip
+                                  ? 'resource-icon-zip'
+                                  : 'resource-icon-doc'
+                              }`}
+                            >
+                              {isPdf ? (
+                                <FileText size={18} />
+                              ) : isZip ? (
+                                <FolderArchive size={18} />
+                              ) : (
+                                <FileCode size={18} />
+                              )}
+                            </div>
+
+                            <button
+                              className="resource-download-btn hover-level-1"
+                              title={`Download ${doc.name}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                showToast(`Downloading ${doc.name} (${doc.size})...`);
+                              }}
+                            >
+                              <Download size={14} />
+                            </button>
+                          </div>
+
+                          <div>
+                            <div className="resource-name">{doc.name}</div>
+                            <div className="resource-meta">
+                              {doc.size} • {doc.updated}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-
-                  <button
-                    className="milestone-link hover-level-1"
-                    onClick={() => setShowVaultModal(true)}
+                ) : (
+                  <div
+                    style={{
+                      padding: '2.5rem 1.5rem',
+                      textAlign: 'center',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: '10px',
+                      border: '1px dashed rgba(255, 255, 255, 0.08)',
+                    }}
                   >
-                    View All <ArrowRight size={14} />
-                  </button>
-                </div>
-
-                {/* Document Cards */}
-                <div className="resources-grid">
-                  {filteredResources.map((doc) => {
-                    const isPdf = doc.type === 'pdf';
-                    const isZip = doc.type === 'zip';
-                    return (
-                      <div
-                        key={doc.id}
-                        className="resource-card hover-level-2"
-                        onClick={() => setPreviewDocModal(doc)}
-                      >
-                        <div className="resource-card-top">
-                          <div
-                            className={`resource-type-icon ${
-                              isPdf
-                                ? 'resource-icon-pdf'
-                                : isZip
-                                ? 'resource-icon-zip'
-                                : 'resource-icon-doc'
-                            }`}
-                          >
-                            {isPdf ? (
-                              <FileText size={18} />
-                            ) : isZip ? (
-                              <FolderArchive size={18} />
-                            ) : (
-                              <FileCode size={18} />
-                            )}
-                          </div>
-
-                          <button
-                            className="resource-download-btn hover-level-1"
-                            title={`Download ${doc.name}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              showToast(`Downloading ${doc.name} (${doc.size})...`);
-                            }}
-                          >
-                            <Download size={14} />
-                          </button>
-                        </div>
-
-                        <div>
-                          <div className="resource-name">{doc.name}</div>
-                          <div className="resource-meta">
-                            {doc.size} • {doc.updated}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                    <HardDrive size={28} color="var(--portal-text-muted)" style={{ margin: '0 auto 0.5rem' }} />
+                    <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.25rem' }}>
+                      No Shared Documents in Vault
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--portal-text-muted)', margin: 0 }}>
+                      Contracts, design specifications, and deliverables uploaded for {client.name} will appear here.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Recent Invoices Panel */}
@@ -941,75 +1108,97 @@ function ClientPortalContent() {
                     <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
                       Recent Invoices
                     </h2>
-                    <span className="invoices-subtext">Retainer {project.sprintTitle}</span>
+                    <span className="invoices-subtext">
+                      {invoices.length > 0 ? `${invoices.length} Statements` : 'Statements'}
+                    </span>
                   </div>
 
                   <button
                     className="milestone-link hover-level-1"
-                    onClick={() => showToast(`Opening Stripe Billing Portal for ${client.name}...`)}
+                    onClick={() => showToast(`Opening billing statements for ${client.name}...`)}
                   >
                     Billing Portal <ArrowRight size={14} />
                   </button>
                 </div>
 
-                {/* Invoice Rows */}
-                <div className="invoices-list">
-                  {invoices.map((inv) => {
-                    const isPaid = inv.status === 'PAID' || Boolean(paidInvoices[inv.id]);
-                    const isOutstanding = !isPaid;
+                {/* Invoice Rows or Empty State */}
+                {invoices.length > 0 ? (
+                  <div className="invoices-list">
+                    {invoices.map((inv) => {
+                      const isPaid = inv.status === 'PAID' || Boolean(paidInvoices[inv.id]);
+                      const isOutstanding = !isPaid;
 
-                    return (
-                      <div
-                        key={inv.id}
-                        className={`invoice-row ${isOutstanding ? 'invoice-row-outstanding' : ''}`}
-                      >
-                        <div className="invoice-left-block">
-                          <div
-                            className="invoice-icon-wrap"
-                            style={{ color: isPaid ? '#10b981' : '#f59e0b' }}
-                          >
-                            <Receipt size={18} />
+                      return (
+                        <div
+                          key={inv.id}
+                          className={`invoice-row ${isOutstanding ? 'invoice-row-outstanding' : ''}`}
+                        >
+                          <div className="invoice-left-block">
+                            <div
+                              className="invoice-icon-wrap"
+                              style={{ color: isPaid ? '#10b981' : '#f59e0b' }}
+                            >
+                              <Receipt size={18} />
+                            </div>
+                            <div className="invoice-number-col">
+                              <span className="invoice-number-text">{inv.number}</span>
+                              <span className="invoice-desc-text">{inv.description} • {inv.dueDate}</span>
+                            </div>
                           </div>
-                          <div className="invoice-number-col">
-                            <span className="invoice-number-text">{inv.number}</span>
-                            <span className="invoice-desc-text">{inv.description} • {inv.dueDate}</span>
+
+                          <div className="invoice-right-block">
+                            <span
+                              className="invoice-amount-text"
+                              style={{ color: isPaid ? 'var(--portal-text-secondary)' : '#ffffff' }}
+                            >
+                              ${inv.amount.toLocaleString()}.00
+                            </span>
+                            {isPaid ? (
+                              <span className="invoice-badge-paid">Paid</span>
+                            ) : (
+                              <span className="invoice-badge-outstanding">Outstanding</span>
+                            )}
+
+                            {isPaid ? (
+                              <button
+                                className="btn-invoice-download hover-level-1"
+                                title="Download receipt"
+                                onClick={() => showToast(`Downloading Receipt for ${inv.number}...`)}
+                              >
+                                <Download size={15} />
+                              </button>
+                            ) : (
+                              <button
+                                className="btn-pay-now hover-level-1"
+                                onClick={() => setShowPayModal(true)}
+                              >
+                                <CreditCard size={13} /> Pay Now
+                              </button>
+                            )}
                           </div>
                         </div>
-
-                        <div className="invoice-right-block">
-                          <span
-                            className="invoice-amount-text"
-                            style={{ color: isPaid ? 'var(--portal-text-secondary)' : '#ffffff' }}
-                          >
-                            ${inv.amount.toLocaleString()}.00
-                          </span>
-                          {isPaid ? (
-                            <span className="invoice-badge-paid">Paid</span>
-                          ) : (
-                            <span className="invoice-badge-outstanding">Outstanding</span>
-                          )}
-
-                          {isPaid ? (
-                            <button
-                              className="btn-invoice-download hover-level-1"
-                              title="Download receipt"
-                              onClick={() => showToast(`Downloading Receipt for ${inv.number}...`)}
-                            >
-                              <Download size={15} />
-                            </button>
-                          ) : (
-                            <button
-                              className="btn-pay-now hover-level-1"
-                              onClick={() => setShowPayModal(true)}
-                            >
-                              <CreditCard size={13} /> Pay Now
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: '2.5rem 1.5rem',
+                      textAlign: 'center',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: '10px',
+                      border: '1px dashed rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
+                    <Receipt size={28} color="var(--portal-text-muted)" style={{ margin: '0 auto 0.5rem' }} />
+                    <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff', marginBottom: '0.25rem' }}>
+                      No Invoices Issued
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--portal-text-muted)', margin: 0 }}>
+                      There are currently no outstanding or paid billing statements on record for {client.name}.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Recent Activity Panel */}
@@ -1019,27 +1208,34 @@ function ClientPortalContent() {
                     <span className="live-dot-green" />
                     <span>Recent Activity</span>
                   </div>
-                  <span className="activity-sync-badge">Live Sync</span>
+                  <span className="activity-sync-badge">Live DB Sync</span>
                 </div>
 
-                {/* Vertical Timeline */}
-                <div className="activity-timeline">
-                  {activities.map((act) => (
-                    <div key={act.id} className="activity-row">
-                      <div className={`activity-avatar ${act.avatarClass}`}>
-                        {act.avatar}
-                      </div>
-                      <div className="activity-content">
-                        <div className="activity-text-line">
-                          <span className="activity-user-name">{act.userName}</span> {act.actionPhrase}{' '}
-                          <span style={{ color: '#c4b5fd', fontWeight: 600 }}>{act.objectTitle}</span>
+                {/* Vertical Timeline or Empty State */}
+                {activities.length > 0 ? (
+                  <div className="activity-timeline">
+                    {activities.map((act) => (
+                      <div key={act.id} className="activity-row">
+                        <div className={`activity-avatar ${act.avatarClass}`}>
+                          {act.avatar}
                         </div>
-                        <div className="activity-sub-desc">{act.supportingText}</div>
+                        <div className="activity-content">
+                          <div className="activity-text-line">
+                            <span className="activity-user-name">{act.userName}</span> {act.actionPhrase}{' '}
+                            <span style={{ color: '#c4b5fd', fontWeight: 600 }}>{act.objectTitle}</span>
+                          </div>
+                          <div className="activity-sub-desc">{act.supportingText}</div>
+                        </div>
+                        <span className="activity-timestamp">{act.time}</span>
                       </div>
-                      <span className="activity-timestamp">{act.time}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--portal-text-muted)', fontSize: '0.82rem' }}>
+                    <Clock size={24} style={{ margin: '0 auto 0.4rem', opacity: 0.6 }} />
+                    <div>No timeline activities logged yet for this account.</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1050,7 +1246,7 @@ function ClientPortalContent() {
             ========================================================= */}
 
         {/* Modal 1: Request Revision Modal */}
-        {showRevisionModal && (
+        {showRevisionModal && actionRequired && (
           <div className="portal-modal-backdrop" onClick={() => setRevisionModal(false)}>
             <div className="portal-modal-card" onClick={(e) => e.stopPropagation()}>
               <div className="portal-modal-header">
@@ -1071,7 +1267,7 @@ function ClientPortalContent() {
               <form onSubmit={handleRevisionSubmit}>
                 <div className="portal-modal-body">
                   <div style={{ fontSize: '0.8rem', color: 'var(--portal-text-secondary)', marginBottom: '0.85rem' }}>
-                    Target Deliverable: <strong style={{ color: '#ffffff' }}>{actionRequired.specTitle}</strong>
+                    Target Item: <strong style={{ color: '#ffffff' }}>{actionRequired.specTitle}</strong>
                   </div>
 
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: '#c4b5fd', marginBottom: '0.4rem' }}>
@@ -1273,7 +1469,7 @@ function ClientPortalContent() {
         )}
 
         {/* Modal 3: Milestone Roadmap Detailed Modal */}
-        {showRoadmapModal && (
+        {showRoadmapModal && milestones.length > 0 && (
           <div className="portal-modal-backdrop" onClick={() => setShowRoadmapModal(false)}>
             <div className="portal-modal-card" style={{ maxWidth: '640px' }} onClick={(e) => e.stopPropagation()}>
               <div className="portal-modal-header">
@@ -1325,7 +1521,7 @@ function ClientPortalContent() {
                         </span>
                       </div>
                       <p style={{ fontSize: '0.75rem', color: 'var(--portal-text-secondary)', margin: '0 0 0.5rem' }}>
-                        Scheduled deliverables, approvals, and milestone targets dedicated for {client.name}.
+                        Milestone stage and deliverable targets for {client.name}.
                       </p>
                       <div style={{ fontSize: '0.72rem', color: m.status === 'COMPLETED' ? '#34d399' : '#c4b5fd', fontWeight: 600 }}>
                         {m.metric}
@@ -1358,7 +1554,7 @@ function ClientPortalContent() {
         )}
 
         {/* Modal 4: File Vault Modal ("View All") */}
-        {showVaultModal && (
+        {showVaultModal && allVaultFiles.length > 0 && (
           <div className="portal-modal-backdrop" onClick={() => setShowVaultModal(false)}>
             <div className="portal-modal-card" style={{ maxWidth: '680px' }} onClick={(e) => e.stopPropagation()}>
               <div className="portal-modal-header">
@@ -1533,7 +1729,7 @@ function ClientPortalContent() {
                 </div>
 
                 <p style={{ fontSize: '0.82rem', color: 'var(--portal-text-secondary)', lineHeight: 1.5, margin: '0 0 1rem' }}>
-                  {previewDocModal.description || `Verified production document for ${client.name}.`}
+                  {previewDocModal.description || `Production document for ${client.name}.`}
                 </p>
 
                 <div style={{ fontSize: '0.75rem', color: 'var(--portal-text-muted)' }}>
