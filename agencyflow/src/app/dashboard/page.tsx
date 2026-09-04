@@ -165,7 +165,7 @@ export default function DashboardPage() {
         <div className="kpi-grid">
           {/* Card 1: Pipeline Value */}
           <div
-            className="kpi-card hover-level-2"
+            className="kpi-card hover-level-2-spacious"
             onClick={() => router.push('/pipeline')}
             style={{ cursor: 'pointer' }}
             title="View Pipeline"
@@ -183,7 +183,7 @@ export default function DashboardPage() {
 
           {/* Card 2: Active Projects */}
           <div
-            className="kpi-card hover-level-2"
+            className="kpi-card hover-level-2-spacious"
             onClick={() => router.push('/projects')}
             style={{ cursor: 'pointer' }}
             title="View Projects"
@@ -208,7 +208,7 @@ export default function DashboardPage() {
 
           {/* Card 3: Outstanding Invoices */}
           <div
-            className="kpi-card hover-level-2"
+            className="kpi-card hover-level-2-spacious"
             onClick={() => router.push('/invoices')}
             style={{ cursor: 'pointer' }}
             title="View Invoices"
@@ -233,7 +233,7 @@ export default function DashboardPage() {
 
           {/* Card 4: Monthly Revenue */}
           <div
-            className="kpi-card hover-level-2"
+            className="kpi-card hover-level-2-spacious"
             onClick={() => router.push('/invoices')}
             style={{ cursor: 'pointer' }}
             title="View Billing"
@@ -253,7 +253,7 @@ export default function DashboardPage() {
 
           {/* Card 5: Conversion Win Rate */}
           <div
-            className="kpi-card hover-level-2"
+            className="kpi-card hover-level-2-spacious"
             onClick={() => router.push('/pipeline')}
             style={{ cursor: 'pointer' }}
             title="View Conversion"

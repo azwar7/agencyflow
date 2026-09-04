@@ -228,7 +228,7 @@ export default function ClientsOverviewPage() {
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="btn btn-primary"
+              className="btn btn-primary hover-level-1"
               style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.65rem 1.15rem' }}
             >
               <Plus size={18} /> Add Client Account
@@ -236,7 +236,7 @@ export default function ClientsOverviewPage() {
 
             <Link
               href="/clients/portal"
-              className="btn btn-secondary"
+              className="btn btn-secondary hover-level-1"
               style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.65rem 1.15rem' }}
             >
               <Eye size={18} /> Client Portal View
@@ -247,7 +247,7 @@ export default function ClientsOverviewPage() {
         {/* Summary Metrics Cards */}
         <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
           {/* Active Retainers */}
-          <div className="glass-card" style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'var(--surface-container)' }}>
+          <div className="glass-card hover-level-2-spacious cursor-pointer" style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'var(--surface-container)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 ACTIVE RETAINERS
@@ -265,7 +265,7 @@ export default function ClientsOverviewPage() {
           </div>
 
           {/* Total Accounts */}
-          <div className="glass-card" style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'var(--surface-container)' }}>
+          <div className="glass-card hover-level-2-spacious cursor-pointer" style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'var(--surface-container)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 TOTAL ACCOUNTS
@@ -283,7 +283,7 @@ export default function ClientsOverviewPage() {
           </div>
 
           {/* Satisfaction Score */}
-          <div className="glass-card" style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'var(--surface-container)' }}>
+          <div className="glass-card hover-level-2-spacious cursor-pointer" style={{ padding: '1.25rem 1.5rem', borderRadius: '1rem', background: 'var(--surface-container)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 SATISFACTION SCORE
@@ -430,7 +430,7 @@ export default function ClientsOverviewPage() {
 
         {/* Clients Table / List */}
         <div
-          className="glass-card"
+          className="glass-card hover-level-3"
           style={{
             background: 'var(--surface-container-low)',
             borderRadius: '1rem',

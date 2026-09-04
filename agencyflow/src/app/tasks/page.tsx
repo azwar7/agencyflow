@@ -420,6 +420,7 @@ export default function TasksPage() {
               return (
                 <div
                   key={col.id}
+                  className="hover-level-3"
                   onDragOver={(e) => handleDragOver(e, col.id)}
                   onDragLeave={(e) => handleDragLeave(e, col.id)}
                   onDrop={(e) => handleDrop(e, col.id)}
@@ -431,7 +432,6 @@ export default function TasksPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
-                    transition: 'all 0.2s ease',
                   }}
                 >
                   {/* Distinct Colored Column Header matching reference UI */}
@@ -517,6 +517,7 @@ export default function TasksPage() {
                           <div
                             key={t.id}
                             draggable={true}
+                            className={isDragging ? '' : 'hover-level-2'}
                             onDragStart={(e) => handleDragStart(e, t.id)}
                             onDragEnd={handleDragEnd}
                             style={{
@@ -531,8 +532,7 @@ export default function TasksPage() {
                               gap: '0.65rem',
                               cursor: 'grab',
                               opacity: isDragging ? 0.4 : 1,
-                              transform: isDragging ? 'scale(0.98)' : 'none',
-                              transition: 'all 0.15s ease',
+                              transform: isDragging ? 'scale(0.98)' : undefined,
                               position: 'relative',
                             }}
                           >

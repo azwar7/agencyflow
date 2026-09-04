@@ -245,7 +245,7 @@ export default function ProjectsOverviewPage() {
 
             <button
               onClick={() => setIsNewProjectModalOpen(true)}
-              className="btn btn-primary"
+              className="btn btn-primary hover-level-1"
               style={{
                 background: 'linear-gradient(135deg, #38bdf8, #2563eb)',
                 border: 'none',
@@ -264,7 +264,7 @@ export default function ProjectsOverviewPage() {
         {/* Top KPI Metric Cards Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
           {/* Total Revenue in Delivery */}
-          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="hover-level-2-spacious cursor-pointer" style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(78, 222, 163, 0.15)', color: '#4edea3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <DollarSign size={20} />
             </div>
@@ -275,7 +275,7 @@ export default function ProjectsOverviewPage() {
           </div>
 
           {/* Active Projects */}
-          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="hover-level-2-spacious cursor-pointer" style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FolderKanban size={20} />
             </div>
@@ -286,7 +286,7 @@ export default function ProjectsOverviewPage() {
           </div>
 
           {/* On Track Rate */}
-          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="hover-level-2-spacious cursor-pointer" style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <TrendingUp size={20} />
             </div>
@@ -299,7 +299,7 @@ export default function ProjectsOverviewPage() {
           </div>
 
           {/* At Risk Projects */}
-          <div style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="hover-level-2-spacious cursor-pointer" style={{ background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: atRiskProjects > 0 ? 'rgba(255, 185, 95, 0.15)' : 'rgba(255, 255, 255, 0.05)', color: atRiskProjects > 0 ? '#ffb95f' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AlertTriangle size={20} />
             </div>
@@ -360,6 +360,7 @@ export default function ProjectsOverviewPage() {
               return (
                 <div
                   key={proj.id}
+                  className="hover-level-2"
                   style={{
                     background: 'var(--surface-container)',
                     borderRadius: '14px',

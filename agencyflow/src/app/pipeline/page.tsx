@@ -93,7 +93,7 @@ export default function PipelinePage() {
           </p>
         </div>
 
-        <button onClick={fetchPipeline} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
+        <button onClick={fetchPipeline} className="btn btn-secondary hover-level-1" style={{ fontSize: '0.85rem' }}>
           Refresh Pipeline
         </button>
       </div>
@@ -107,7 +107,7 @@ export default function PipelinePage() {
       ) : error ? (
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--error)' }}>
           <p>{error}</p>
-          <button onClick={fetchPipeline} className="btn btn-secondary" style={{ marginTop: '1rem' }}>
+          <button onClick={fetchPipeline} className="btn btn-secondary hover-level-1" style={{ marginTop: '1rem' }}>
             Retry
           </button>
         </div>
@@ -124,7 +124,7 @@ export default function PipelinePage() {
       ) : (
         <div className="kanban-grid">
           {pipelineData.columns.map((col: any) => (
-            <div key={col.stageId} className="kanban-column">
+            <div key={col.stageId} className="kanban-column hover-level-3">
               {/* Column Header */}
               <div className="kanban-header">
                 <div>
@@ -143,7 +143,7 @@ export default function PipelinePage() {
                   </div>
                 ) : (
                   col.deals.map((deal: any) => (
-                    <div key={deal.id} className="deal-card">
+                    <div key={deal.id} className="deal-card hover-level-2">
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                           {deal.company?.name || 'Independent Prospect'}
