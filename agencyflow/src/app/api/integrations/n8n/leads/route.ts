@@ -4,6 +4,7 @@ import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate
 import { N8nLeadPayloadSchema } from '@/lib/integrations/n8n/schema';
 import { authenticateN8nRequest, N8nAuthenticationError } from '@/lib/integrations/n8n/auth';
 import { processN8nLead } from '@/lib/integrations/n8n/service';
+import { recordLeadIngested } from '@/lib/integrations/n8n/job-tracker';
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +43,13 @@ export async function POST(request: Request) {
 
     // 5. Process lead with ordered duplicate detection and persistence
     const result = await processN8nLead(validatedPayload, authContext);
+
+    // Track lead discovery against any active background Lead Finder job
+    if (!result.isDuplicate && result.leadId) {
+      await recordLeadIngested(authContext.workspaceId, result.leadId).catch((err) =>
+        console.warn('[n8n Lead Ingestion] Failed to record lead in job tracker:', err)
+      );
+    }
 
     // 6. Return appropriate structured response
     if (result.isDuplicate) {

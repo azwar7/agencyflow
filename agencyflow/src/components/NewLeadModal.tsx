@@ -2,15 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Sparkles, CheckCircle2, Bot, Search, MapPin, Globe, Loader2, ArrowRight } from 'lucide-react';
+import { useLeadFinder } from '@/context/LeadFinderContext';
 
 interface NewLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialTab?: 'manual' | 'n8n';
 }
 
-export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) {
-  const [activeTab, setActiveTab] = useState<'manual' | 'n8n'>('manual');
+export function NewLeadModal({ isOpen, onClose, onSuccess, initialTab = 'manual' }: NewLeadModalProps) {
+  const { isJobRunning, startJob, activeJob } = useLeadFinder();
+  const [activeTab, setActiveTab] = useState<'manual' | 'n8n'>(initialTab);
 
   // Manual Form State
   const [formData, setFormData] = useState({
@@ -48,6 +51,9 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
   // Fetch dynamic lead sources and custom fields when modal opens
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(initialTab);
+      setError('');
+      setSuccessToast('');
       // 1. Fetch sources
       fetch('/api/v1/settings/crm-defaults')
         .then((res) => res.json())
@@ -150,39 +156,34 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
       return;
     }
 
+    if (isJobRunning) {
+      setError('A lead search is already running in your workspace. Please check the bottom-right status widget.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const res = await fetch('/api/v1/integrations/n8n/trigger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: finderData.query,
-          location: finderData.location,
-          webhookUrl: finderData.webhookUrl || undefined,
-        }),
-      });
+      const res = await startJob(
+        finderData.query,
+        finderData.location,
+        finderData.webhookUrl || undefined
+      );
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error?.message || 'Failed to trigger n8n workflow.');
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to trigger AI Lead Finder.');
       }
 
-      setSuccessToast(`🚀 n8n Lead Finder started! Discovered leads will auto-populate in CRM.`);
-
-      // Trigger automatic refresh of leads list
-      setTimeout(() => {
-        onSuccess();
-      }, 3000);
+      setSuccessToast('🚀 AI Lead Finder started in background! You can close this modal or continue working.');
 
       setTimeout(() => {
         setSuccessToast('');
         onClose();
-      }, 2000);
+      }, 1200);
     } catch (err: any) {
       console.error('n8n Trigger Error:', err);
-      setError(err.message || 'Unable to trigger n8n workflow. Ensure webhook is configured.');
+      setError(err.message || 'Unable to trigger AI Lead Finder. Ensure webhook is configured.');
     } finally {
       setLoading(false);
     }
@@ -770,21 +771,28 @@ export function NewLeadModal({ isOpen, onClose, onSuccess }: NewLeadModalProps) 
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || isJobRunning}
                 className="btn btn-primary"
                 style={{
-                  background: 'linear-gradient(135deg, #4edea3 0%, #6ffbbe 100%)',
-                  color: '#0a2318',
+                  background: isJobRunning
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'linear-gradient(135deg, #4edea3 0%, #6ffbbe 100%)',
+                  color: isJobRunning ? 'var(--on-surface-variant)' : '#0a2318',
                   fontWeight: 700,
-                  border: 'none',
+                  border: isJobRunning ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
+                  cursor: isJobRunning ? 'not-allowed' : 'pointer',
                 }}
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="spin" /> Searching & Scraping Leads...
+                    <Loader2 size={16} className="spin" /> Starting AI Search...
+                  </>
+                ) : isJobRunning ? (
+                  <>
+                    <Loader2 size={16} className="spin" color="#38bdf8" /> ⚡ Workflow Already Running...
                   </>
                 ) : (
                   <>

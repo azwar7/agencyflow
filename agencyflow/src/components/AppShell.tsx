@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { LeadFinderProvider } from '@/context/LeadFinderContext';
+import { LeadFinderStatusWidget } from './LeadFinderStatusWidget';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { NewLeadModal } from './NewLeadModal';
@@ -16,6 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [leadModalTab, setLeadModalTab] = useState<'manual' | 'n8n'>('manual');
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [activeRole, setActiveRole] = useState('OWNER');
@@ -32,7 +35,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [isLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    const handleOpenLeadModal = () => setIsLeadModalOpen(true);
+    const handleOpenLeadModal = () => {
+      setLeadModalTab('manual');
+      setIsLeadModalOpen(true);
+    };
+
+    const handleOpenLeadFinder = () => {
+      setLeadModalTab('n8n');
+      setIsLeadModalOpen(true);
+    };
+
     const handleOpenDealModal = () => setIsDealModalOpen(true);
     const handleStartTour = () => setIsTourOpen(true);
 
@@ -53,6 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('agencyflow-open-new-lead', handleOpenLeadModal);
+    window.addEventListener('agencyflow-open-lead-finder', handleOpenLeadFinder);
     window.addEventListener('agencyflow-open-new-deal', handleOpenDealModal);
     window.addEventListener('agencyflow-start-tour', handleStartTour);
     window.addEventListener('agencyflow-appearance-updated', handleAppearanceUpdated);
@@ -69,6 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     return () => {
       window.removeEventListener('agencyflow-open-new-lead', handleOpenLeadModal);
+      window.removeEventListener('agencyflow-open-lead-finder', handleOpenLeadFinder);
       window.removeEventListener('agencyflow-open-new-deal', handleOpenDealModal);
       window.removeEventListener('agencyflow-start-tour', handleStartTour);
       window.removeEventListener('agencyflow-appearance-updated', handleAppearanceUpdated);
@@ -96,34 +110,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar />
-      <div className="app-main">
-        <SampleDataBanner />
-        <Header
-          onOpenNewLead={() => setIsLeadModalOpen(true)}
-          onOpenNewDeal={() => setIsDealModalOpen(true)}
-          activeRole={activeRole}
-          onRoleChange={setActiveRole}
+    <LeadFinderProvider>
+      <div className="app-layout">
+        <Sidebar />
+        <div className="app-main">
+          <SampleDataBanner />
+          <Header
+            onOpenNewLead={() => {
+              setLeadModalTab('manual');
+              setIsLeadModalOpen(true);
+            }}
+            onOpenNewDeal={() => setIsDealModalOpen(true)}
+            activeRole={activeRole}
+            onRoleChange={setActiveRole}
+          />
+          <main className="page-container">{children}</main>
+        </div>
+
+        <NewLeadModal
+          isOpen={isLeadModalOpen}
+          initialTab={leadModalTab}
+          onClose={() => setIsLeadModalOpen(false)}
+          onSuccess={handleModalSuccess}
         />
-        <main className="page-container">{children}</main>
+
+        <NewDealModal
+          isOpen={isDealModalOpen}
+          onClose={() => setIsDealModalOpen(false)}
+          onSuccess={handleModalSuccess}
+        />
+
+        <OnboardingModal onStartTour={() => setIsTourOpen(true)} />
+        <ProductTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+        <GettingStartedWidget />
+
+        {/* Global Persistent Floating AI Lead Finder Background Activity Widget */}
+        <LeadFinderStatusWidget />
       </div>
-
-      <NewLeadModal
-        isOpen={isLeadModalOpen}
-        onClose={() => setIsLeadModalOpen(false)}
-        onSuccess={handleModalSuccess}
-      />
-
-      <NewDealModal
-        isOpen={isDealModalOpen}
-        onClose={() => setIsDealModalOpen(false)}
-        onSuccess={handleModalSuccess}
-      />
-
-      <OnboardingModal onStartTour={() => setIsTourOpen(true)} />
-      <ProductTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
-      <GettingStartedWidget />
-    </div>
+    </LeadFinderProvider>
   );
 }

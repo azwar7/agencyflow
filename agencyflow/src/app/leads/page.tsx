@@ -27,9 +27,12 @@ import {
   Target,
   Lightbulb,
   GripVertical,
+  Loader2,
+  Bot,
 } from 'lucide-react';
 import { getCachedData, setCachedData } from '@/lib/client-cache';
 import { isEmailAvailable, formatLeadEmail } from '@/lib/lead-utils';
+import { useLeadFinder } from '@/context/LeadFinderContext';
 
 export default function LeadsPage() {
   const cached = getCachedData<any[]>('/api/v1/leads');
@@ -39,6 +42,9 @@ export default function LeadsPage() {
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [filterTab, setFilterTab] = useState<'all' | 'my'>('all');
   const [sourceFilter, setSourceFilter] = useState('');
+
+  // Global AI Lead Finder Background Job Integration
+  const { isJobRunning, activeJob, setIsWidgetOpen } = useLeadFinder();
 
   // Drag-and-Drop Kanban State
   const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
@@ -614,13 +620,64 @@ export default function LeadsPage() {
               </button>
             </div>
 
+            {/* Find Leads with AI Button */}
+            {isJobRunning ? (
+              <button
+                type="button"
+                onClick={() => setIsWidgetOpen(true)}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: 'var(--radius-DEFAULT)',
+                  color: '#38bdf8',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 15px rgba(56, 189, 248, 0.2)',
+                  transition: 'all 0.15s ease',
+                }}
+                title="A lead-finding workflow is currently active in the background. Click to view status."
+              >
+                <Loader2 size={16} className="spin" color="#38bdf8" />
+                Finding Leads{activeJob?.leadsFound ? ` (${activeJob.leadsFound})` : '...'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event('agencyflow-open-lead-finder'))}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  background: 'linear-gradient(135deg, rgba(111, 251, 190, 0.15) 0%, rgba(56, 189, 248, 0.15) 100%)',
+                  border: '1px solid rgba(111, 251, 190, 0.35)',
+                  borderRadius: 'var(--radius-DEFAULT)',
+                  color: '#6ffbbe',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 15px rgba(111, 251, 190, 0.12)',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Find Leads with AI automation"
+              >
+                <Sparkles size={16} color="#6ffbbe" />
+                ⚡ Find Leads with AI
+              </button>
+            )}
+
             {/* New Lead Button */}
             <button
               onClick={() => window.dispatchEvent(new Event('agencyflow-open-new-lead'))}
-              className="btn btn-primary"
+              className="btn btn-secondary"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-              New Lead
+              Add Lead
             </button>
           </div>
         </div>

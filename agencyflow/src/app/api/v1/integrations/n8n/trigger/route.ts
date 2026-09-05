@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth-session';
+import {
+  startLeadFinderJob,
+  setJobRunning,
+  failLeadFinderJob,
+} from '@/lib/integrations/n8n/job-tracker';
 
 export async function POST(request: Request) {
   try {
     const session = await getAuthSession(request);
     const workspaceId = session.workspaceId;
+
+    if (!workspaceId) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Unauthorized. No workspace context found.' } },
+        { status: 401 }
+      );
+    }
 
     const body = await request.json().catch(() => ({}));
     const query = body.query?.trim() || 'Gyms';
@@ -24,8 +36,31 @@ export async function POST(request: Request) {
       );
     }
 
-    // Ping n8n webhook asynchronously
+    // 1. Guard against duplicate concurrent executions
+    const { job, error: duplicateError } = await startLeadFinderJob({
+      workspaceId,
+      query,
+      location,
+      requestedBy: session.email,
+    });
+
+    if (duplicateError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: duplicateError,
+            code: 'JOB_ALREADY_RUNNING',
+            activeJob: job,
+          },
+        },
+        { status: 409 }
+      );
+    }
+
+    // 2. Ping n8n webhook with tracked jobId
     const n8nPayload = {
+      jobId: job.id,
       query,
       location,
       workspaceId,
@@ -45,10 +80,15 @@ export async function POST(request: Request) {
 
       if (!response.ok && response.status !== 200 && response.status !== 201) {
         const errorText = await response.text().catch(() => '');
-        console.warn('[n8n Trigger] Webhook returned status:', response.status, errorText);
+        console.warn('[n8n Trigger] Webhook returned non-200 status:', response.status, errorText);
       }
+
+      // Mark job as RUNNING
+      await setJobRunning(workspaceId, job.id);
     } catch (fetchErr: any) {
       console.error('[n8n Trigger] Failed to reach n8n webhook URL:', fetchErr.message);
+      await failLeadFinderJob(workspaceId, `Could not connect to n8n webhook: ${fetchErr.message}`);
+
       return NextResponse.json(
         {
           success: false,
@@ -62,11 +102,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `n8n Lead Finder triggered for "${query}" in "${location}". Leads will be automatically ingested into CRM.`,
-      target: {
-        query,
-        location,
-        workspaceId,
+      message: `AI Lead Finder started in the background for "${query}" in "${location}".`,
+      data: {
+        job: {
+          ...job,
+          status: 'RUNNING',
+        },
       },
     });
   } catch (error: any) {
