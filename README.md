@@ -1,4 +1,4 @@
-# AgencyFlow (LeadFlow CRM) 🚀
+# AgencyFlow CRM 🚀
 ### Autonomous AI-Powered CRM, Lead Intelligence & Outreach Engine for Modern Agencies
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
