@@ -17,10 +17,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         assignedTo: { select: { id: true, fullName: true, email: true, role: true } },
         activities: {
           orderBy: { createdAt: 'desc' },
+          take: 50,
           include: { user: { select: { fullName: true } } },
         },
         tasks: {
           orderBy: { dueDate: 'asc' },
+          take: 50,
         },
       },
     });

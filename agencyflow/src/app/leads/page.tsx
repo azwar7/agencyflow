@@ -49,6 +49,10 @@ export default function LeadsPage() {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [drawerTab, setDrawerTab] = useState<'intelligence' | 'outreach' | 'history'>('intelligence');
   const [noteContent, setNoteContent] = useState('');
+
+  // In-Memory Fast Cache for Lead Details & Outreach (0ms repeated opens)
+  const leadCacheRef = useRef<Map<string, any>>(new Map());
+  const outreachCacheRef = useRef<Map<string, any>>(new Map());
   const [converting, setConverting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -211,47 +215,96 @@ export default function LeadsPage() {
   };
 
   const openLeadDrawer = async (leadId: string) => {
-    setDrawerLoading(true);
     setFeedbackMsg(null);
+
+    // 1. INSTANT ZERO-LATENCY OPEN:
+    // Immediately open drawer with existing lead data from in-memory list or cache
+    const cachedLead = leadCacheRef.current.get(leadId);
+    const localLead = leads.find((l) => l.id === leadId);
+    const initialLead = cachedLead || localLead;
+
+    if (initialLead) {
+      setSelectedLead(initialLead);
+    }
+
+    // 2. Load cached outreach data if available
+    const cachedOutreach = outreachCacheRef.current.get(leadId);
+    if (cachedOutreach) {
+      setOutreachHistory(cachedOutreach.outreach || []);
+      if (cachedOutreach.analyses?.length > 0) {
+        setAnalysisData(cachedOutreach.analyses[0]);
+      } else {
+        setAnalysisData(null);
+      }
+
+      const draftOrLatest = cachedOutreach.outreach?.[0];
+      if (draftOrLatest) {
+        setCurrentOutreach(draftOrLatest);
+        setEmailSubject(draftOrLatest.subject);
+        setEmailBody(draftOrLatest.body);
+        if (draftOrLatest.tone) setSelectedTone(draftOrLatest.tone);
+      } else {
+        setCurrentOutreach(null);
+        setEmailSubject('');
+        setEmailBody('');
+      }
+    } else {
+      setOutreachHistory([]);
+      setAnalysisData(null);
+      setCurrentOutreach(null);
+      setEmailSubject('');
+      setEmailBody('');
+    }
+
+    setDrawerLoading(true);
+
+    // 3. BACKGROUND REVALIDATE (Non-blocking):
+    // Stream in latest full details and outreach without freezing the UI
     try {
       const [leadRes, outreachRes] = await Promise.all([
         fetch(`/api/v1/leads/${leadId}`),
         fetch(`/api/v1/leads/${leadId}/outreach`),
       ]);
 
-      const leadJson = await leadRes.json();
-      const outreachJson = await outreachRes.json();
+      const [leadJson, outreachJson] = await Promise.all([
+        leadRes.json().catch(() => ({})),
+        outreachRes.json().catch(() => ({})),
+      ]);
 
-      if (leadJson.success && leadJson.data) {
-        setSelectedLead(leadJson.data);
-      } else {
-        const match = leads.find((l) => l.id === leadId);
-        if (match) setSelectedLead(match);
+      if (leadJson?.success && leadJson?.data) {
+        leadCacheRef.current.set(leadId, leadJson.data);
+        setSelectedLead((prev: any) => {
+          if (prev?.id === leadId) {
+            return { ...prev, ...leadJson.data };
+          }
+          return prev;
+        });
       }
 
-      if (outreachJson.success && outreachJson.data) {
-        setOutreachHistory(outreachJson.data.outreach || []);
-        if (outreachJson.data.analyses?.length > 0) {
-          setAnalysisData(outreachJson.data.analyses[0]);
-        } else {
-          setAnalysisData(null);
-        }
+      if (outreachJson?.success && outreachJson?.data) {
+        outreachCacheRef.current.set(leadId, outreachJson.data);
+        setSelectedLead((prev: any) => {
+          if (prev?.id === leadId) {
+            setOutreachHistory(outreachJson.data.outreach || []);
+            if (outreachJson.data.analyses?.length > 0) {
+              setAnalysisData(outreachJson.data.analyses[0]);
+            } else {
+              setAnalysisData(null);
+            }
 
-        // Pre-fill active draft email if exists
-        const draftOrLatest = outreachJson.data.outreach?.[0];
-        if (draftOrLatest) {
-          setCurrentOutreach(draftOrLatest);
-          setEmailSubject(draftOrLatest.subject);
-          setEmailBody(draftOrLatest.body);
-          if (draftOrLatest.tone) setSelectedTone(draftOrLatest.tone);
-        } else {
-          setCurrentOutreach(null);
-          setEmailSubject('');
-          setEmailBody('');
-        }
+            const draftOrLatest = outreachJson.data.outreach?.[0];
+            if (draftOrLatest) {
+              setCurrentOutreach(draftOrLatest);
+              setEmailSubject(draftOrLatest.subject);
+              setEmailBody(draftOrLatest.body);
+              if (draftOrLatest.tone) setSelectedTone(draftOrLatest.tone);
+            }
+          }
+          return prev;
+        });
       }
     } catch (err) {
-      console.error(err);
+      console.error('Background lead sync error:', err);
     } finally {
       setDrawerLoading(false);
     }
@@ -271,6 +324,8 @@ export default function LeadsPage() {
       if (!res.ok || !json.success) throw new Error(json.error?.message || 'Analysis failed');
 
       setAnalysisData(json.data);
+      leadCacheRef.current.delete(selectedLead.id);
+      outreachCacheRef.current.delete(selectedLead.id);
       setSelectedLead((prev: any) => ({
         ...prev,
         leadScore: json.data.score,
@@ -347,7 +402,10 @@ export default function LeadsPage() {
       setCurrentOutreach(sendJson.data.outreach);
       setSelectedLead((prev: any) => ({ ...prev, status: 'OUTREACH_SENT' }));
       setFeedbackMsg({ type: 'success', text: '🚀 Email approved & sent! Lead moved to Outreach Sent stage.' });
-      fetchLeads();
+      // Invalidate cache on new outreach dispatch
+      outreachCacheRef.current.delete(selectedLead.id);
+      leadCacheRef.current.delete(selectedLead.id);
+      setSendingEmail(false);
       openLeadDrawer(selectedLead.id);
     } catch (err: any) {
       setFeedbackMsg({ type: 'error', text: err.message || 'Failed to send outreach email' });
@@ -403,6 +461,7 @@ export default function LeadsPage() {
       const json = await res.json();
       if (json.success) {
         setNoteContent('');
+        leadCacheRef.current.delete(selectedLead.id);
         openLeadDrawer(selectedLead.id);
       }
     } catch (err) {
@@ -945,6 +1004,9 @@ export default function LeadsPage() {
                   <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700 }}>
                     {selectedLead.status}
                   </span>
+                  {drawerLoading && (
+                    <RefreshCw size={12} className="animate-spin" style={{ opacity: 0.5, color: '#38bdf8' }} />
+                  )}
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem' }}>
                   {selectedLead.firstName} {selectedLead.lastName} •{' '}
@@ -1521,7 +1583,9 @@ export default function LeadsPage() {
               {drawerTab === 'history' && (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {outreachHistory.length === 0 ? (
+                    {drawerLoading && outreachHistory.length === 0 ? (
+                      <div className="skeleton-pulse" style={{ height: '80px', borderRadius: 'var(--radius-md)' }} />
+                    ) : outreachHistory.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--outline)', fontSize: '0.85rem' }}>
                         No outreach history recorded for this prospect.
                       </div>

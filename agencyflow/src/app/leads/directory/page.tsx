@@ -41,13 +41,19 @@ export default function LeadsDirectoryPage() {
     fetchLeads();
   }, [sourceFilter]);
 
+  const leadCacheRef = React.useRef<Map<string, any>>(new Map());
+
   const openLeadDrawer = async (lead: any) => {
-    setSelectedLead(lead);
+    const cached = leadCacheRef.current.get(lead.id);
+    setSelectedLead(cached || lead);
     setDrawerOpen(true);
     try {
       const res = await fetch(`/api/v1/leads/${lead.id}`);
       const json = await res.json();
-      if (json.success) setSelectedLead(json.data);
+      if (json.success && json.data) {
+        leadCacheRef.current.set(lead.id, json.data);
+        setSelectedLead((prev: any) => (prev?.id === lead.id ? { ...prev, ...json.data } : prev));
+      }
     } catch (err) {
       console.error(err);
     }

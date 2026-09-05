@@ -10,20 +10,11 @@ export async function GET(
     const session = await getAuthSession(request);
     const { id: leadId } = await params;
 
-    // Verify lead belongs to authenticated workspace
-    const lead = await prisma.lead.findFirst({
-      where: { id: leadId, workspaceId: session.workspaceId },
-      select: { id: true },
-    });
-
-    if (!lead) {
-      return NextResponse.json(
-        { success: false, error: { message: 'Lead not found in current workspace.' } },
-        { status: 404 }
-      );
-    }
-
-    const [outreachHistory, analyses] = await Promise.all([
+    const [lead, outreachHistory, analyses] = await Promise.all([
+      prisma.lead.findFirst({
+        where: { id: leadId, workspaceId: session.workspaceId },
+        select: { id: true },
+      }),
       prisma.outreachEmail.findMany({
         where: { leadId, workspaceId: session.workspaceId },
         orderBy: { createdAt: 'desc' },
@@ -33,6 +24,13 @@ export async function GET(
         orderBy: { createdAt: 'desc' },
       }),
     ]);
+
+    if (!lead) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Lead not found in current workspace.' } },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

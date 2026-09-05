@@ -176,7 +176,7 @@ You can ask me questions, request executive summaries, or ask me to **create tas
               </div>
               <div>
                 <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>
-                  AgencyFlow AI Brain & Knowledge RAG
+                  AgencyFlow AI
                 </h1>
                 <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', margin: 0 }}>
                   Real-time intelligence engine connected across Leads, Deals, Tasks, Invoices, and Projects.
