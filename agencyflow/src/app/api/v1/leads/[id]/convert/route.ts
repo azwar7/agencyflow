@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { isEmailAvailable } from '@/lib/lead-utils';
 
 const convertSchema = z.object({
   dealTitle: z.string().min(1, 'Deal title is required').max(255).optional().default('New Agency Service Deal'),
@@ -73,10 +74,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         }
       }
 
-      // 3. Contact (reuse existing to prevent duplicate contacts)
-      let contact = await tx.contact.findFirst({
-        where: { workspaceId, email: lead.email },
-      });
+      // 3. Contact (reuse existing to prevent duplicate contacts if email is available)
+      const validContactEmail = isEmailAvailable(lead.email) ? lead.email.trim() : '';
+      let contact = validContactEmail
+        ? await tx.contact.findFirst({
+            where: { workspaceId, email: validContactEmail },
+          })
+        : null;
+
       if (!contact) {
         contact = await tx.contact.create({
           data: {
@@ -84,7 +89,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             companyId: company ? company.id : null,
             firstName: lead.firstName,
             lastName: lead.lastName,
-            email: lead.email,
+            email: validContactEmail,
             phone: lead.phone,
           },
         });

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { UIStateCard } from '@/components/UIStateCard';
 import { X, Sparkles, Send, ArrowRight, Phone, Mail, Building } from 'lucide-react';
+import { isEmailAvailable, formatLeadEmail } from '@/lib/lead-utils';
 
 export default function LeadsDirectoryPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -240,7 +241,9 @@ export default function LeadsDirectoryPage() {
                             </span>
                           </div>
                         </td>
-                        <td style={{ color: 'var(--on-surface-variant)' }}>{l.email}</td>
+                        <td style={{ color: isEmailAvailable(l.email) ? 'var(--on-surface-variant)' : 'var(--outline)', fontStyle: isEmailAvailable(l.email) ? 'normal' : 'italic' }}>
+                          {formatLeadEmail(l.email)}
+                        </td>
                         <td style={{ color: 'var(--on-surface)', fontWeight: 500 }}>{l.companyName || '—'}</td>
                         <td>
                           <div
@@ -401,7 +404,9 @@ export default function LeadsDirectoryPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
                   <div>
                     <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--on-surface-variant)' }}>EMAIL</span>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--on-surface)', marginTop: '0.1rem' }}>{selectedLead.email}</p>
+                    <p style={{ fontSize: '0.875rem', color: isEmailAvailable(selectedLead.email) ? 'var(--on-surface)' : 'var(--outline)', fontStyle: isEmailAvailable(selectedLead.email) ? 'normal' : 'italic', marginTop: '0.1rem' }}>
+                      {formatLeadEmail(selectedLead.email)}
+                    </p>
                   </div>
                   <div>
                     <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--on-surface-variant)' }}>PHONE</span>

@@ -3,11 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { getAuthSession } from '@/lib/auth-session';
 import { getVisibilityFilter } from '@/lib/visibility';
+import { isEmailAvailable } from '@/lib/lead-utils';
 
 const createLeadSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   phone: z.string().optional().nullable(),
   companyName: z.string().optional().nullable(),
   source: z.string().optional().default('Website Inbound'),
@@ -94,14 +95,16 @@ export async function POST(request: Request) {
     // 2. Duplicate Detection
     const dupRule = workspace?.duplicateLeadDetection || 'EMAIL_AND_PHONE';
     if (dupRule !== 'OFF') {
-      const emailDup = await prisma.lead.findFirst({
-        where: { workspaceId, email: validated.email.trim().toLowerCase() },
-      });
-      if (emailDup) {
-        return NextResponse.json(
-          { success: false, error: { message: `A lead with email '${validated.email}' already exists in your workspace.` } },
-          { status: 400 }
-        );
+      if (validated.email && isEmailAvailable(validated.email)) {
+        const emailDup = await prisma.lead.findFirst({
+          where: { workspaceId, email: validated.email.trim().toLowerCase() },
+        });
+        if (emailDup) {
+          return NextResponse.json(
+            { success: false, error: { message: `A lead with email '${validated.email}' already exists in your workspace.` } },
+            { status: 400 }
+          );
+        }
       }
 
       if (dupRule === 'EMAIL_AND_PHONE' && validated.phone) {
@@ -129,7 +132,7 @@ export async function POST(request: Request) {
         assignedToId: assignedUserId,
         firstName: validated.firstName.trim(),
         lastName: validated.lastName.trim(),
-        email: validated.email.trim().toLowerCase(),
+        email: validated.email ? validated.email.trim().toLowerCase() : '',
         phone: validated.phone?.trim() || null,
         companyName: validated.companyName?.trim() || null,
         source: validated.source || 'Website Inbound',

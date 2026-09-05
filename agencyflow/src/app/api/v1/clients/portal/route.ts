@@ -186,7 +186,7 @@ export async function GET(request: Request) {
       contactFullName = clientName;
       contactFirstName = clientName.split(' ')[0] || 'Client';
       contactLastName = clientName.split(' ').slice(1).join(' ') || 'Contact';
-      contactEmail = `contact@${targetCompany?.domain || 'client.com'}`;
+      contactEmail = '';
       contactInitials = clientName.slice(0, 2).toUpperCase();
     }
 

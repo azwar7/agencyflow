@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth-session';
+import { isEmailAvailable, formatLeadEmail } from '@/lib/lead-utils';
 
 const sendOutreachSchema = z.object({
   outreachId: z.string().min(1, 'outreachId is required'),
@@ -49,6 +50,19 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: { message: 'Lead or outreach record not found in workspace.' } },
         { status: 404 }
+      );
+    }
+
+    // Guard: Verify email is available and not a placeholder
+    if (!isEmailAvailable(lead.email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: `Cannot send outreach email: Lead has no valid email address (${formatLeadEmail(lead.email)}).`,
+          },
+        },
+        { status: 400 }
       );
     }
 

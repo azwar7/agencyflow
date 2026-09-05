@@ -62,7 +62,7 @@ Output ONLY valid, parseable JSON conforming strictly to this shape.`;
 ### PROSPECT_DATA
 - Contact Name: ${options.context.lead.fullName || options.context.lead.firstName || 'Business Owner'}
 - Company: ${options.context.lead.companyName || 'Your Business'}
-- Website: ${options.context.company?.domain || options.context.lead.email || 'Online'}
+- Website: ${options.context.company?.domain || 'Online'}
 - Status: ${options.context.lead.status}
 - Source: ${options.context.lead.source}
 

@@ -29,6 +29,7 @@ import {
   GripVertical,
 } from 'lucide-react';
 import { getCachedData, setCachedData } from '@/lib/client-cache';
+import { isEmailAvailable, formatLeadEmail } from '@/lib/lead-utils';
 
 export default function LeadsPage() {
   const cached = getCachedData<any[]>('/api/v1/leads');
@@ -873,7 +874,9 @@ export default function LeadsPage() {
                   <tr key={l.id} onClick={() => openLeadDrawer(l.id)} style={{ cursor: 'pointer' }}>
                     <td style={{ fontWeight: 600 }}>
                       {l.firstName} {l.lastName}
-                      <span style={{ display: 'block', fontSize: '12px', color: 'var(--on-surface-variant)', fontWeight: 400 }}>{l.email}</span>
+                      <span style={{ display: 'block', fontSize: '12px', color: isEmailAvailable(l.email) ? 'var(--on-surface-variant)' : 'var(--outline)', fontStyle: isEmailAvailable(l.email) ? 'normal' : 'italic', fontWeight: 400 }}>
+                        {formatLeadEmail(l.email)}
+                      </span>
                     </td>
                     <td>{l.companyName || '—'}</td>
                     <td>
@@ -944,7 +947,11 @@ export default function LeadsPage() {
                   </span>
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem' }}>
-                  {selectedLead.firstName} {selectedLead.lastName} • {selectedLead.email} • {selectedLead.phone || 'No phone'}
+                  {selectedLead.firstName} {selectedLead.lastName} •{' '}
+                  <span style={{ fontStyle: isEmailAvailable(selectedLead.email) ? 'normal' : 'italic', color: isEmailAvailable(selectedLead.email) ? 'inherit' : 'var(--outline)' }}>
+                    {formatLeadEmail(selectedLead.email)}
+                  </span>
+                  {' '}• {selectedLead.phone || 'No phone'}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1220,6 +1227,30 @@ export default function LeadsPage() {
 
               {drawerTab === 'outreach' && (
                 <>
+                  {/* Email Availability Banner */}
+                  {!isEmailAvailable(selectedLead.email) && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        padding: '0.75rem 1rem',
+                        borderRadius: '8px',
+                        background: 'rgba(234, 179, 8, 0.1)',
+                        border: '1px solid rgba(234, 179, 8, 0.25)',
+                        color: '#facc15',
+                        fontSize: '0.8rem',
+                        lineHeight: 1.4,
+                        marginBottom: '0.75rem',
+                      }}
+                    >
+                      <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                      <div>
+                        <span style={{ fontWeight: 700 }}>Email not available:</span> Direct automated email dispatch is disabled because no verified email was found for this lead. You can still generate email copy for manual outreach or phone reference.
+                      </div>
+                    </div>
+                  )}
+
                   {/* Email Settings Controls */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -1427,25 +1458,44 @@ export default function LeadsPage() {
                           ) : (
                             <button
                               onClick={handleApproveAndSend}
-                              disabled={sendingEmail}
+                              disabled={sendingEmail || !isEmailAvailable(selectedLead.email)}
+                              title={!isEmailAvailable(selectedLead.email) ? 'Direct email outreach disabled: Lead email is not available.' : ''}
                               style={{
                                 padding: '0.5rem 1rem',
                                 borderRadius: '6px',
-                                background: currentOutreach?.status === 'FAILED' ? '#f87171' : '#38bdf8',
-                                color: currentOutreach?.status === 'FAILED' ? '#450a0a' : '#082f49',
+                                background: !isEmailAvailable(selectedLead.email)
+                                  ? '#334155'
+                                  : currentOutreach?.status === 'FAILED'
+                                  ? '#f87171'
+                                  : '#38bdf8',
+                                color: !isEmailAvailable(selectedLead.email)
+                                  ? '#94a3b8'
+                                  : currentOutreach?.status === 'FAILED'
+                                  ? '#450a0a'
+                                  : '#082f49',
                                 border: 'none',
                                 fontSize: '0.85rem',
                                 fontWeight: 700,
-                                cursor: sendingEmail ? 'not-allowed' : 'pointer',
+                                cursor: sendingEmail || !isEmailAvailable(selectedLead.email) ? 'not-allowed' : 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '0.4rem',
-                                boxShadow: currentOutreach?.status === 'FAILED' ? '0 0 20px rgba(248, 113, 113, 0.3)' : '0 0 20px rgba(56, 189, 248, 0.3)',
+                                boxShadow: !isEmailAvailable(selectedLead.email)
+                                  ? 'none'
+                                  : currentOutreach?.status === 'FAILED'
+                                  ? '0 0 20px rgba(248, 113, 113, 0.3)'
+                                  : '0 0 20px rgba(56, 189, 248, 0.3)',
                               }}
                             >
-                              {sendingEmail ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                              {sendingEmail ? (
+                                <RefreshCw size={14} className="animate-spin" />
+                              ) : (
+                                <Send size={14} />
+                              )}
                               {sendingEmail
                                 ? 'Dispatching email...'
+                                : !isEmailAvailable(selectedLead.email)
+                                ? 'Email Not Available'
                                 : currentOutreach?.status === 'FAILED'
                                 ? 'Retry Send 🚀'
                                 : 'Approve & Send 🚀'}

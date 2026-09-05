@@ -1422,7 +1422,7 @@ function ClientPortalContent() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', color: 'var(--portal-text-muted)' }}>
-                  <ShieldCheck size={14} color="#34d399" /> Encrypted 256-bit Stripe checkout. A receipt will be sent to {client.primaryContact.email}.
+                  <ShieldCheck size={14} color="#34d399" /> Encrypted 256-bit Stripe checkout. A receipt will be sent to {client.primaryContact.email && !client.primaryContact.email.includes('not available') && !client.primaryContact.email.includes('.internal') ? client.primaryContact.email : 'your verified billing email'}.
                 </div>
               </div>
 

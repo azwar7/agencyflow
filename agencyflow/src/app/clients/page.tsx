@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { AppShell } from '@/components/AppShell';
 import { EmptyState } from '@/components/EmptyState';
+import { isEmailAvailable, formatLeadEmail } from '@/lib/lead-utils';
 import {
   ArrowRight,
   Eye,
@@ -137,7 +138,7 @@ export default function ClientsOverviewPage() {
         domain: formData.domain || `${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
         industry: formData.industry,
         contact: formData.contactName || 'Primary Contact',
-        email: formData.contactEmail || `contact@${formData.name.toLowerCase().replace(/\s+/g, '')}.com`,
+        email: formData.contactEmail ? formData.contactEmail.trim() : '',
         phone: formData.contactPhone || '+1 (555) 000-0000',
         retainerValue: retVal,
         retainerFormatted: retVal > 0 ? `$${retVal.toLocaleString()}/mo` : '$0',
@@ -558,8 +559,8 @@ export default function ClientsOverviewPage() {
                           <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--on-surface)' }}>
                             {c.contact}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                            {c.email}
+                          <div style={{ fontSize: '0.75rem', color: isEmailAvailable(c.email) ? 'var(--on-surface-variant)' : 'var(--outline)', fontStyle: isEmailAvailable(c.email) ? 'normal' : 'italic' }}>
+                            {formatLeadEmail(c.email)}
                           </div>
                         </td>
 
@@ -1026,8 +1027,8 @@ export default function ClientsOverviewPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface)', fontWeight: 600, fontSize: '0.9rem' }}>
                 <User size={16} color="var(--primary)" /> {selectedClient.contact}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.8rem' }}>
-                <Mail size={14} /> {selectedClient.email}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isEmailAvailable(selectedClient.email) ? 'var(--on-surface-variant)' : 'var(--outline)', fontSize: '0.8rem', fontStyle: isEmailAvailable(selectedClient.email) ? 'normal' : 'italic' }}>
+                <Mail size={14} /> {formatLeadEmail(selectedClient.email)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--on-surface-variant)', fontSize: '0.8rem' }}>
                 <Phone size={14} /> {selectedClient.phone}

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { isEmailAvailable } from '@/lib/lead-utils';
 import { N8nLeadPayload } from './schema';
 import { N8nAuthContext } from './auth';
 
@@ -109,7 +110,32 @@ export async function processN8nLead(
     }
   }
 
-  // Step C: Deduplication by Company Name
+  // Step C: Deduplication by Verified Email (only if genuine email exists)
+  const rawEmail = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+  const contactEmail = isEmailAvailable(rawEmail) ? rawEmail : '';
+
+  if (contactEmail) {
+    const existingLeadByEmail = await prisma.lead.findFirst({
+      where: {
+        workspaceId,
+        email: {
+          equals: contactEmail,
+          mode: 'insensitive',
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingLeadByEmail) {
+      return {
+        isDuplicate: true,
+        leadId: existingLeadByEmail.id,
+        duplicateReason: `Duplicate email address (${contactEmail}) matched existing lead "${existingLeadByEmail.firstName} ${existingLeadByEmail.lastName}".`,
+      };
+    }
+  }
+
+  // Step D: Deduplication by Company Name
   const existingLeadByName = await prisma.lead.findFirst({
     where: {
       workspaceId,
@@ -144,20 +170,10 @@ export async function processN8nLead(
     ? `AI Prospect Qualification (${payload.score !== null ? `Score: ${payload.score}/10` : 'Evaluated'}): ${payload.reason}`
     : 'Inbound business prospect discovered and qualified via Autonomous AI Lead Engine.';
 
-  // Construct contact name and safe email
+  // Construct contact name (no fake placeholder email generated)
   const nameParts = companyName.split(' ');
   const firstName = nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : companyName;
   const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : 'Lead';
-
-  let contactEmail = payload.email;
-  if (!contactEmail) {
-    if (cleanDomain) {
-      contactEmail = `info@${cleanDomain}`;
-    } else {
-      const sanitizedSlug = companyName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 20);
-      contactEmail = `lead-${sanitizedSlug}-${Date.now()}@lead.internal`;
-    }
-  }
 
   // -------------------------------------------------------------
   // 3. PERSIST LEAD & COMPANY IN DATABASE
